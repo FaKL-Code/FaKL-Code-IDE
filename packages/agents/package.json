@@ -24,7 +24,7 @@
     "@fakl/i18n": "workspace:*",
     "@fakl/protocol": "workspace:*",
     "cross-spawn": "^7.0.6",
-    "zod": "^4.6.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cross-spawn": "^6.0.6"
