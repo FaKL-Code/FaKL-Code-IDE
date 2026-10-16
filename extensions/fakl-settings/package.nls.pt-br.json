@@ -1,0 +1,12 @@
+{
+  "displayName": "FaKL-Code: configurações",
+  "description": "Importa a configuração do VS Code e sincroniza settings, atalhos, snippets, extensões e perfis de agente entre máquinas.",
+  "command.settings.import": "Importar configurações do VS Code",
+  "command.sync.configure": "Configurar sincronização entre máquinas",
+  "command.sync.now": "Sincronizar configurações agora",
+  "command.sync.disable": "Desligar sincronização",
+  "config.title": "FaKL-Code: sincronização",
+  "config.sync.repository": "Repositório **privado** no GitHub que guarda a configuração sincronizada, no formato `dono/nome`. Vazio desliga a sincronização.",
+  "config.sync.intervalMinutes": "Intervalo, em minutos, entre sincronizações automáticas enquanto a IDE está aberta.",
+  "config.sync.ignoredSettings": "Settings que ficam só nesta máquina e não são sincronizados."
+}

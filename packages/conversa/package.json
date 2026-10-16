@@ -1,0 +1,26 @@
+{
+  "name": "@fakl/conversa",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A conversa com um agente montada dos eventos do Core, markdown e realce de sintaxe, usados pelo Core, pelo chat da IDE e pelo app do celular.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*",
+    "@fakl/protocol": "workspace:*"
+  }
+}

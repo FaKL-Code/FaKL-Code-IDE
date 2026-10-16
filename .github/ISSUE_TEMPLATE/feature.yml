@@ -1,0 +1,39 @@
+name: Funcionalidade
+description: Nova funcionalidade ou mudança de requisito
+labels: [enhancement]
+body:
+  - type: input
+    id: requirement
+    attributes:
+      label: Requisito do SDD
+      description: ID do requisito (RF-xxx ou RNF-xx), ou "novo" se ainda não existe no SDD.
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Marco
+      options:
+        [
+          M1 Fundação,
+          M2 Agentes e orquestração,
+          M3 Controle remoto,
+          M4 Vault,
+          M5 Integrações,
+          M6 Cyber café,
+        ]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: O que e por quê
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critério de aceite
+      description: Como saber que está pronto. Os agentes usam isto como critério de pronto.
+    validations:
+      required: true

@@ -1,0 +1,117 @@
+---
+// Cena portada do filme de apresentação (v-celular.html).
+import { langDaUrl, pastaFilme } from '../../../i18n';
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-vp-celular" data-cena="vp-celular">
+    <div id="vp-bgwrap">
+      <div id="vp-bg">
+      </div>
+    </div>
+    <div id="vp-stage">
+      <div id="vp-phone">
+        <div id="vp-screen">
+          <video preload="auto" id="vp-pwa" muted playsinline><source src={`${F}/caixa-cafe.webm`} type="video/webm" /><source src={`${F}/caixa-cafe.mp4`} type="video/mp4" /></video>
+          <div id="vp-touch"></div>
+          <div id="vp-ring"></div>
+        </div>
+        <div id="vp-notch"></div>
+      </div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-vp-celular {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-vp-celular #vp-bgwrap {
+  position: absolute;
+  inset: 0;
+  filter: blur(10px) brightness(0.5);
+}
+#cena-vp-celular #vp-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  transform-origin: 0 0;
+}
+#cena-vp-celular #vp-bg video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  image-rendering: pixelated;
+}
+#cena-vp-celular #vp-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+}
+#cena-vp-celular /* O celular em 1,
+#cena-vp-celular 15x: 520x1081,
+#cena-vp-celular acima das legendas. */
+        #vp-phone {
+  position: absolute;
+  left: 314px;
+  top: 150px;
+  width: 452px;
+  height: 940px;
+  border-radius: 66px;
+  background: #05070c;
+  border: 3px solid #4b5563;
+  box-shadow: 0 50px 140px rgba(0, 0, 0, 0.7), 0 0 0 10px #111827, 0 0 80px rgba(6, 224, 255, 0.14);
+  transform-origin: 50% 0;
+}
+#cena-vp-celular #vp-screen {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  width: 402px;
+  height: 890px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: #0a0d12;
+}
+#cena-vp-celular #vp-pwa {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 402px;
+  height: 870px;
+}
+#cena-vp-celular #vp-notch {
+  position: absolute;
+  left: 168px;
+  top: 34px;
+  width: 116px;
+  height: 30px;
+  border-radius: 15px;
+  background: #05070c;
+}
+#cena-vp-celular #vp-touch,
+#cena-vp-celular #vp-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  opacity: 0;
+}
+#cena-vp-celular #vp-touch {
+  background: rgba(229, 231, 235, 0.32);
+  border: 3px solid rgba(229, 231, 235, 0.95);
+}
+#cena-vp-celular #vp-ring {
+  border: 3px solid var(--accent);
+}
+</style>

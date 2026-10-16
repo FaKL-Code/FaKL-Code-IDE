@@ -1,0 +1,23 @@
+{
+  "name": "@fakl/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CLI fakl: tarefas, execuções, decisões, agentes e custos pela API local do FaKL Core (RF-210).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "bin": {
+    "fakl": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/core": "workspace:*",
+    "@fakl/i18n": "workspace:*",
+    "@fakl/protocol": "workspace:*"
+  }
+}

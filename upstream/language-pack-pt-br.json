@@ -1,0 +1,8 @@
+{
+  "id": "MS-CEINTL.vscode-language-pack-pt-BR",
+  "version": "1.131.0",
+  "url": "https://open-vsx.org/api/MS-CEINTL/vscode-language-pack-pt-BR/1.131.0/file/MS-CEINTL.vscode-language-pack-pt-BR-1.131.0.vsix",
+  "sha256": "31cd674f7ae6f10cfb05f882f7bc01fe4e4e3cf9049bcaea4617338a537256e7",
+  "repository": "https://github.com/microsoft/vscode-loc",
+  "license": "MIT"
+}

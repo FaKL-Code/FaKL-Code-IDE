@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro';
+import { textos } from '../i18n';
+
+// O 404 é um arquivo só: serve os dois idiomas, então mostra os dois.
+const pt = textos('pt').erro404;
+const en = textos('en').erro404;
+---
+
+<Base title={pt.titulo}>
+  <section class="nada wrap">
+    <p class="mono">&gt;_ {pt.kicker}</p>
+    <h1>{pt.h1}</h1>
+    <p>{pt.texto}</p>
+    <a class="btn btn-primary" href="/">{pt.voltar}</a>
+    <div class="en" lang="en">
+      <h2>{en.h1}</h2>
+      <p>{en.texto}</p>
+      <a class="btn" href="/en/">{en.voltar}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nada {
+    display: grid;
+    justify-items: start;
+    gap: 18px;
+    min-height: 80vh;
+    align-content: center;
+    padding-top: var(--nav-h);
+  }
+  .nada .mono {
+    color: var(--cyan);
+  }
+  .nada h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    letter-spacing: -0.03em;
+  }
+  .nada p:not(.mono) {
+    color: var(--muted);
+  }
+  .en {
+    display: grid;
+    justify-items: start;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .en h2 {
+    font-size: 22px;
+  }
+</style>

@@ -1,0 +1,488 @@
+/* Jornada de configuração: a paleta da marca (a mesma da Mesa), com a fonte e
+   o foco do VS Code. */
+:root {
+  --bg: #07090d;
+  --panel: #0b0f16;
+  --card: #0f141d;
+  --line: #1c2330;
+  --line-2: #263041;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --blue: #2563eb;
+  --blue-soft: rgba(37, 99, 235, 0.15);
+  --cyan: #22d3ee;
+  --amber: #fbbf24;
+  --green: #4ade80;
+  --red: #f87171;
+  --sans: 'IBM Plex Sans', var(--vscode-font-family, system-ui), sans-serif;
+  --radius: 14px;
+  --focus: var(--vscode-focusBorder, #22d3ee);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.carregando {
+  padding: 48px;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------- lateral */
+
+.lateral {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 16px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.marca {
+  display: flex;
+  flex-direction: column;
+  margin: 0 8px 20px;
+}
+
+.marca strong {
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.marca span,
+.lateral h2,
+.progresso small {
+  color: var(--muted);
+}
+
+.progresso {
+  margin: 0 8px 20px;
+}
+
+.barra {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  transition: width 0.3s ease;
+}
+
+.lateral h2 {
+  margin: 16px 8px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lateral ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.passo {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.passo:hover {
+  background: var(--card);
+}
+
+.passo.atual {
+  background: var(--blue-soft);
+}
+
+.ponto {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+}
+
+.feito > .ponto,
+.passo.feito .ponto,
+.provedor.pronto .ponto {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.passo.pulado .ponto {
+  border-color: var(--muted);
+  border-style: dashed;
+}
+
+.passo.indisponivel .nome {
+  color: var(--muted);
+}
+
+.rodape-lateral {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+/* ---------------------------------------------------------------- páginas */
+
+.principal {
+  min-width: 0;
+}
+
+.faixa {
+  padding: 10px 32px;
+  background: rgba(251, 191, 36, 0.12);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.35);
+  color: var(--amber);
+}
+
+.pagina {
+  max-width: 760px;
+  padding: 40px 32px 64px;
+}
+
+.pagina header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+h1:focus {
+  outline: none;
+}
+
+.lead {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.detalhe {
+  padding: 10px 14px;
+  border-left: 3px solid var(--cyan);
+  background: var(--card);
+  border-radius: 0 8px 8px 0;
+}
+
+.nota {
+  color: var(--muted);
+}
+
+.chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+}
+
+.chip.feito {
+  color: var(--green);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.chip.pendente {
+  color: var(--amber);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.acoes,
+.navegacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.navegacao {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.espaco {
+  flex: 1;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--cyan);
+}
+
+.btn.principal {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn.principal:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn.link {
+  padding: 6px 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--cyan);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------------------------------------------------------------- opções */
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.opcao {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.opcao:hover {
+  border-color: var(--line-2);
+}
+
+.opcao:has(input:checked) {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.opcao input {
+  margin-top: 3px;
+  accent-color: var(--blue);
+}
+
+.opcao span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opcao small,
+.provedor small,
+.resumo small {
+  color: var(--muted);
+}
+
+.opcao em {
+  color: var(--green);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- provedores */
+
+.provedores {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.provedor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.provedor .info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+
+.provedor .aviso {
+  color: var(--amber);
+}
+
+.botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teto {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 420px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.campo {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.campo input {
+  width: 90px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+/* ---------------------------------------------------------------- resumo */
+
+.resumo {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.resumo li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lateral {
+    position: static;
+    height: auto;
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Estreito: só a marca e o progresso; navega-se pelos botões e pelo resumo. */
+  .lateral section,
+  .rodape-lateral {
+    display: none;
+  }
+
+  .marca,
+  .progresso {
+    margin-bottom: 0;
+  }
+
+  .progresso {
+    margin-top: 12px;
+  }
+
+  .pagina {
+    padding: 24px 16px 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra span {
+    transition: none;
+  }
+}

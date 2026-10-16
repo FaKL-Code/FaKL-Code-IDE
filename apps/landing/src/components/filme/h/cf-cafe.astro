@@ -1,0 +1,101 @@
+---
+// 02-cafe: três quadros parados da sala e a tela do Codex ampliada ao lado.
+import { MARCAS_TELA } from '../../../filme/h/cafe';
+import { langDaUrl, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+---
+
+<div class="cena" id="cena-cf-cafe" data-cena="cf-cafe">
+  <div id="cf-cam"><svg id="cf-foco" class="cafe-foco" viewBox="0 0 3840 2160" aria-hidden="true"><polygon points="1860,878 2016,956 2016,1056 1860,978"></polygon></svg></div>
+  <div id="cf-tela" class="cafe-tela">
+    <p class="cafe-tela-cab"><b>Codex</b> · {C.telaCodex}</p>
+    <ol>
+      {
+        MARCAS_TELA.map((p, k) => (
+          <li>
+            <span>{p}</span>
+            {C.telaLinhas[k]}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</div>
+
+<style is:global>
+  #cena-cf-cafe {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  /* A sala é capturada em 6x (3840x2160): escala 1 = 6x. */
+  #cena-cf-cafe #cf-cam {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3840px;
+    height: 2160px;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  #cena-cf-cafe #cf-tela {
+    left: 1010px;
+    top: 300px;
+    width: 780px;
+  }
+  /* Contorno da tela do Codex na sala (QUAD, espaço 6x). */
+  .cafe-foco {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 3840px;
+    height: 2160px;
+    opacity: 0;
+  }
+  .cafe-foco polygon {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+  }
+  .cafe-tela {
+    position: absolute;
+    opacity: 0;
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg);
+    font-family: var(--mono);
+    box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
+  }
+  .cafe-tela-cab {
+    margin: 0;
+    padding: 22px 32px;
+    border-bottom: 3px solid var(--border);
+    color: var(--muted);
+    font-size: 28px;
+  }
+  .cafe-tela-cab b {
+    color: var(--text);
+  }
+  .cafe-tela ol {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 30px 32px 36px;
+    list-style: none;
+    color: var(--text);
+    font-size: 36px;
+  }
+  .cafe-tela li {
+    display: flex;
+    gap: 22px;
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      transform 0.25s;
+  }
+  .cafe-tela li span {
+    min-width: 2.2ch;
+    color: var(--accent);
+  }
+</style>

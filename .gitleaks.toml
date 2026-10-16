@@ -1,0 +1,3 @@
+# Configuração do gitleaks (job "Segredos" do ci.yml). Usa as regras padrão, sem exceções.
+[extend]
+useDefault = true

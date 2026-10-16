@@ -1,0 +1,144 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Player from '../../components/filme/Player.astro';
+import Clipe from '../../components/filme/Clipe.astro';
+import { CLIPES } from '../../filme/roteiro';
+import { site } from '../../config/site';
+import { caminhosPorIdioma, langDaUrl, rota, textos } from '../../i18n';
+import '../../components/filme/pagina.css';
+
+export const getStaticPaths = caminhosPorIdioma;
+
+const lang = langDaUrl(Astro.url);
+const T = textos(lang).home;
+
+const clipe = (id: string) => {
+  const c = CLIPES.find((x) => x.id === id);
+  if (!c) throw new Error(`clipe ${id}`);
+  return { clipe: c, n: CLIPES.indexOf(c) + 1 };
+};
+
+const slams = [
+  [21.474, 0.3, 'CLAUDE.'],
+  [21.79, 0.3, 'CODEX.'],
+  [22.105, 0.36, 'GEMINI.'],
+] as const;
+---
+
+<Base>
+  <div class="composicao" data-composicao>
+    <div class="estagio" data-estagio>
+    <Player />
+
+    <Clipe {...clipe('gancho')}>
+      <div slot="sobre" class="abre">
+        <h1>{T.titulo}</h1>
+        <p>{T.abre}</p>
+        <div class="abre-acoes">
+          <a class="acao acao-forte" href={rota(lang, '/download/')}>{T.baixar}</a>
+          <a class="acao" href={site.repo} rel="noopener">
+            <Icon name="github" size={16} /> {T.github}
+          </a>
+        </div>
+      </div>
+    </Clipe>
+
+    <Clipe {...clipe('cafe')}>
+      <p>{T.cafe}</p>
+      <a class="doc" href={rota(lang, '/docs/cafe/')}>{T.cafeLink} <Icon name="arrow" size={14} /></a>
+    </Clipe>
+
+    <Clipe {...clipe('mesa')}>
+      <p>{T.mesa}</p>
+      <a class="doc" href={rota(lang, '/docs/mesa/')}>{T.mesaLink} <Icon name="arrow" size={14} /></a>
+      <div slot="sobre" class="slams" aria-hidden="true">
+        {
+          slams.map(([s, d, t]) => (
+            <b data-slam data-start={s} data-dur={d}>
+              {t}
+            </b>
+          ))
+        }
+      </div>
+    </Clipe>
+
+    <Clipe {...clipe('chat')}>
+      <p>{T.chat}</p>
+      <a class="doc" href={rota(lang, '/docs/agentes/')}>{T.chatLink} <Icon name="arrow" size={14} /></a>
+    </Clipe>
+
+    <Clipe {...clipe('estacoes')}>
+      <p>{T.estacoes}</p>
+      <a class="doc" href={rota(lang, '/docs/integracoes/')}>{T.estacoesLink} <Icon name="arrow" size={14} /></a>
+    </Clipe>
+
+    <Clipe {...clipe('celular')}>
+      <p>{T.celular}</p>
+      <a class="doc" href={rota(lang, '/docs/remoto/')}>{T.celularLink} <Icon name="arrow" size={14} /></a>
+    </Clipe>
+
+    <Clipe {...clipe('marca')}>
+      <div slot="sobre" class="fecha" data-fecha>
+        <div class="abre-acoes">
+          <a class="acao acao-forte" href={rota(lang, '/download/')}>{T.baixarMarca}</a>
+          <a class="acao" href={rota(lang, '/docs/')}>{T.docs}</a>
+          <a class="acao" href={site.repo} rel="noopener">{T.github}</a>
+        </div>
+        <p>{T.sistemas}</p>
+      </div>
+    </Clipe>
+    </div>
+
+  </div>
+
+  <section class="creditos" id="creditos" aria-labelledby="creditos-titulo">
+    <div class="creditos-in">
+      <p class="creditos-kicker" data-revela>&gt;_ {T.creditosKicker}</p>
+      <h2 id="creditos-titulo" data-revela>{T.creditosTitulo}</h2>
+
+      <h3 class="creditos-bloco" data-revela>{T.elencoTitulo}</h3>
+      <ul class="rol">
+        {
+          T.elenco.map(([papel, quem]) => (
+            <li data-revela>
+              <span class="rol-papel">{papel}</span>
+              <span class="rol-nome">{quem}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <h3 class="creditos-bloco" data-revela>{T.bastidoresTitulo}</h3>
+      <ul class="rol">
+        {
+          T.bastidores.map(([papel, texto, href]) => (
+            <li data-revela>
+              <span class="rol-papel">{papel}</span>
+              <a class="rol-nome" href={rota(lang, href)}>
+                {texto}
+                <Icon name="arrow" size={14} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="creditos-fim" data-revela>
+        <p class="creditos-assina">
+          <span>&gt;_</span> {T.assinatura[0]}<br />{T.assinatura[1]}<i aria-hidden="true"></i>
+        </p>
+        <div class="abre-acoes">
+          <a class="acao acao-forte" href={rota(lang, '/download/')}>{T.baixarMarca}</a>
+          <a class="acao" href={rota(lang, '/docs/')}>{T.docs}</a>
+          <a class="acao" href={site.repo} rel="noopener">{T.github}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { initPagina } from '../../scripts/landing';
+  initPagina();
+</script>

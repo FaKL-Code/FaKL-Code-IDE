@@ -1,0 +1,25 @@
+{
+  "name": "@fakl/voz",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Comandos por voz: reconhecimento de fala no navegador ou por gravação, ditado em pt-BR e interpretação do pedido (tarefa, execução avulsa ou mensagem), usados pelo chat da IDE e pelo app do celular.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*"
+  }
+}

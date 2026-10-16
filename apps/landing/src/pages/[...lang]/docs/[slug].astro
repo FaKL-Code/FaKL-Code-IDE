@@ -1,0 +1,19 @@
+---
+import { getCollection, render } from 'astro:content';
+import Docs from '../../../layouts/Docs.astro';
+
+export async function getStaticPaths() {
+  const [pt, en] = await Promise.all([getCollection('docs'), getCollection('docsEn')]);
+  return [
+    ...pt.map((pagina) => ({ params: { lang: undefined, slug: pagina.id }, props: { pagina } })),
+    ...en.map((pagina) => ({ params: { lang: 'en', slug: pagina.id }, props: { pagina } })),
+  ];
+}
+
+const { pagina } = Astro.props;
+const { Content, headings } = await render(pagina);
+---
+
+<Docs titulo={pagina.data.titulo} descricao={pagina.data.descricao} slug={pagina.id} headings={headings}>
+  <Content />
+</Docs>

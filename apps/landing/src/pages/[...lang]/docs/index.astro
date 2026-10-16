@@ -1,0 +1,66 @@
+---
+import { getCollection } from 'astro:content';
+import Docs from '../../../layouts/Docs.astro';
+import { caminhosPorIdioma, langDaUrl, rota, textos } from '../../../i18n';
+
+export const getStaticPaths = caminhosPorIdioma;
+
+const lang = langDaUrl(Astro.url);
+const T = textos(lang).docs;
+const paginas = (await getCollection(lang === 'en' ? 'docsEn' : 'docs')).sort(
+  (a, b) => a.data.ordem - b.data.ordem,
+);
+---
+
+<Docs titulo={T.tituloIndice} descricao={T.descricaoIndice} slug="">
+  <ul class="cartoes">
+    {
+      paginas.map((p) => (
+        <li>
+          <a href={rota(lang, `/docs/${p.id}/`)}>
+            <strong>{p.data.titulo}</strong>
+            <span>{p.data.descricao}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Docs>
+
+<style>
+  .cartoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cartoes li {
+    margin: 0;
+  }
+  .cartoes a {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-side);
+    color: var(--text);
+    text-decoration: none;
+    transition:
+      border-color 0.2s,
+      transform 0.2s var(--ease-out);
+  }
+  .cartoes a:hover {
+    border-color: var(--cyan);
+    transform: translateY(-2px);
+  }
+  .cartoes span {
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+</style>

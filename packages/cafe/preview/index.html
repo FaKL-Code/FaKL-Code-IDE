@@ -1,0 +1,87 @@
+<title>Cyber café da FaKL</title>
+<style>
+  :root {
+    color-scheme: dark; /* Mundo único escuro, como a sala à noite. */
+    --bg: #0d1117;
+    --surface: #1f2937;
+    --text: #e5e7eb;
+    --muted: #a1a1aa;
+    --accent: #06e0ff;
+  }
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font:
+      14px/1.4 system-ui,
+      sans-serif;
+  }
+  #cena {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .barra {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    padding-top: 10px;
+    padding-inline: 16px;
+    background: var(--surface);
+    border-top: 1px solid #374151;
+  }
+  .barra label {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--muted);
+  }
+  .barra input[type='range'] {
+    width: min(240px, 50vw);
+    accent-color: var(--accent);
+  }
+  button {
+    background: #111827;
+    color: var(--text);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font: inherit;
+    cursor: pointer;
+  }
+  button:hover {
+    border-color: var(--accent);
+  }
+  #hora-valor {
+    min-width: 3.2em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  #status {
+    color: var(--accent);
+  }
+</style>
+<canvas id="cena" aria-label="Sala do cyber café com os agentes"></canvas>
+<div class="barra">
+  <label
+    >Hora <input id="hora" type="range" min="0" max="23.9" step="0.1" value="21" />
+    <span id="hora-valor"></span
+  ></label>
+  <label><input id="auto" type="checkbox" /> relógio de verdade</label>
+  <button id="novo">Novo agente</button>
+  <button id="concluir">Concluir tarefa</button>
+  <button id="falhar">Falhar</button>
+  <button id="limite">Estourar limite</button>
+  <span id="status"></span>
+</div>
+<!--script-->

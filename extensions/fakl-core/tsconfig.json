@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node", "vscode"]
+  },
+  "include": ["src", "test", "vitest.config.mts"],
+  "exclude": ["src/webview"]
+}

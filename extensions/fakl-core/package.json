@@ -1,0 +1,2411 @@
+{
+  "name": "fakl-core",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.1.0",
+  "publisher": "fakl",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:fakl.chat",
+    "onView:fakl.email.inbox",
+    "onFileSystem:fakl-ssh",
+    "onTerminalProfile:fakl.ssh.terminal",
+    "onWebviewPanel:fakl.mesa",
+    "onWebviewPanel:fakl.cafe",
+    "onWebviewPanel:fakl.chatJanela"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "fakl.setup.open",
+        "title": "%command.setup.open%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.overlay.minimize",
+        "title": "%command.overlay.minimize%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.core.status",
+        "title": "%command.core.status%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.agents.status",
+        "title": "%command.agents.status%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.agents.chat",
+        "title": "%command.agents.chat%",
+        "category": "FaKL",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "fakl.agents.new",
+        "title": "%command.agents.new%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.mesa.open",
+        "title": "%command.mesa.open%",
+        "category": "FaKL",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "fakl.mesa.focus",
+        "title": "%command.mesa.focus%",
+        "category": "FaKL",
+        "icon": "$(screen-full)"
+      },
+      {
+        "command": "fakl.cafe.open",
+        "title": "%command.cafe.open%",
+        "category": "FaKL",
+        "icon": "$(coffee)"
+      },
+      {
+        "command": "fakl.agents.send",
+        "title": "%command.agents.send%",
+        "category": "FaKL",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "fakl.agents.pause",
+        "title": "%command.agents.pause%",
+        "category": "FaKL",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "fakl.agents.resume",
+        "title": "%command.agents.resume%",
+        "category": "FaKL",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "fakl.agents.stop",
+        "title": "%command.agents.stop%",
+        "category": "FaKL",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "fakl.agents.showLog",
+        "title": "%command.agents.showLog%",
+        "category": "FaKL",
+        "icon": "$(output)"
+      },
+      {
+        "command": "fakl.agents.clearFinished",
+        "title": "%command.agents.clearFinished%",
+        "category": "FaKL",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "fakl.agents.refresh",
+        "title": "%command.agents.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.chat.open",
+        "title": "%command.chat.open%",
+        "category": "FaKL",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "fakl.claude.login",
+        "title": "%command.claude.login%",
+        "category": "FaKL",
+        "icon": "$(sign-in)"
+      },
+      {
+        "command": "fakl.claude.logout",
+        "title": "%command.claude.logout%",
+        "category": "FaKL",
+        "icon": "$(sign-out)"
+      },
+      {
+        "command": "fakl.claude.rename",
+        "title": "%command.claude.rename%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.claude.setActive",
+        "title": "%command.claude.setActive%",
+        "category": "FaKL",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fakl.claude.switch",
+        "title": "%command.claude.switch%",
+        "category": "FaKL",
+        "icon": "$(account)"
+      },
+      {
+        "command": "fakl.claude.useDefault",
+        "title": "%command.claude.useDefault%",
+        "category": "FaKL",
+        "icon": "$(home)"
+      },
+      {
+        "command": "fakl.claude.refresh",
+        "title": "%command.claude.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.profiles.new",
+        "title": "%command.profiles.new%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.profiles.edit",
+        "title": "%command.profiles.edit%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.profiles.delete",
+        "title": "%command.profiles.delete%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.profiles.refresh",
+        "title": "%command.profiles.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.resources.sources.add",
+        "title": "%command.resources.sources.add%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.resources.sources.list",
+        "title": "%command.resources.sources.list%",
+        "category": "FaKL",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "fakl.resources.sources.update",
+        "title": "%command.resources.sources.update%",
+        "category": "FaKL",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "fakl.resources.sources.updateOne",
+        "title": "%command.resources.sources.updateOne%",
+        "category": "FaKL",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "fakl.resources.sources.remove",
+        "title": "%command.resources.sources.remove%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.resources.sources.reveal",
+        "title": "%command.resources.sources.reveal%",
+        "category": "FaKL",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "fakl.resources.sources.refresh",
+        "title": "%command.resources.sources.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.resources.agents.install",
+        "title": "%command.resources.agents.install%",
+        "category": "FaKL",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "fakl.resources.agents.create",
+        "title": "%command.resources.agents.create%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.resources.agents.refresh",
+        "title": "%command.resources.agents.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.resources.skills.install",
+        "title": "%command.resources.skills.install%",
+        "category": "FaKL",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "fakl.resources.skills.create",
+        "title": "%command.resources.skills.create%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.resources.skills.refresh",
+        "title": "%command.resources.skills.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.resources.open",
+        "title": "%command.resources.open%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.resources.remove",
+        "title": "%command.resources.remove%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.resources.mcps.create",
+        "title": "%command.resources.mcps.create%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.resources.mcps.open",
+        "title": "%command.resources.mcps.open%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.resources.mcps.remove",
+        "title": "%command.resources.mcps.remove%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.resources.mcps.refresh",
+        "title": "%command.resources.mcps.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.costs.show",
+        "title": "%command.costs.show%",
+        "category": "FaKL",
+        "icon": "$(credit-card)"
+      },
+      {
+        "command": "fakl.costs.editCaps",
+        "title": "%command.costs.editCaps%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.windows.refresh",
+        "title": "%command.windows.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.tasks.new",
+        "title": "%command.tasks.new%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.maestro.run",
+        "title": "%command.maestro.run%",
+        "category": "FaKL",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "fakl.voz.falar",
+        "title": "%command.voz.falar%",
+        "category": "FaKL",
+        "icon": "$(mic)"
+      },
+      {
+        "command": "fakl.voz.configurar",
+        "title": "%command.voz.configurar%",
+        "category": "FaKL",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "fakl.tasks.start",
+        "title": "%command.tasks.start%",
+        "category": "FaKL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fakl.tasks.cancel",
+        "title": "%command.tasks.cancel%",
+        "category": "FaKL",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "fakl.runs.pause",
+        "title": "%command.runs.pause%",
+        "category": "FaKL",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "fakl.runs.resume",
+        "title": "%command.runs.resume%",
+        "category": "FaKL",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "fakl.runs.setAutoResume",
+        "title": "%command.runs.setAutoResume%",
+        "category": "FaKL",
+        "icon": "$(history)"
+      },
+      {
+        "command": "fakl.runs.stop",
+        "title": "%command.runs.stop%",
+        "category": "FaKL",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "fakl.runs.openMaestro",
+        "title": "%command.runs.openMaestro%",
+        "category": "FaKL",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "fakl.runs.openPr",
+        "title": "%command.runs.openPr%",
+        "category": "FaKL",
+        "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "fakl.decisions.show",
+        "title": "%command.decisions.show%",
+        "category": "FaKL",
+        "icon": "$(question)"
+      },
+      {
+        "command": "fakl.tasks.refresh",
+        "title": "%command.tasks.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.agents.terminal",
+        "title": "%command.agents.terminal%",
+        "category": "FaKL",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "fakl.vault.menu",
+        "title": "%command.vault.menu%",
+        "category": "FaKL",
+        "icon": "$(book)"
+      },
+      {
+        "command": "fakl.vault.configure",
+        "title": "%command.vault.configure%",
+        "category": "FaKL",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "fakl.vault.search",
+        "title": "%command.vault.search%",
+        "category": "FaKL",
+        "icon": "$(search)"
+      },
+      {
+        "command": "fakl.vault.semanticSearch",
+        "title": "%command.vault.semanticSearch%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fakl.vault.graph",
+        "title": "%command.vault.graph%",
+        "category": "FaKL",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "fakl.vault.insertTemplate",
+        "title": "%command.vault.insertTemplate%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.vault.tags.refresh",
+        "title": "%command.vault.tags.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.vault.daily",
+        "title": "%command.vault.daily%",
+        "category": "FaKL",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "fakl.vault.appendDaily",
+        "title": "%command.vault.appendDaily%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.vault.newNote",
+        "title": "%command.vault.newNote%",
+        "category": "FaKL",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "fakl.vault.sync",
+        "title": "%command.vault.sync%",
+        "category": "FaKL",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "fakl.vault.openWindow",
+        "title": "%command.vault.openWindow%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.vault.openNote",
+        "title": "%command.vault.openNote%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.playbooks.run",
+        "title": "%command.playbooks.run%",
+        "category": "FaKL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fakl.tasks.fromNote",
+        "title": "%command.tasks.fromNote%",
+        "category": "FaKL",
+        "icon": "$(tasklist)"
+      },
+      {
+        "command": "fakl.remote.menu",
+        "title": "%command.remote.menu%",
+        "category": "FaKL",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "fakl.remote.toggle",
+        "title": "%command.remote.toggle%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.remote.pair",
+        "title": "%command.remote.pair%",
+        "category": "FaKL",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "fakl.remote.devices",
+        "title": "%command.remote.devices%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.remote.configure",
+        "title": "%command.remote.configure%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.remote.test",
+        "title": "%command.remote.test%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.cli.addToPath",
+        "title": "%command.cli.addToPath%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.github.login",
+        "title": "%command.github.login%",
+        "category": "FaKL",
+        "icon": "$(github)"
+      },
+      {
+        "command": "fakl.github.logout",
+        "title": "%command.github.logout%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.github.refresh",
+        "title": "%command.github.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.github.diagnose",
+        "title": "%command.github.diagnose%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.github.openFull",
+        "title": "%command.github.openFull%",
+        "category": "FaKL",
+        "icon": "$(screen-full)"
+      },
+      {
+        "command": "fakl.github.account.search",
+        "title": "%command.github.account.search%",
+        "category": "FaKL",
+        "icon": "$(search)"
+      },
+      {
+        "command": "fakl.github.account.clearSearch",
+        "title": "%command.github.account.clearSearch%",
+        "category": "FaKL",
+        "icon": "$(close)"
+      },
+      {
+        "command": "fakl.github.issues.filter",
+        "title": "%command.github.issues.filter%",
+        "category": "FaKL",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "fakl.github.actions.filter",
+        "title": "%command.github.actions.filter%",
+        "category": "FaKL",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "fakl.github.notification.markRead",
+        "title": "%command.github.notification.markRead%",
+        "category": "FaKL",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fakl.github.notification.markGroupRead",
+        "title": "%command.github.notification.markGroupRead%",
+        "category": "FaKL",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "fakl.github.notification.markAllRead",
+        "title": "%command.github.notification.markAllRead%",
+        "category": "FaKL",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "fakl.github.repo.clone",
+        "title": "%command.github.repo.clone%",
+        "category": "FaKL",
+        "icon": "$(repo-clone)"
+      },
+      {
+        "command": "fakl.github.open",
+        "title": "%command.github.open%",
+        "category": "FaKL",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "fakl.github.show",
+        "title": "%command.github.show%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.github.pr.openFile",
+        "title": "%command.github.pr.openFile%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.github.pr.review",
+        "title": "%command.github.pr.review%",
+        "category": "FaKL",
+        "icon": "$(check)"
+      },
+      {
+        "command": "fakl.github.pr.merge",
+        "title": "%command.github.pr.merge%",
+        "category": "FaKL",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "fakl.github.pr.checkout",
+        "title": "%command.github.pr.checkout%",
+        "category": "FaKL",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "fakl.github.comment",
+        "title": "%command.github.comment%",
+        "category": "FaKL",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "fakl.github.issue.toAgents",
+        "title": "%command.github.issue.toAgents%",
+        "category": "FaKL",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "fakl.github.issue.new",
+        "title": "%command.github.issue.new%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.github.run.rerun",
+        "title": "%command.github.run.rerun%",
+        "category": "FaKL",
+        "icon": "$(debug-rerun)"
+      },
+      {
+        "command": "fakl.github.job.log",
+        "title": "%command.github.job.log%",
+        "category": "FaKL",
+        "icon": "$(output)"
+      },
+      {
+        "command": "fakl.github.review.create",
+        "title": "%command.github.review.create%",
+        "enablement": "!commentIsEmpty"
+      },
+      {
+        "command": "fakl.ssh.refresh",
+        "title": "%command.ssh.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.ssh.add",
+        "title": "%command.ssh.add%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.ssh.terminal",
+        "title": "%command.ssh.terminal%",
+        "category": "FaKL",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "fakl.ssh.addToWorkspace",
+        "title": "%command.ssh.addToWorkspace%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.ssh.removeFromWorkspace",
+        "title": "%command.ssh.removeFromWorkspace%",
+        "category": "FaKL",
+        "icon": "$(close)"
+      },
+      {
+        "command": "fakl.ssh.folderTerminal",
+        "title": "%command.ssh.folderTerminal%",
+        "category": "FaKL",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "fakl.ssh.openFolder",
+        "title": "%command.ssh.openFolder%",
+        "category": "FaKL",
+        "icon": "$(remote)"
+      },
+      {
+        "command": "fakl.ssh.exec",
+        "title": "%command.ssh.exec%",
+        "category": "FaKL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fakl.ssh.policy",
+        "title": "%command.ssh.policy%",
+        "category": "FaKL",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "fakl.ssh.tags",
+        "title": "%command.ssh.tags%",
+        "category": "FaKL",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "fakl.ssh.remove",
+        "title": "%command.ssh.remove%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.ssh.editConfig",
+        "title": "%command.ssh.editConfig%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.ssh.keygen",
+        "title": "%command.ssh.keygen%",
+        "category": "FaKL",
+        "icon": "$(key)"
+      },
+      {
+        "command": "fakl.providers.detect",
+        "title": "%command.providers.detect%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fakl.providers.setKey",
+        "title": "%command.providers.setKey%",
+        "category": "FaKL",
+        "icon": "$(key)"
+      },
+      {
+        "command": "fakl.providers.removeKey",
+        "title": "%command.providers.removeKey%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.providers.addAcp",
+        "title": "%command.providers.addAcp%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.hostinger.connect",
+        "title": "%command.hostinger.connect%",
+        "category": "FaKL",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "fakl.hostinger.disconnect",
+        "title": "%command.hostinger.disconnect%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.hostinger.refresh",
+        "title": "%command.hostinger.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.hostinger.restart",
+        "title": "%command.hostinger.restart%",
+        "category": "FaKL",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "fakl.hostinger.snapshot",
+        "title": "%command.hostinger.snapshot%",
+        "category": "FaKL",
+        "icon": "$(save)"
+      },
+      {
+        "command": "fakl.hostinger.dns.add",
+        "title": "%command.hostinger.dns.add%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.hostinger.dns.edit",
+        "title": "%command.hostinger.dns.edit%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.hostinger.dns.delete",
+        "title": "%command.hostinger.dns.delete%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.hostinger.firewall.create",
+        "title": "%command.hostinger.firewall.create%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.hostinger.firewall.delete",
+        "title": "%command.hostinger.firewall.delete%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.hostinger.firewall.attach",
+        "title": "%command.hostinger.firewall.attach%",
+        "category": "FaKL",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "fakl.hostinger.firewall.rule.add",
+        "title": "%command.hostinger.firewall.rule.add%",
+        "category": "FaKL",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.hostinger.firewall.rule.edit",
+        "title": "%command.hostinger.firewall.rule.edit%",
+        "category": "FaKL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fakl.hostinger.firewall.rule.delete",
+        "title": "%command.hostinger.firewall.rule.delete%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.hostinger.panel",
+        "title": "%command.hostinger.panel%",
+        "category": "FaKL",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "fakl.lovable.link",
+        "title": "%command.lovable.link%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.lovable.open",
+        "title": "%command.lovable.open%",
+        "category": "FaKL",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "fakl.audit.show",
+        "title": "%command.audit.show%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.audit.verify",
+        "title": "%command.audit.verify%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.email.addAccount",
+        "title": "%command.email.addAccount%",
+        "category": "Email",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fakl.email.refresh",
+        "title": "%command.email.refresh%",
+        "category": "Email",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.email.removeAccount",
+        "title": "%command.email.removeAccount%",
+        "category": "Email",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.resources.mcpLibrary.install",
+        "title": "%command.resources.mcpLibrary.install%",
+        "category": "FaKL",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "fakl.resources.mcpLibrary.openFile",
+        "title": "%command.resources.mcpLibrary.openFile%",
+        "category": "FaKL",
+        "icon": "$(json)"
+      },
+      {
+        "command": "fakl.resources.mcpLibrary.refresh",
+        "title": "%command.resources.mcpLibrary.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fakl.resources.mcpLibrary.secrets",
+        "title": "%command.resources.mcpLibrary.secrets%",
+        "category": "FaKL",
+        "icon": "$(key)"
+      },
+      {
+        "command": "fakl.resources.mcpLibrary.remove",
+        "title": "%command.resources.mcpLibrary.remove%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.janela.mesa",
+        "title": "%command.janela.mesa%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.chat",
+        "title": "%command.janela.chat%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.cafe",
+        "title": "%command.janela.cafe%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.editor",
+        "title": "%command.janela.editor%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.grupo",
+        "title": "%command.janela.grupo%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.terminal",
+        "title": "%command.janela.terminal%",
+        "category": "FaKL",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "fakl.janela.vazia",
+        "title": "%command.janela.vazia%",
+        "category": "FaKL",
+        "icon": "$(empty-window)"
+      },
+      {
+        "command": "fakl.janela.voltar",
+        "title": "%command.janela.voltar%",
+        "category": "FaKL",
+        "icon": "$(screen-normal)"
+      }
+    ],
+    "themes": [
+      {
+        "label": "FaKL Noite",
+        "uiTheme": "vs-dark",
+        "path": "./themes/fakl-noite-color-theme.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fakl",
+          "title": "FaKL-Code",
+          "icon": "media/agents.svg"
+        },
+        {
+          "id": "fakl-claude",
+          "title": "%viewsContainer.fakl-claude%",
+          "icon": "media/claude.svg"
+        },
+        {
+          "id": "fakl-github",
+          "title": "GitHub",
+          "icon": "media/github.svg"
+        },
+        {
+          "id": "fakl-infra",
+          "title": "%viewsContainer.fakl-infra%",
+          "icon": "media/server.svg"
+        },
+        {
+          "id": "fakl-email",
+          "title": "Email",
+          "icon": "media/email.svg"
+        },
+        {
+          "id": "fakl-ai-resources",
+          "title": "%viewsContainer.fakl-ai-resources%",
+          "icon": "media/agents.svg"
+        }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "fakl-chat",
+          "title": "%viewsContainer.fakl-chat%",
+          "icon": "media/agents.svg"
+        }
+      ]
+    },
+    "views": {
+      "fakl": [
+        {
+          "id": "fakl.agents",
+          "name": "%view.agents%",
+          "contextualTitle": "%view.agents.contextualTitle%"
+        },
+        {
+          "id": "fakl.tasks",
+          "name": "%view.tasks%",
+          "contextualTitle": "%view.tasks.contextualTitle%"
+        },
+        {
+          "id": "fakl.vault.backlinks",
+          "name": "Backlinks",
+          "contextualTitle": "Vault"
+        },
+        {
+          "id": "fakl.vault.tags",
+          "name": "Tags",
+          "contextualTitle": "Vault",
+          "when": "fakl.vault.active"
+        }
+      ],
+      "fakl-chat": [
+        {
+          "type": "webview",
+          "id": "fakl.chat",
+          "name": "%view.chat%",
+          "contextualTitle": "%view.chat.contextualTitle%"
+        }
+      ],
+      "fakl-ai-resources": [
+        {
+          "id": "fakl.profiles",
+          "name": "%view.profiles%",
+          "contextualTitle": "%view.profiles.contextualTitle%"
+        },
+        {
+          "id": "fakl.resources.sources",
+          "name": "%view.resources.sources%",
+          "contextualTitle": "%view.resources.sources.contextualTitle%"
+        },
+        {
+          "id": "fakl.resources.agents",
+          "name": "%view.resources.agents%",
+          "contextualTitle": "%view.resources.agents.contextualTitle%"
+        },
+        {
+          "id": "fakl.resources.skills",
+          "name": "%view.resources.skills%",
+          "contextualTitle": "%view.resources.skills.contextualTitle%"
+        },
+        {
+          "id": "fakl.resources.mcpLibrary",
+          "name": "%view.resources.mcpLibrary%",
+          "contextualTitle": "%view.resources.mcpLibrary.contextualTitle%"
+        },
+        {
+          "id": "fakl.resources.mcps",
+          "name": "%view.resources.mcps%",
+          "contextualTitle": "%view.resources.mcps.contextualTitle%"
+        }
+      ],
+      "fakl-claude": [
+        {
+          "id": "fakl.claude.accounts",
+          "name": "%view.claude.accounts%",
+          "contextualTitle": "%view.claude.accounts.contextualTitle%"
+        }
+      ],
+      "fakl-github": [
+        {
+          "id": "fakl.github.account",
+          "name": "%view.github.account%"
+        },
+        {
+          "id": "fakl.github.assigned",
+          "name": "%view.github.assigned%"
+        },
+        {
+          "id": "fakl.github.reviews",
+          "name": "%view.github.reviews%"
+        },
+        {
+          "id": "fakl.github.myprs",
+          "name": "%view.github.myprs%",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "fakl.github.issues",
+          "name": "Issues",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "fakl.github.actions",
+          "name": "%view.github.actions%",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "fakl.github.notifications",
+          "name": "%view.github.notifications%",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "fakl.github.workspace",
+          "name": "%view.github.workspace%",
+          "visibility": "collapsed",
+          "when": "fakl.github.workspaceRepo"
+        }
+      ],
+      "fakl-infra": [
+        {
+          "id": "fakl.ssh.hosts",
+          "name": "%view.ssh.hosts%"
+        },
+        {
+          "id": "fakl.hostinger",
+          "name": "Hostinger"
+        }
+      ],
+      "fakl-email": [
+        {
+          "id": "fakl.email.inbox",
+          "name": "%view.email.inbox%",
+          "contextualTitle": "Email"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "fakl.agents",
+        "contents": "%viewsWelcome.agents.1%"
+      },
+      {
+        "view": "fakl.tasks",
+        "contents": "%viewsWelcome.tasks.1%"
+      },
+      {
+        "view": "fakl.resources.sources",
+        "contents": "%viewsWelcome.resources.sources.1%",
+        "when": "!fakl.resources.coreConnected"
+      },
+      {
+        "view": "fakl.resources.sources",
+        "contents": "%viewsWelcome.resources.sources.2%",
+        "when": "fakl.resources.coreConnected"
+      },
+      {
+        "view": "fakl.resources.agents",
+        "contents": "%viewsWelcome.resources.agents.1%",
+        "when": "!fakl.resources.coreConnected"
+      },
+      {
+        "view": "fakl.resources.skills",
+        "contents": "%viewsWelcome.resources.skills.1%",
+        "when": "!fakl.resources.coreConnected"
+      },
+      {
+        "view": "fakl.resources.agents",
+        "contents": "%viewsWelcome.resources.agents.2%",
+        "when": "fakl.resources.coreConnected && !fakl.resources.hasSources"
+      },
+      {
+        "view": "fakl.resources.agents",
+        "contents": "%viewsWelcome.resources.agents.3%",
+        "when": "fakl.resources.coreConnected && fakl.resources.hasSources"
+      },
+      {
+        "view": "fakl.resources.skills",
+        "contents": "%viewsWelcome.resources.skills.2%",
+        "when": "fakl.resources.coreConnected && !fakl.resources.hasSources"
+      },
+      {
+        "view": "fakl.resources.skills",
+        "contents": "%viewsWelcome.resources.skills.3%",
+        "when": "fakl.resources.coreConnected && fakl.resources.hasSources"
+      },
+      {
+        "view": "fakl.resources.mcps",
+        "contents": "%viewsWelcome.resources.mcps.1%",
+        "when": "workspaceFolderCount > 0"
+      },
+      {
+        "view": "fakl.vault.backlinks",
+        "contents": "%viewsWelcome.vault.backlinks.1%",
+        "when": "!fakl.vault.active"
+      },
+      {
+        "view": "fakl.ssh.hosts",
+        "contents": "%viewsWelcome.ssh.hosts.1%"
+      },
+      {
+        "view": "fakl.resources.mcpLibrary",
+        "contents": "%viewsWelcome.resources.mcpLibrary.1%",
+        "when": "!fakl.resources.coreConnected"
+      },
+      {
+        "view": "fakl.resources.mcpLibrary",
+        "contents": "%viewsWelcome.resources.mcpLibrary.2%",
+        "when": "fakl.resources.coreConnected && !fakl.resources.hasSources"
+      },
+      {
+        "view": "fakl.resources.mcpLibrary",
+        "contents": "%viewsWelcome.resources.mcpLibrary.3%",
+        "when": "fakl.resources.coreConnected && fakl.resources.hasSources"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fakl.voz.falar",
+          "when": "view == fakl.chat",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.voz.falar",
+          "when": "view == fakl.agents",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.email.addAccount",
+          "when": "view == fakl.email.inbox",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.email.refresh",
+          "when": "view == fakl.email.inbox",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.claude.switch",
+          "when": "view == fakl.claude.accounts",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.claude.refresh",
+          "when": "view == fakl.claude.accounts",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.mesa.open",
+          "when": "view == fakl.agents",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.agents.chat",
+          "when": "view == fakl.agents",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.cafe.open",
+          "when": "view == fakl.agents",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.agents.clearFinished",
+          "when": "view == fakl.agents",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.agents.refresh",
+          "when": "view == fakl.agents",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.profiles.new",
+          "when": "view == fakl.profiles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.profiles.refresh",
+          "when": "view == fakl.profiles",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.resources.sources.add",
+          "when": "view == fakl.resources.sources",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.sources.update",
+          "when": "view == fakl.resources.sources && fakl.resources.hasSources",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.resources.sources.refresh",
+          "when": "view == fakl.resources.sources",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.resources.agents.install",
+          "when": "view == fakl.resources.agents",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.agents.create",
+          "when": "view == fakl.resources.agents",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.resources.agents.refresh",
+          "when": "view == fakl.resources.agents",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.resources.skills.install",
+          "when": "view == fakl.resources.skills",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.skills.create",
+          "when": "view == fakl.resources.skills",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.resources.skills.refresh",
+          "when": "view == fakl.resources.skills",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.resources.mcps.create",
+          "when": "view == fakl.resources.mcps",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.mcps.refresh",
+          "when": "view == fakl.resources.mcps",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.costs.show",
+          "when": "view == fakl.agents",
+          "group": "navigation@4"
+        },
+        {
+          "command": "fakl.maestro.run",
+          "when": "view == fakl.tasks",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.tasks.new",
+          "when": "view == fakl.tasks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.decisions.show",
+          "when": "view == fakl.tasks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.tasks.refresh",
+          "when": "view == fakl.tasks",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.vault.search",
+          "when": "view == fakl.vault.backlinks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.vault.graph",
+          "when": "view == fakl.vault.backlinks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.vault.daily",
+          "when": "view == fakl.vault.backlinks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.vault.newNote",
+          "when": "view == fakl.vault.backlinks",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.vault.sync",
+          "when": "view == fakl.vault.backlinks && fakl.vault.active",
+          "group": "navigation@4"
+        },
+        {
+          "command": "fakl.playbooks.run",
+          "when": "view == fakl.tasks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.github.refresh",
+          "when": "view =~ /^fakl\\.github\\./",
+          "group": "navigation@9"
+        },
+        {
+          "command": "fakl.github.openFull",
+          "when": "view =~ /^fakl\\.github\\./",
+          "group": "navigation@8"
+        },
+        {
+          "command": "fakl.github.issue.new",
+          "when": "view == fakl.github.issues || view == fakl.github.account",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.github.account.search",
+          "when": "view == fakl.github.account",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.github.issues.filter",
+          "when": "view == fakl.github.issues",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.github.actions.filter",
+          "when": "view == fakl.github.actions",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.github.notification.markAllRead",
+          "when": "view == fakl.github.notifications",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fakl.github.diagnose",
+          "when": "view =~ /^fakl\\.github\\./",
+          "group": "overflow@3"
+        },
+        {
+          "command": "fakl.github.login",
+          "when": "view =~ /^fakl\\.github\\./",
+          "group": "overflow@1"
+        },
+        {
+          "command": "fakl.github.logout",
+          "when": "view =~ /^fakl\\.github\\./",
+          "group": "overflow@2"
+        },
+        {
+          "command": "fakl.ssh.add",
+          "when": "view == fakl.ssh.hosts",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.ssh.refresh",
+          "when": "view == fakl.ssh.hosts",
+          "group": "navigation@9"
+        },
+        {
+          "command": "fakl.ssh.editConfig",
+          "when": "view == fakl.ssh.hosts",
+          "group": "overflow@1"
+        },
+        {
+          "command": "fakl.ssh.keygen",
+          "when": "view == fakl.ssh.hosts",
+          "group": "overflow@2"
+        },
+        {
+          "command": "fakl.hostinger.refresh",
+          "when": "view == fakl.hostinger",
+          "group": "navigation@9"
+        },
+        {
+          "command": "fakl.hostinger.connect",
+          "when": "view == fakl.hostinger",
+          "group": "overflow@1"
+        },
+        {
+          "command": "fakl.hostinger.disconnect",
+          "when": "view == fakl.hostinger",
+          "group": "overflow@2"
+        },
+        {
+          "command": "fakl.hostinger.panel",
+          "when": "view == fakl.hostinger",
+          "group": "overflow@3"
+        },
+        {
+          "command": "fakl.vault.tags.refresh",
+          "when": "view == fakl.vault.tags",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.install",
+          "when": "view == fakl.resources.mcpLibrary",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.openFile",
+          "when": "view == fakl.resources.mcpLibrary",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.refresh",
+          "when": "view == fakl.resources.mcpLibrary",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.janela.chat",
+          "when": "view == fakl.chat",
+          "group": "navigation@9"
+        },
+        {
+          "command": "fakl.janela.mesa",
+          "when": "view == fakl.agents",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fakl.email.removeAccount",
+          "when": "view == fakl.email.inbox && viewItem == emailAccount",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.claude.login",
+          "when": "view == fakl.claude.accounts && viewItem == fakl.claude.account.out",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.claude.setActive",
+          "when": "view == fakl.claude.accounts && viewItem == fakl.claude.account.in",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.claude.rename",
+          "when": "view == fakl.claude.accounts",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.claude.logout",
+          "when": "view == fakl.claude.accounts && viewItem == fakl.claude.account.in",
+          "group": "inline@3"
+        },
+        {
+          "command": "fakl.agents.send",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado|pausado)$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.agents.pause",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado)$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.agents.resume",
+          "when": "view == fakl.agents && viewItem == fakl.agent.pausado",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.agents.stop",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado|pausado)$/",
+          "group": "inline@3"
+        },
+        {
+          "command": "fakl.agents.showLog",
+          "when": "view == fakl.agents",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.profiles.edit",
+          "when": "view == fakl.profiles && viewItem == fakl.profile",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.profiles.delete",
+          "when": "view == fakl.profiles && viewItem == fakl.profile",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.resources.sources.updateOne",
+          "when": "viewItem == fakl.resource.source",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.resources.sources.remove",
+          "when": "viewItem == fakl.resource.source",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.resources.sources.reveal",
+          "when": "viewItem == fakl.resource.source",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.resources.open",
+          "when": "viewItem =~ /^fakl\\.resource\\.library\\.(agent|skill)$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.resources.remove",
+          "when": "viewItem =~ /^fakl\\.resource\\.library\\.(agent|skill)$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.resources.mcps.open",
+          "when": "viewItem == fakl.resource.mcp",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.resources.mcps.remove",
+          "when": "viewItem == fakl.resource.mcp",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.tasks.start",
+          "when": "view == fakl.tasks && viewItem == fakl.task",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.tasks.cancel",
+          "when": "view == fakl.tasks && viewItem =~ /^fakl\\.task/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.runs.openMaestro",
+          "when": "view == fakl.tasks && (viewItem =~ /^fakl\\.run\\.(executando|pausada|aguardando-decisão)/ || viewItem =~ /^fakl\\.run\\..*\\.retomavel(\\.|$)/)",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.runs.pause",
+          "when": "view == fakl.tasks && viewItem =~ /^fakl\\.run\\.executando/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.runs.resume",
+          "when": "view == fakl.tasks && viewItem =~ /^fakl\\.run\\..*\\.retomavel(\\.|$)/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.runs.setAutoResume",
+          "when": "view == fakl.tasks && viewItem =~ /^fakl\\.run\\..*\\.limite(\\.|$)/",
+          "group": "navigation@4"
+        },
+        {
+          "command": "fakl.runs.stop",
+          "when": "view == fakl.tasks && viewItem =~ /^fakl\\.run\\.(executando|pausada|aguardando-decisão)/",
+          "group": "inline@3"
+        },
+        {
+          "command": "fakl.runs.openPr",
+          "when": "view == fakl.tasks && viewItem =~ /\\.pr$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.agents.terminal",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado|pausado)$/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.github.pr.review",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.pr.merge",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.github.open",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
+          "group": "inline@3"
+        },
+        {
+          "command": "fakl.github.pr.checkout",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
+          "group": "1_pr@1"
+        },
+        {
+          "command": "fakl.github.openFull",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem =~ /^(repo|owner|pr|issue|run|run-done|job|notification|notification-read)$/",
+          "group": "0_full@1"
+        },
+        {
+          "command": "fakl.github.comment",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
+          "group": "1_pr@2"
+        },
+        {
+          "command": "fakl.github.issue.toAgents",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == issue",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.comment",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == issue",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.github.open",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem =~ /^(run|run-done|job)$/",
+          "group": "inline@9"
+        },
+        {
+          "command": "fakl.github.run.rerun",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == run-done",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.notification.markRead",
+          "when": "view == fakl.github.notifications && viewItem == notification",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.notification.markGroupRead",
+          "when": "view == fakl.github.notifications && viewItem == notifgroup",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.notification.markRead",
+          "when": "view == fakl.github.notifications && viewItem == notification",
+          "group": "1_notificacao@1"
+        },
+        {
+          "command": "fakl.github.notification.markGroupRead",
+          "when": "view == fakl.github.notifications && viewItem == notifgroup",
+          "group": "1_notificacao@1"
+        },
+        {
+          "command": "fakl.github.open",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem =~ /^(repo|owner|notification|notification-read)$/",
+          "group": "inline@9"
+        },
+        {
+          "command": "fakl.github.repo.clone",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == repo",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.github.issue.new",
+          "when": "view =~ /^fakl\\.github\\./ && viewItem == repo",
+          "group": "1_repo@1"
+        },
+        {
+          "command": "fakl.ssh.addToWorkspace",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.ssh.removeFromWorkspace",
+          "when": "view == fakl.ssh.hosts && viewItem =~ / ws$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.ssh.openFolder",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "1_host@3"
+        },
+        {
+          "command": "fakl.ssh.exec",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.ssh.policy",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "inline@3"
+        },
+        {
+          "command": "fakl.ssh.terminal",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "1_host@1"
+        },
+        {
+          "command": "fakl.ssh.tags",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "1_host@2"
+        },
+        {
+          "command": "fakl.ssh.remove",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-own/",
+          "group": "9_remove@1"
+        },
+        {
+          "command": "fakl.hostinger.snapshot",
+          "when": "view == fakl.hostinger && viewItem =~ /^vps$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.restart",
+          "when": "view == fakl.hostinger && viewItem =~ /^vps$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.hostinger.dns.add",
+          "when": "view == fakl.hostinger && viewItem =~ /^domain$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.dns.edit",
+          "when": "view == fakl.hostinger && viewItem =~ /^dns-record$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.dns.delete",
+          "when": "view == fakl.hostinger && viewItem =~ /^dns-record$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.hostinger.firewall.create",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall-section$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.add",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.firewall.attach",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.hostinger.firewall.delete",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall$/",
+          "group": "9_remove@1"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.edit",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall-rule$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.delete",
+          "when": "view == fakl.hostinger && viewItem =~ /^firewall-rule$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.secrets",
+          "when": "viewItem == fakl.resource.mcpLibrary",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.remove",
+          "when": "viewItem == fakl.resource.mcpLibrary",
+          "group": "inline@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "fakl.email.removeAccount",
+          "when": "false"
+        },
+        {
+          "command": "fakl.agents.clearFinished",
+          "when": "false"
+        },
+        {
+          "command": "fakl.agents.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fakl.chat.open",
+          "when": "false"
+        },
+        {
+          "command": "fakl.profiles.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.open",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.remove",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.mcps.open",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.mcps.remove",
+          "when": "false"
+        },
+        {
+          "command": "fakl.tasks.start",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.pause",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.resume",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.setAutoResume",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.stop",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.openMaestro",
+          "when": "false"
+        },
+        {
+          "command": "fakl.runs.openPr",
+          "when": "false"
+        },
+        {
+          "command": "fakl.tasks.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fakl.vault.openNote",
+          "when": "false"
+        },
+        {
+          "command": "fakl.vault.menu",
+          "when": "false"
+        },
+        {
+          "command": "fakl.tasks.fromNote",
+          "when": "resourceLangId == markdown"
+        },
+        {
+          "command": "fakl.remote.menu",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.open",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.show",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.pr.openFile",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.notification.markRead",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.notification.markGroupRead",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.account.clearSearch",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.repo.clone",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.pr.review",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.pr.merge",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.pr.checkout",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.comment",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.issue.toAgents",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.run.rerun",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.job.log",
+          "when": "false"
+        },
+        {
+          "command": "fakl.github.review.create",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.restart",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.snapshot",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.dns.add",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.dns.edit",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.dns.delete",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.create",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.delete",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.attach",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.add",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.edit",
+          "when": "false"
+        },
+        {
+          "command": "fakl.hostinger.firewall.rule.delete",
+          "when": "false"
+        },
+        {
+          "command": "fakl.vault.tags.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.secrets",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.mcpLibrary.remove",
+          "when": "false"
+        },
+        {
+          "command": "fakl.janela.voltar",
+          "when": "isAuxiliaryWindowFocusedContext"
+        },
+        {
+          "command": "fakl.resources.sources.reveal",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.sources.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fakl.resources.sources.update",
+          "when": "fakl.resources.hasSources"
+        },
+        {
+          "command": "fakl.resources.sources.updateOne",
+          "when": "fakl.resources.hasSources"
+        },
+        {
+          "command": "fakl.resources.sources.remove",
+          "when": "fakl.resources.hasSources"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "fakl.tasks.fromNote",
+          "when": "resourceLangId == markdown && fakl.vault.active",
+          "group": "navigation@90"
+        },
+        {
+          "command": "fakl.janela.editor",
+          "when": "activeWebviewPanelId =~ /^fakl\\./ && !isAuxiliaryWindow",
+          "group": "navigation@95"
+        },
+        {
+          "command": "fakl.janela.voltar",
+          "when": "activeWebviewPanelId =~ /^fakl\\./ && isAuxiliaryWindow",
+          "group": "navigation@95"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "fakl.github.review.create",
+          "group": "inline",
+          "when": "commentController == fakl-github && commentThreadIsEmpty"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "fakl.ssh.folderTerminal",
+          "when": "resourceScheme == fakl-ssh",
+          "group": "navigation@40"
+        },
+        {
+          "command": "fakl.ssh.removeFromWorkspace",
+          "when": "resourceScheme == fakl-ssh && explorerResourceIsRoot",
+          "group": "navigation@41"
+        }
+      ],
+      "terminal/title/context": [
+        {
+          "command": "fakl.janela.terminal",
+          "group": "fakl@1"
+        }
+      ],
+      "terminal/context": [
+        {
+          "command": "fakl.janela.terminal",
+          "group": "fakl@1"
+        }
+      ]
+    },
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/vault-preview.css"
+    ],
+    "markdown.previewScripts": [
+      "./dist/mermaid/mermaid-preview.js"
+    ],
+    "keybindings": [
+      {
+        "command": "fakl.overlay.minimize",
+        "key": "ctrl+alt+shift+m",
+        "mac": "cmd+alt+shift+m"
+      },
+      {
+        "command": "fakl.voz.falar",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v"
+      },
+      {
+        "command": "fakl.mesa.open",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m"
+      },
+      {
+        "command": "fakl.vault.search",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o"
+      }
+    ],
+    "configuration": {
+      "title": "FaKL",
+      "properties": {
+        "fakl.mesa.abrirAoIniciar": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.mesa.abrirAoIniciar%"
+        },
+        "fakl.claude.perguntarConta": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.claude.perguntarConta%"
+        },
+        "fakl.limits.providers": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "%config.limits.providers%",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "sessionTokens": {
+                "type": "number",
+                "minimum": 0,
+                "description": "%config.limits.providers.sessionTokens%"
+              },
+              "dailyTokens": {
+                "type": "number",
+                "minimum": 0,
+                "description": "%config.limits.providers.dailyTokens%"
+              },
+              "dailyRequests": {
+                "type": "number",
+                "minimum": 0,
+                "description": "%config.limits.providers.dailyRequests%"
+              },
+              "weeklyTokens": {
+                "type": "number",
+                "minimum": 0,
+                "description": "%config.limits.providers.weeklyTokens%"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "fakl.limits.claude.sessionTokens": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "%config.limits.claude.sessionTokens%",
+          "markdownDeprecationMessage": "%config.limits.claude.sessionTokens.deprecation%"
+        },
+        "fakl.limits.claude.weeklyTokens": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "%config.limits.claude.weeklyTokens%",
+          "markdownDeprecationMessage": "%config.limits.claude.weeklyTokens.deprecation%"
+        },
+        "fakl.github.clientId": {
+          "type": "string",
+          "default": "",
+          "description": "%config.github.clientId%"
+        }
+      }
+    },
+    "terminal": {
+      "profiles": [
+        {
+          "id": "fakl.ssh.terminal",
+          "title": "SSH (FaKL)",
+          "icon": "remote"
+        }
+      ]
+    },
+    "walkthroughs": [
+      {
+        "id": "fakl.setup",
+        "title": "%walkthrough.setup.title%",
+        "description": "%walkthrough.setup.description%",
+        "steps": [
+          {
+            "id": "idioma",
+            "title": "%walkthrough.setup.idioma.title%",
+            "description": "%walkthrough.setup.idioma.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.idioma"
+            ]
+          },
+          {
+            "id": "ia",
+            "title": "%walkthrough.setup.ia.title%",
+            "description": "%walkthrough.setup.ia.description%",
+            "media": {
+              "image": "media/agents.svg",
+              "altText": "%walkthrough.setup.ia.altText%"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.ia"
+            ]
+          },
+          {
+            "id": "importar",
+            "title": "%walkthrough.setup.importar.title%",
+            "description": "%walkthrough.setup.importar.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.importar"
+            ]
+          },
+          {
+            "id": "tema",
+            "title": "%walkthrough.setup.tema.title%",
+            "description": "%walkthrough.setup.tema.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.tema"
+            ]
+          },
+          {
+            "id": "permissoes",
+            "title": "%walkthrough.setup.permissoes.title%",
+            "description": "%walkthrough.setup.permissoes.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.permissoes"
+            ]
+          },
+          {
+            "id": "github",
+            "title": "%walkthrough.setup.github.title%",
+            "description": "%walkthrough.setup.github.description%",
+            "media": {
+              "image": "media/github.svg",
+              "altText": "%walkthrough.setup.github.altText%"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.github"
+            ]
+          },
+          {
+            "id": "fontes",
+            "title": "%walkthrough.setup.fontes.title%",
+            "description": "%walkthrough.setup.fontes.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.fontes"
+            ]
+          },
+          {
+            "id": "vault",
+            "title": "%walkthrough.setup.vault.title%",
+            "description": "%walkthrough.setup.vault.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.vault"
+            ]
+          },
+          {
+            "id": "remoto",
+            "title": "%walkthrough.setup.remoto.title%",
+            "description": "%walkthrough.setup.remoto.description%",
+            "media": {
+              "image": "media/server.svg",
+              "altText": "%walkthrough.setup.remoto.altText%"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.remoto"
+            ]
+          },
+          {
+            "id": "voz",
+            "title": "%walkthrough.setup.voz.title%",
+            "description": "%walkthrough.setup.voz.description%",
+            "media": {
+              "image": "media/mic.svg",
+              "altText": "%walkthrough.setup.voz.altText%"
+            },
+            "completionEvents": [
+              "onContext:fakl.setup.voz"
+            ]
+          },
+          {
+            "id": "mais",
+            "title": "%walkthrough.setup.mais.title%",
+            "description": "%walkthrough.setup.mais.description%",
+            "media": {
+              "markdown": "media/walkthrough/jornada.md"
+            },
+            "completionEvents": [
+              "onCommand:fakl.setup.open"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p src/webview/tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@fakl/cafe": "workspace:*",
+    "@fakl/cli": "workspace:*",
+    "@fakl/conversa": "workspace:*",
+    "@fakl/core": "workspace:*",
+    "@fakl/i18n": "workspace:*",
+    "@fakl/integrations": "workspace:*",
+    "@fakl/protocol": "workspace:*",
+    "@fakl/voz": "workspace:*",
+    "@types/markdown-it": "^14.2.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/vscode": "~1.140.0",
+    "esbuild": "^0.28.2",
+    "markdown-it": "^14.3.2",
+    "mermaid": "^11.17.2",
+    "qrcode": "^1.5.4"
+  }
+}

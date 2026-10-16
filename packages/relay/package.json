@@ -1,0 +1,37 @@
+{
+  "name": "@fakl/relay",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Relay do controle remoto (SDD 12.1): casa o Core e os aparelhos, repassa bytes cifrados, serve o PWA e envia Web Push. Roda no seu VPS.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js",
+    "pack:relay": "node bundle.mjs && node pack.mjs"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*",
+    "@fakl/remote": "workspace:*",
+    "web-push": "^3.6.7",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@fakl/core": "workspace:*",
+    "@fakl/protocol": "workspace:*",
+    "@types/web-push": "^3.6.4",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2"
+  }
+}

@@ -1,0 +1,37 @@
+/* Só da prévia: uma "área de trabalho" e a moldura do tamanho da janela. */
+html {
+  background:
+    radial-gradient(60% 50% at 20% 20%, #2b3a55 0%, transparent 70%),
+    linear-gradient(160deg, #3d4b63 0%, #6b7a90 55%, #c9b79c 100%);
+}
+
+body {
+  position: relative;
+}
+
+#app {
+  position: absolute;
+  right: 32px;
+  bottom: 32px;
+  width: 72px;
+  height: 72px;
+  /* Faz os `position: fixed` do app se prenderem à moldura, como na janela. */
+  transform: translateZ(0);
+  outline: 1px dashed rgba(255, 255, 255, 0.35);
+  outline-offset: 0;
+}
+
+/* Com o balão, a moldura se alarga para o lado do centro da tela, como a janela. */
+html[data-janela='balao'] #app {
+  width: 304px;
+}
+
+html[data-lado='direita'] #app {
+  right: auto;
+  left: 32px;
+}
+
+html[data-janela='painel'] #app {
+  width: 380px;
+  height: 560px;
+}

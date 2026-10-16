@@ -1,0 +1,104 @@
+diff --git a/src/main.ts b/src/main.ts
+index 9a154bb..dc41523 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -6,6 +6,7 @@
+ import * as path from 'node:path';
+ import * as fs from 'original-fs';
+ import * as os from 'node:os';
++import { createHash } from 'node:crypto';
+ import { createRequire } from 'node:module';
+ import { performance } from 'node:perf_hooks';
+ import { configurePortable } from './bootstrap-node.js';
+@@ -142,7 +143,7 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
+ // the 'C' locale is the user's only configured locale.
+ // No matter the OS, if the array is empty, default back to 'en'.
+ const osLocale = processZhLocale((app.getPreferredSystemLanguages()?.[0] ?? 'en').toLowerCase());
+-const userLocale = getUserDefinedLocale(argvConfig);
++const userLocale = getUserDefinedLocale(argvConfig) ?? getFaklSystemLocale(osLocale);
+ if (userLocale) {
+ 	nlsConfigurationPromise = resolveNLSConfiguration({
+ 		userLocale,
+@@ -751,4 +752,82 @@ function getUserDefinedLocale(argvConfig: IArgvConfig): string | undefined {
+ 	return typeof argvConfig?.locale === 'string' ? argvConfig.locale.toLowerCase() : undefined;
+ }
+ 
++interface IFaklLocalization {
++	languageId: string;
++	languageName?: string;
++	localizedLanguageName?: string;
++	translations: { id: string; path: string }[];
++}
++
++interface IFaklLanguagePack {
++	hash?: string;
++	label?: string;
++	extensions?: { extensionIdentifier: { id: string }; version: string }[];
++	translations?: Record<string, string>;
++}
++
++/**
++ * FaKL-Code: sem `--locale` nem `locale` no argv.json, a IDE segue o idioma do sistema quando
++ * traz embutido um pacote de idioma para ele (o pt-BR atende qualquer português); nos outros
++ * casos fica no inglês, como o VS Code. Sozinho o VS Code abriria em inglês: no Windows e no
++ * Linux ele passa `--lang en` ao Electron, e o pacote embutido só entra no languagepacks.json
++ * depois que o processo compartilhado sobe, ou seja, a partir da segunda abertura.
++ */
++function getFaklSystemLocale(osLocale: string): string | undefined {
++	try {
++		const extensionsPath = path.join(import.meta.dirname, '..', 'extensions');
++		const language = osLocale.split('-')[0];
++		for (const folder of fs.readdirSync(extensionsPath)) {
++			if (!folder.startsWith('vscode-language-pack-')) {
++				continue;
++			}
++			const extensionPath = path.join(extensionsPath, folder);
++			const manifest = JSON.parse(fs.readFileSync(path.join(extensionPath, 'package.json'), 'utf8'));
++			const localizations: IFaklLocalization[] = manifest.contributes?.localizations ?? [];
++			const localization = localizations.find(l => l.languageId === osLocale) ?? localizations.find(l => l.languageId.split('-')[0] === language);
++			if (localization) {
++				registerFaklLanguagePack(extensionPath, manifest, localization);
++				return localization.languageId;
++			}
++		}
++	} catch (error) {
++		console.error('FaKL-Code: could not resolve the system language', error);
++	}
++
++	return undefined;
++}
++
++/**
++ * Grava o pacote embutido no languagepacks.json no mesmo formato e com o mesmo hash do
++ * LanguagePacksCache (languagePacks.ts), que reescreve o arquivo a cada abertura.
++ */
++function registerFaklLanguagePack(extensionPath: string, manifest: { publisher: string; name: string; version: string }, localization: IFaklLocalization): void {
++	const languagePacksPath = path.join(userDataPath, 'languagepacks.json');
++	let languagePacks: Record<string, IFaklLanguagePack> = {};
++	try {
++		languagePacks = JSON.parse(fs.readFileSync(languagePacksPath, 'utf8'));
++	} catch {
++		// Primeira abertura: o arquivo ainda não existe.
++	}
++
++	const current = languagePacks[localization.languageId]?.translations?.['vscode'];
++	if (current && fs.existsSync(current)) {
++		return;
++	}
++
++	const id = `${manifest.publisher}.${manifest.name}`.toLowerCase();
++	const translations: Record<string, string> = {};
++	for (const translation of localization.translations) {
++		translations[translation.id] = path.join(extensionPath, translation.path);
++	}
++	languagePacks[localization.languageId] = {
++		hash: createHash('md5').update(id).update(manifest.version).digest('hex'),
++		label: localization.localizedLanguageName ?? localization.languageName,
++		extensions: [{ extensionIdentifier: { id }, version: manifest.version }],
++		translations
++	};
++	fs.mkdirSync(userDataPath, { recursive: true });
++	fs.writeFileSync(languagePacksPath, JSON.stringify(languagePacks));
++}
++
+ //#endregion

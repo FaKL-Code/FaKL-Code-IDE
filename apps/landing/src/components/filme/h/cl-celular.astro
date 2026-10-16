@@ -1,0 +1,148 @@
+---
+// Cena portada do filme de apresentação (06-celular.html).
+import { langDaUrl, pastaFilme } from '../../../i18n';
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-cl-celular" data-cena="cl-celular">
+    <div id="cl-bgwrap">
+      <div id="cl-bg">
+      </div>
+    </div>
+    <div id="cl-stage">
+      <div id="cl-phone">
+        <div id="cl-screen">
+          <video preload="auto" id="cl-pwa" muted playsinline><source src={`${F}/caixa-cafe.webm`} type="video/webm" /><source src={`${F}/caixa-cafe.mp4`} type="video/mp4" /></video>
+          <div id="cl-touch"></div>
+          <div id="cl-ring"></div>
+        </div>
+        <div id="cl-notch"></div>
+      </div>
+    </div>
+    <div id="cl-night">
+    </div>
+    <div id="cl-cells"></div>
+  
+</div>
+
+<style is:global>
+#cena-cl-celular {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-cl-celular #cl-bgwrap {
+  position: absolute;
+  inset: 0;
+  filter: blur(9px) brightness(0.5) saturate(0.9);
+}
+#cena-cl-celular #cl-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  transform-origin: 0 0;
+}
+#cena-cl-celular #cl-bg video,
+#cena-cl-celular #cl-night video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  image-rendering: pixelated;
+}
+#cena-cl-celular #cl-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+}
+#cena-cl-celular #cl-phone {
+  position: absolute;
+  left: 1210px;
+  top: 70px;
+  width: 452px;
+  height: 940px;
+  border-radius: 66px;
+  background: #05070c;
+  border: 3px solid #4b5563;
+  box-shadow: 0 50px 140px rgba(0, 0, 0, 0.7), 0 0 0 10px #111827, 0 0 80px rgba(6, 224, 255, 0.12);
+  /* Origem no centro da sala desenhada na aba Café, para o mergulho final. */
+  transform-origin: 223px 393px;
+}
+#cena-cl-celular #cl-screen {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  width: 402px;
+  height: 890px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: #0a0d12;
+}
+#cena-cl-celular #cl-pwa {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 402px;
+  height: 870px;
+}
+#cena-cl-celular #cl-notch {
+  position: absolute;
+  left: 168px;
+  top: 34px;
+  width: 116px;
+  height: 30px;
+  border-radius: 15px;
+  background: #05070c;
+}
+#cena-cl-celular #cl-touch {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  background: rgba(229, 231, 235, 0.32);
+  border: 3px solid rgba(229, 231, 235, 0.95);
+  opacity: 0;
+}
+#cena-cl-celular #cl-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  opacity: 0;
+}
+#cena-cl-celular #cl-night {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  transform-origin: 0 0;
+  opacity: 0;
+}
+#cena-cl-celular #cl-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(24, 80px);
+  grid-template-rows: repeat(14, 80px);
+  pointer-events: none;
+}
+#cena-cl-celular #cl-cells i {
+  display: block;
+  width: 80px;
+  height: 80px;
+  background: var(--bg);
+  transform: scale(0);
+}
+</style>

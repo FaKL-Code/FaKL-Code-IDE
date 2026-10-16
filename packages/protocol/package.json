@@ -1,0 +1,22 @@
+{
+  "name": "@fakl/protocol",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tipos e contratos JSON-RPC compartilhados entre o FaKL Core, as extensões, a CLI e o controle remoto (SDD 6.3 e 6.4).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

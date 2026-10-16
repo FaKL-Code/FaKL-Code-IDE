@@ -1,0 +1,87 @@
+{
+  "name": "fakl-settings",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.1.0",
+  "publisher": "fakl",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "fakl.settings.import",
+        "title": "%command.settings.import%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.sync.configure",
+        "title": "%command.sync.configure%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.sync.now",
+        "title": "%command.sync.now%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.sync.disable",
+        "title": "%command.sync.disable%",
+        "category": "FaKL"
+      }
+    ],
+    "configuration": {
+      "title": "%config.title%",
+      "properties": {
+        "fakl.sync.repository": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "%config.sync.repository%"
+        },
+        "fakl.sync.intervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "scope": "application",
+          "description": "%config.sync.intervalMinutes%"
+        },
+        "fakl.sync.ignoredSettings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "fakl.sync.repository",
+            "window.zoomLevel",
+            "terminal.integrated.defaultProfile.windows",
+            "terminal.integrated.defaultProfile.osx",
+            "terminal.integrated.cwd",
+            "git.path"
+          ],
+          "scope": "application",
+          "description": "%config.sync.ignoredSettings%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@fakl/i18n": "workspace:*",
+    "@fakl/settings-sync": "workspace:*",
+    "@types/vscode": "~1.140.0",
+    "esbuild": "^0.28.2"
+  }
+}

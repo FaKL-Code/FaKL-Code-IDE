@@ -1,0 +1,22 @@
+{
+  "name": "@fakl/remote-pwa",
+  "version": "0.0.0",
+  "private": true,
+  "description": "App do celular (SDD 12.4): execuções, agentes, decisões, diffs e nova tarefa pelo canal cifrado do controle remoto. Servido pelo relay.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p src/sw/tsconfig.json --noEmit",
+    "preview": "node preview/build.mjs"
+  },
+  "devDependencies": {
+    "@fakl/cafe": "workspace:*",
+    "@fakl/conversa": "workspace:*",
+    "@fakl/i18n": "workspace:*",
+    "@fakl/protocol": "workspace:*",
+    "@fakl/remote": "workspace:*",
+    "@fakl/voz": "workspace:*",
+    "esbuild": "^0.28.2"
+  }
+}

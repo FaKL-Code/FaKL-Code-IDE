@@ -1,0 +1,12 @@
+{
+  "displayName": "FaKL-Code: Settings",
+  "description": "Imports your VS Code configuration and syncs settings, keybindings, snippets, extensions and agent profiles across machines.",
+  "command.settings.import": "Import settings from VS Code",
+  "command.sync.configure": "Set up sync across machines",
+  "command.sync.now": "Sync settings now",
+  "command.sync.disable": "Turn off sync",
+  "config.title": "FaKL-Code: Sync",
+  "config.sync.repository": "**Private** GitHub repository that holds the synced configuration, in `owner/name` format. Empty turns sync off.",
+  "config.sync.intervalMinutes": "Interval, in minutes, between automatic syncs while the IDE is open.",
+  "config.sync.ignoredSettings": "Settings that stay on this machine only and are not synced."
+}

@@ -1,0 +1,47 @@
+---
+// 02-cafe no 9:16: os mesmos quadros, com a tela do Codex embaixo.
+import { MARCAS_TELA } from '../../../filme/h/cafe';
+import { langDaUrl, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+---
+
+<div class="cena" id="cena-vc-cafe" data-cena="vc-cafe">
+  <div id="vc-cam"><svg id="vc-foco" class="cafe-foco" viewBox="0 0 3840 2160" aria-hidden="true"><polygon points="1860,878 2016,956 2016,1056 1860,978"></polygon></svg></div>
+  <div id="vc-tela" class="cafe-tela">
+    <p class="cafe-tela-cab"><b>Codex</b> · {C.telaCodex}</p>
+    <ol>
+      {
+        MARCAS_TELA.map((p, k) => (
+          <li>
+            <span>{p}</span>
+            {C.telaLinhas[k]}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</div>
+
+<style is:global>
+  #cena-vc-cafe {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  /* Sala em 6x (3840x2160). No 9:16 a altura só fecha a partir de 6x: escala 1 = 6x. */
+  #cena-vc-cafe #vc-cam {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3840px;
+    height: 2160px;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  #cena-vc-cafe #vc-tela {
+    left: 80px;
+    top: 1060px;
+    width: 920px;
+  }
+</style>

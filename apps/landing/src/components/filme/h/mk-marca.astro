@@ -1,0 +1,153 @@
+---
+// Cena portada do filme de apresentação (07-marca.html).
+import { langDaUrl, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+---
+
+<div class="cena" id="cena-mk-marca" data-cena="mk-marca">
+    <div id="mk-cafe">
+    </div>
+    <div id="mk-dim"></div>
+    <div id="mk-halo"></div>
+    <div id="mk-px"></div>
+    <div id="mk-lock">
+      <svg id="mk-logo" viewBox="0 0 1024 1024">
+        <defs>
+          <linearGradient id="mk-tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#131B2C" /><stop offset="1" stop-color="#05070C" /></linearGradient>
+          <radialGradient id="mk-halo-g" cx="0.6" cy="0.45" r="0.6"><stop offset="0" stop-color="#2563EB" stop-opacity="0.38" /><stop offset="1" stop-color="#2563EB" stop-opacity="0" /></radialGradient>
+          <linearGradient id="mk-side" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1D4ED8" /><stop offset="1" stop-color="#06E0FF" /></linearGradient>
+          <linearGradient id="mk-rim" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2563EB" /><stop offset="1" stop-color="#5EEBFF" /></linearGradient>
+          <linearGradient id="mk-panel" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#202A3B" /><stop offset="0.45" stop-color="#0B0F17" /><stop offset="1" stop-color="#04060A" /></linearGradient>
+          <linearGradient id="mk-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.2" /><stop offset="1" stop-color="#FFFFFF" stop-opacity="0" /></linearGradient>
+          <filter id="mk-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22" /></filter>
+          <filter id="mk-glyphglow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10" /></filter>
+        </defs>
+        <g id="mk-tilegrp" style="transform-origin: 512px 512px">
+          <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#mk-tile)" />
+          <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#mk-halo-g)" />
+        </g>
+        <g id="mk-term" style="transform-origin: 512px 540px">
+          <path d="M283 454 Q280 376 356 358 L680 284 Q756 266 761 344 L783 682 Q788 760 710 767 L372 795 Q294 802 291 724 Z" fill="#2563EB" filter="url(#mk-glow)" opacity="0.85" />
+          <path d="M283 454 Q280 376 356 358 L680 284 Q756 266 761 344 L783 682 Q788 760 710 767 L372 795 Q294 802 291 724 Z" fill="url(#mk-side)" />
+          <path d="M239 424 Q236 346 312 328 L636 254 Q712 236 717 314 L739 652 Q744 730 666 737 L328 765 Q250 772 247 694 Z" fill="url(#mk-panel)" stroke="url(#mk-rim)" stroke-width="10" />
+          <path d="M264 408 Q262 368 301 359 L651 277 Q690 268 695 308 L695 312 Q700 352 663 366 L305 506 Q268 520 266 480 Z" fill="url(#mk-sheen)" />
+        </g>
+        <g fill="none" stroke="#06E0FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="58">
+          <g id="mk-glyphglow-g" filter="url(#mk-glyphglow)" opacity="0">
+            <path d="M344 470 L454 560 L344 650" />
+            <path d="M512 668 H650" />
+          </g>
+          <path id="mk-gt" d="M344 470 L454 560 L344 650" />
+          <path id="mk-us" d="M512 668 H650" />
+        </g>
+      </svg>
+      <div id="mk-word"></div>
+      <div id="mk-tag"><span class="p">&gt;_</span><span id="mk-tagtext"></span><span id="mk-tagsrc" hidden>{C.assinatura}</span></div>
+      <div id="mk-os">Windows · macOS</div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-mk-marca {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-mk-marca #mk-cafe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  transform-origin: 0 0;
+}
+#cena-mk-marca #mk-cafe video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  image-rendering: pixelated;
+}
+#cena-mk-marca #mk-dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(13, 17, 23, 0.72) 0%, rgba(13, 17, 23, 0.94) 62%);
+  opacity: 0;
+}
+#cena-mk-marca #mk-halo {
+  position: absolute;
+  left: 560px;
+  top: -80px;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, rgba(37, 99, 235, 0) 62%);
+  opacity: 0;
+}
+#cena-mk-marca #mk-lock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 40%;
+}
+#cena-mk-marca #mk-logo {
+  width: 330px;
+  height: 330px;
+  overflow: visible;
+}
+#cena-mk-marca #mk-word {
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 116px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+#cena-mk-marca #mk-word span {
+  display: inline-block;
+}
+#cena-mk-marca #mk-word .ide {
+  color: var(--primary);
+}
+#cena-mk-marca #mk-tag {
+  margin-top: 40px;
+  height: 62px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 50px;
+  color: var(--text);
+  white-space: pre;
+}
+#cena-mk-marca #mk-tag .p {
+  color: var(--accent);
+  margin-right: 22px;
+}
+#cena-mk-marca #mk-os {
+  margin-top: 22px;
+  font-family: var(--mono);
+  font-size: 30px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+#cena-mk-marca #mk-px {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#cena-mk-marca #mk-px i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+}
+</style>

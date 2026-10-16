@@ -1,0 +1,180 @@
+name: Build da IDE
+
+# O build completo recompila o VS Code inteiro e leva horas. Por isso só roda
+# quando alguém pede (botão "Run workflow") ou quando a release o chama.
+on:
+  workflow_dispatch:
+    inputs:
+      plataformas:
+        description: Plataformas a compilar
+        type: choice
+        options: [todas, windows, macos]
+        default: todas
+  workflow_call:
+    inputs:
+      plataformas:
+        type: string
+        default: todas
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}-${{ inputs.plataformas }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Plataformas
+    runs-on: windows-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      # PowerShell: no PC com Windows, o `shell: bash` cai no bash do WSL, que
+      # não entende os caminhos do runner.
+      - id: matrix
+        shell: powershell
+        env:
+          PLATAFORMAS: ${{ inputs.plataformas }}
+        run: |
+          # Só a arquitetura mais nova de cada sistema: Apple Silicon e Windows x64.
+          # Todos os jobs rodam nos runners hospedados do GitHub.
+          # [string[]]: no PowerShell 5.1, o array vindo do ConvertFrom-Json vira
+          # {"value": [...], "Count": n} no ConvertTo-Json.
+          [string[]]$windows = 'windows-latest'
+          $all = @(
+            [ordered]@{ name = 'macOS arm64'; runner = @('macos-14'); os_name = 'osx'; arch = 'arm64' },
+            [ordered]@{ name = 'Windows x64'; runner = $windows; os_name = 'windows'; arch = 'x64' }
+          )
+          $include = switch ($env:PLATAFORMAS) {
+            'windows' { @($all | Where-Object { $_.os_name -eq 'windows' }) }
+            'macos' { @($all | Where-Object { $_.os_name -eq 'osx' }) }
+            default { $all }
+          }
+          $json = ConvertTo-Json -InputObject @{ include = @($include) } -Depth 5 -Compress
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "matrix=$json"
+
+  ide:
+    name: ${{ matrix.name }}
+    needs: plan
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      OS_NAME: ${{ matrix.os_name }}
+      VSCODE_ARCH: ${{ matrix.arch }}
+      # O runner de Mac do GitHub tem pouca RAM; 12 GB de heap deixam o resto para
+      # o swap, e com 8 GB o Node já estourou ao compilar o VS Code.
+      MAX_OLD_SPACE_SIZE: 12288
+      npm_config_arch: ${{ matrix.arch }}
+    steps:
+      # Num Windows com WSL, o primeiro bash do PATH é o do WSL (System32), e os
+      # scripts precisam do Git Bash; o 7-Zip instalado não entra no PATH. O
+      # GITHUB_PATH põe os dois na frente para os passos seguintes.
+      - name: Git Bash e 7-Zip no PATH
+        if: matrix.os_name == 'windows'
+        shell: powershell
+        run: |
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\7-Zip"
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\bin"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Node e pnpm do monorepo, para compilar as extensões embutidas.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          # Um pnpm por runner: vários runners na mesma máquina disputavam ~/setup-pnpm (EBUSY).
+          dest: ${{ runner.tool_cache }}/setup-pnpm
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Montar a árvore de build
+        run: build/prepare.sh
+
+      - name: Conferir a marca
+        run: build/check-branding.sh
+
+      # Node na versão que o VSCodium pede para compilar o VS Code.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .build/vscodium/.nvmrc
+
+      # Num runner próprio, Python e os caches do npm e do Electron já ficam na
+      # máquina entre um build e outro; o cache do GitHub só vale nos runners dele.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        if: runner.environment == 'github-hosted'
+        with:
+          python-version: '3.11'
+
+      - name: Baixar o Code-OSS
+        run: build/fetch.sh
+
+      # Downloads que não mudam entre builds da mesma versão do Code-OSS: cache do
+      # npm, binários do Electron e cabeçalhos do node-gyp.
+      - name: Cache de downloads
+        if: runner.environment == 'github-hosted'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.npm
+            ~/AppData/Local/npm-cache
+            ~/Library/Caches/electron
+            ~/AppData/Local/electron/Cache
+            ~/.electron-gyp
+            ~/Library/Caches/node-gyp
+            ~/AppData/Local/node-gyp/Cache
+          key: downloads-${{ matrix.os_name }}-${{ matrix.arch }}-${{ env.MS_COMMIT }}
+          restore-keys: downloads-${{ matrix.os_name }}-${{ matrix.arch }}-
+
+      - name: Listar as pastas de dependências
+        if: runner.environment == 'github-hosted'
+        id: deps
+        run: node build/cache-paths.mjs >> "${GITHUB_OUTPUT}"
+
+      # As node_modules do Code-OSS, já com os módulos nativos compilados para o
+      # Electron, e as extensões embutidas baixadas do marketplace.
+      - name: Restaurar dependências do Code-OSS
+        if: runner.environment == 'github-hosted'
+        id: deps-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.deps.outputs.paths }}
+          key: ${{ steps.deps.outputs.key }}
+          restore-keys: ${{ steps.deps.outputs.restore-key }}
+
+      - name: Compilar e empacotar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Com node_modules restauradas, npm install só ajusta o que mudou; o
+          # npm ci apagaria tudo e reinstalaria do zero.
+          FAKL_NPM_CI: ${{ steps.deps-cache.outputs.cache-matched-key != '' && 'npm install --no-audit --no-fund --prefer-offline' || '' }}
+        run: build/build.sh
+
+      # Salva mesmo se um passo posterior à instalação falhar, para o próximo
+      # build não pagar a instalação de novo. O arquivo de estado só existe
+      # quando o postinstall do Code-OSS terminou.
+      - name: Salvar dependências do Code-OSS
+        if: >-
+          always() && runner.environment == 'github-hosted' &&
+          steps.deps-cache.outputs.cache-hit != 'true' &&
+          hashFiles('.build/vscodium/vscode/node_modules/.postinstall-state') != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.deps.outputs.paths }}
+          key: ${{ steps.deps.outputs.key }}
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fakl-code-${{ matrix.os_name }}-${{ matrix.arch }}
+          path: .build/vscodium/assets/
+          retention-days: 2
+          if-no-files-found: error

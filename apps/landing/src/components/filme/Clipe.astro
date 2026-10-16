@@ -1,0 +1,59 @@
+---
+/*
+ * Uma seção da página e um clipe do filme ao mesmo tempo: o texto e um monitor
+ * vazio, sobre o qual o player pousa enquanto a rolagem passa por aqui.
+ */
+import { timecode, type Clipe } from '../../filme/roteiro';
+import { langDaUrl, textos } from '../../i18n';
+
+interface Props {
+  clipe: Clipe;
+  n: number;
+}
+
+const { clipe, n } = Astro.props;
+const num = String(n).padStart(2, '0');
+const T = textos(langDaUrl(Astro.url)).roteiro[clipe.id] ?? { rotulo: clipe.id, passos: [] };
+---
+
+<section
+  class={`clipe clipe-${clipe.arranjo}`}
+  id={clipe.id}
+  data-clipe={clipe.id}
+  aria-labelledby={`${clipe.id}-titulo`}
+>
+  <div class="clipe-in">
+    <div class="clipe-texto">
+      <header class="clipe-cab">
+        <span class="clipe-n">{num}</span>
+        <h2 id={`${clipe.id}-titulo`}>{T.rotulo}</h2>
+        <span class="clipe-tc">
+          <span class="so-h">{timecode(clipe.h[0])} → {timecode(clipe.h[1])}</span>
+          <span class="so-v">{timecode(clipe.v[0])} → {timecode(clipe.v[1])}</span>
+        </span>
+      </header>
+      {
+        clipe.passos.length > 0 && (
+          <ol class="passos">
+            {clipe.passos.map((p, k) => (
+              <li data-passo data-h={p.h} data-v={p.v}>
+                <span class="passo-p" aria-hidden="true">
+                  &gt;_
+                </span>
+                <span class="passo-t">{T.passos[k] ?? ''}</span>
+              </li>
+            ))}
+          </ol>
+        )
+      }
+      <div class="clipe-corpo"><slot /></div>
+    </div>
+    <div class="monitor" data-monitor>
+      <span class="monitor-tag" aria-hidden="true">
+        <b>V1</b>{clipe.arquivo}.html
+        <span class="so-h">1920×1080</span><span class="so-v">1080×1920</span>
+      </span>
+    </div>
+    <slot name="sobre" />
+  </div>
+</section>

@@ -1,0 +1,31 @@
+{
+  "name": "@fakl/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FaKL Core: processo local que atende extensões, CLI e controle remoto pela API JSON-RPC (SDD seção 6).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/agents": "workspace:*",
+    "@fakl/conversa": "workspace:*",
+    "@fakl/i18n": "workspace:*",
+    "@fakl/integrations": "workspace:*",
+    "@fakl/protocol": "workspace:*",
+    "@fakl/remote": "workspace:*",
+    "yaml": "^2.9.1"
+  }
+}

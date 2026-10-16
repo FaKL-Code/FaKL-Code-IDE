@@ -1,0 +1,25 @@
+{
+  "name": "@fakl/settings-sync",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Importação de configurações do VS Code e sincronização entre máquinas por um repositório git privado (RF-004, RF-005).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*",
+    "jsonc-parser": "^3.3.1"
+  }
+}

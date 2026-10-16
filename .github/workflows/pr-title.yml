@@ -1,0 +1,19 @@
+name: Título do PR
+
+# Os PRs entram por squash merge, então o título vira a mensagem do commit na
+# main e alimenta o changelog. Ele precisa seguir Conventional Commits.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional:
+    name: Conventional Commits
+    runs-on: windows-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

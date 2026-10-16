@@ -1,0 +1,345 @@
+---
+// Cena portada do filme de apresentação (v-estacoes.html).
+import { langDaUrl, pastaFilme, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-ve-estacoes" data-cena="ve-estacoes">
+    <div id="ve-grid"></div>
+    <div id="ve-glow"></div>
+    <div id="ve-stage">
+      <div id="ve-world">
+        <!-- 1. Vault -->
+        <section class="ve" id="ve-0" style="top: 0px">
+          <div class="tag"><i>01</i><span>VAULT</span></div>
+          <div class="card">
+            <video preload="auto" id="ve-graph" muted playsinline><source src={`${F}/vault-graph.webm`} type="video/webm" /><source src={`${F}/vault-graph.mp4`} type="video/mp4" /></video>
+            <div class="below">
+              <div class="head">Backlinks</div>
+              <div class="row ve-r0">{C.estacoes.projetos}</div>
+              <div class="row ve-r0">{C.estacoes.memoria}</div>
+              <div class="row ve-r0">{C.estacoes.diario}</div>
+              <div class="row ve-r0">{C.estacoes.tags}</div>
+            </div>
+          </div>
+        </section>
+        <!-- 2. SSH -->
+        <section class="ve" id="ve-1" style="top: 2000px">
+          <div class="tag"><i>02</i><span>SSH</span></div>
+          <div class="card">
+            <div class="hostbar">
+              <div class="head">{C.estacoes.hostsSsh}</div>
+              <div class="row on">{C.estacoes.vps}</div>
+              <div class="row sub">{C.estacoes.politicaAgente}</div>
+            </div>
+            <div class="term" id="ve-term"></div>
+          </div>
+        </section>
+        <!-- 3. GitHub -->
+        <section class="ve" id="ve-2" style="top: 4000px">
+          <div class="tag"><i>03</i><span>GITHUB</span></div>
+          <div class="card">
+            <div id="ve-ghwrap">
+              <img id="ve-gh" src={`${F}/github-narrow.webp`} alt="" />
+              <div id="ve-gh-hl"></div>
+            </div>
+          </div>
+        </section>
+        <!-- 4. Hostinger e Lovable -->
+        <section class="ve" id="ve-3" style="top: 6000px">
+          <div class="tag"><i>04</i><span>HOSTINGER · LOVABLE</span></div>
+          <div class="card">
+            <div class="hostbar">
+              <div class="head">Hostinger</div>
+              <div class="row ve-r3">VPS</div>
+              <div class="row sub ve-r3">{C.estacoes.vpsRodando}</div>
+              <div class="row ve-r3">{C.estacoes.dominios}</div>
+              <div class="row sub ve-r3">{C.estacoes.dominioRegistros}</div>
+              <div class="row ve-r3">Firewall</div>
+            </div>
+            <div class="palette" id="ve-pal">
+              <div class="qq">&gt; <span id="ve-pal-q"></span>▏</div>
+              <div id="ve-pal-sel"></div>
+              <div class="opt">Lovable: <b>{C.estacoes.lovableAbrir}</b></div>
+              <div class="opt">{C.estacoes.lovableLigarCurto}</div>
+              <div class="opt">{C.estacoes.hostingerSnapshot}</div>
+            </div>
+          </div>
+        </section>
+        <!-- 5. Extensões e MCP -->
+        <section class="ve" id="ve-4" style="top: 8000px">
+          <div class="tag"><i>05</i><span>{C.estacoes.extensoes}</span></div>
+          <div class="card">
+            <div class="head">{C.estacoes.extensoesOpenVsx}</div>
+            <div class="ext"><span class="ve-r4">ESLint</span><span class="ve-r4">Prettier</span><span class="ve-r4">GitLens</span><span class="ve-r4">Python</span></div>
+            <div class="head">{C.estacoes.recursosMcp}</div>
+            <div class="mcp-grid">
+              <div class="mcp ve-mcp"><span class="inst" id="ve-i1">✓</span><b>github</b><small>{C.estacoes.mcpCodigo}</small></div>
+              <div class="mcp ve-mcp"><span class="inst" id="ve-i2">✓</span><b>playwright</b><small>{C.estacoes.mcpNavegador}</small></div>
+              <div class="mcp ve-mcp"><b>context7</b><small>{C.estacoes.mcpDocs}</small></div>
+              <div class="mcp ve-mcp"><b>sonarqube</b><small>{C.estacoes.mcpCodigo}</small></div>
+              <div class="mcp ve-mcp"><b>postman</b><small>{C.estacoes.mcpNavegador}</small></div>
+              <div class="mcp ve-mcp"><b>serena</b><small>{C.estacoes.mcpCodigo}</small></div>
+              <div class="mcp ve-mcp"><b>filesystem</b><small>{C.estacoes.mcpCodigo}</small></div>
+              <div class="mcp ve-mcp"><b>chrome-devtools</b><small>{C.estacoes.mcpNavegador}</small></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-ve-estacoes {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-ve-estacoes #ve-grid {
+  position: absolute;
+  left: 0;
+  top: -200px;
+  width: 1080px;
+  height: 12400px;
+  background-image: linear-gradient(rgba(55, 65, 81, 0.5) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(55, 65, 81, 0.5) 2px, transparent 2px);
+  background-size: 64px 64px;
+  opacity: 0.18;
+}
+#cena-ve-estacoes #ve-glow {
+  position: absolute;
+  left: -260px;
+  top: 160px;
+  width: 1600px;
+  height: 1500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.26) 0%, rgba(37, 99, 235, 0) 65%);
+}
+#cena-ve-estacoes #ve-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2000px;
+}
+#cena-ve-estacoes #ve-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1080px;
+  height: 1920px;
+  transform-style: preserve-3d;
+}
+#cena-ve-estacoes .ve {
+  position: absolute;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  transform-style: preserve-3d;
+}
+#cena-ve-estacoes .ve .tag {
+  position: absolute;
+  left: 60px;
+  top: 400px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+#cena-ve-estacoes .ve .tag i {
+  font-style: normal;
+  color: var(--muted);
+  margin-right: 20px;
+}
+#cena-ve-estacoes .ve .card {
+  position: absolute;
+  left: 60px;
+  top: 466px;
+  width: 960px;
+  height: 1040px;
+  background: #07090d;
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  font-family: var(--sans);
+  color: #e6edf3;
+  box-shadow: 0 50px 140px rgba(0, 0, 0, 0.7);
+}
+#cena-ve-estacoes .head {
+  padding: 26px 34px 14px;
+  font-family: var(--mono);
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  color: #9fb0c3;
+  text-transform: uppercase;
+}
+#cena-ve-estacoes .row {
+  padding: 12px 34px;
+  font-size: 32px;
+  color: #c9d4df;
+  white-space: nowrap;
+}
+#cena-ve-estacoes .row.sub {
+  padding-left: 74px;
+  color: #9fb0c3;
+  font-size: 28px;
+}
+#cena-ve-estacoes .row.on {
+  background: #2563eb33;
+  color: #e6edf3;
+}
+#cena-ve-estacoes #ve-graph {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 612px;
+  object-fit: cover;
+}
+#cena-ve-estacoes .below {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 612px;
+  bottom: 0;
+  background: #0b0f16;
+  border-top: 2px solid #1c2330;
+}
+#cena-ve-estacoes .hostbar {
+  background: #0b0f16;
+  border-bottom: 2px solid #1c2330;
+  padding-bottom: 14px;
+}
+#cena-ve-estacoes .term {
+  padding: 30px 34px;
+  font-family: var(--mono);
+  font-size: 30px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: #e6edf3;
+}
+#cena-ve-estacoes .term .g {
+  color: #4ade80;
+}
+#cena-ve-estacoes .term .c {
+  color: #22d3ee;
+}
+#cena-ve-estacoes .term .m {
+  color: #9fb0c3;
+}
+#cena-ve-estacoes #ve-term-caret {
+  display: inline-block;
+  width: 17px;
+  height: 36px;
+  vertical-align: -7px;
+  background: #22d3ee;
+}
+#cena-ve-estacoes #ve-ghwrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 1350px;
+}
+#cena-ve-estacoes #ve-gh {
+  display: block;
+  width: 960px;
+}
+#cena-ve-estacoes #ve-gh-hl {
+  position: absolute;
+  left: 22px;
+  top: 590px;
+  width: 916px;
+  height: 96px;
+  border: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(6, 224, 255, 0.45);
+  opacity: 0;
+}
+#cena-ve-estacoes .palette {
+  margin: 30px 34px 0;
+  background: #0b0f16;
+  border: 2px solid #263041;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px #00000099;
+  font-size: 30px;
+  overflow: hidden;
+  position: relative;
+}
+#cena-ve-estacoes .palette .qq {
+  padding: 22px 26px;
+  border-bottom: 2px solid #1c2330;
+  font-family: var(--mono);
+}
+#cena-ve-estacoes .palette .opt {
+  position: relative;
+  padding: 16px 26px;
+  color: #c9d4df;
+  white-space: nowrap;
+}
+#cena-ve-estacoes .palette .opt b {
+  color: #22d3ee;
+  font-weight: 600;
+}
+#cena-ve-estacoes #ve-pal-sel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84px;
+  height: 68px;
+  background: #2563eb44;
+  border-left: 5px solid var(--accent);
+}
+#cena-ve-estacoes .mcp-grid {
+  margin: 10px 26px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+#cena-ve-estacoes .mcp {
+  position: relative;
+  padding: 18px 20px;
+  border: 2px solid #1c2330;
+  border-radius: 14px;
+  background: #0b0f16;
+  font-size: 26px;
+}
+#cena-ve-estacoes .mcp b {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 28px;
+}
+#cena-ve-estacoes .mcp small {
+  display: block;
+  margin-top: 6px;
+  color: #9fb0c3;
+  font-size: 21px;
+}
+#cena-ve-estacoes .mcp .inst {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 19px;
+  color: #0d1117;
+  background: var(--accent);
+  border-radius: 9999px;
+  padding: 4px 12px;
+}
+#cena-ve-estacoes .ext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 34px 18px;
+}
+#cena-ve-estacoes .ext span {
+  padding: 8px 18px;
+  border: 2px solid #1c2330;
+  border-radius: 9999px;
+  font-size: 26px;
+  color: #c9d4df;
+}
+</style>

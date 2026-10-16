@@ -1,0 +1,76 @@
+---
+// Abertura: JUNTOS. em pixels, montada ao vivo pelos três agentes.
+---
+
+<div class="cena" id="cena-g1-gancho" data-cena="g1-gancho">
+  <div id="g1-juntos" class="juntos"></div>
+</div>
+
+<style is:global>
+  #cena-g1-gancho,
+  #cena-v1-gancho {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .juntos {
+    position: absolute;
+    inset: 0;
+  }
+  .juntos i {
+    position: absolute;
+    border-radius: 2px;
+    background: var(--cor);
+    transform: scale(0);
+    transition:
+      transform 0.12s steps(2),
+      background-color 0.5s;
+  }
+  .juntos i.on {
+    transform: none;
+  }
+  .juntos.pronto i {
+    background: var(--text);
+  }
+  .juntos.pronto i.ponto {
+    background: var(--accent);
+  }
+  .juntos-cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .juntos-cursor svg {
+    width: 40px;
+    height: 40px;
+    margin: -4px 0 0 -4px;
+    fill: var(--cor);
+    stroke: var(--bg);
+    stroke-width: 1.5;
+  }
+  .juntos-cursor span {
+    margin-top: 30px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: var(--cor);
+    color: #0b0f16;
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+  }
+  #cena-v1-gancho .juntos-cursor svg {
+    width: 48px;
+    height: 48px;
+  }
+  #cena-v1-gancho .juntos-cursor span {
+    margin-top: 36px;
+    padding: 6px 16px;
+    font-size: 34px;
+  }
+</style>

@@ -1,0 +1,36 @@
+# Relay do FaKL-Code no VPS: o relay atrás do Caddy, que tira o certificado
+# TLS sozinho. Preencha o .env (veja env.example) e rode `docker compose up -d`.
+# A imagem vem pronta do GHCR; para gerá-la aqui, some docker-compose.build.yml
+# (veja o README).
+services:
+  relay:
+    image: ${FAKL_RELAY_IMAGE:-ghcr.io/fakl-code/fakl-relay:latest}
+    restart: unless-stopped
+    environment:
+      FAKL_RELAY_KEY: ${FAKL_RELAY_KEY:?defina FAKL_RELAY_KEY no .env}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:relay@fakl-code.local}
+    volumes:
+      - relay-data:/data
+    expose:
+      - '8080'
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - relay
+    environment:
+      FAKL_RELAY_DOMAIN: ${FAKL_RELAY_DOMAIN:?defina FAKL_RELAY_DOMAIN no .env}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  relay-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,35 @@
+# Relay do FaKL-Code num VPS que já tem o Traefik nas portas 80 e 443: em vez
+# do Caddy, o relay entra na rede do Traefik com rótulos de roteamento e usa o
+# certificado do resolvedor dele. Preencha o .env e rode
+# `docker compose -f docker-compose.traefik.yml up -d`. A imagem vem pronta do
+# GHCR; para gerá-la aqui, some docker-compose.build.yml (veja o README).
+services:
+  relay:
+    image: ${FAKL_RELAY_IMAGE:-ghcr.io/fakl-code/fakl-relay:latest}
+    restart: unless-stopped
+    environment:
+      FAKL_RELAY_KEY: ${FAKL_RELAY_KEY:?defina FAKL_RELAY_KEY no .env}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:relay@fakl-code.local}
+    volumes:
+      - relay-data:/data
+    expose:
+      - '8080'
+    networks:
+      - traefik
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      # Mais de um nome: TRAEFIK_RULE no .env (veja env.example).
+      traefik.http.routers.fakl-relay.rule: ${TRAEFIK_RULE:-Host(`${FAKL_RELAY_DOMAIN:?defina FAKL_RELAY_DOMAIN no .env}`)}
+      traefik.http.routers.fakl-relay.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.fakl-relay.tls: 'true'
+      traefik.http.routers.fakl-relay.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.services.fakl-relay.loadbalancer.server.port: '8080'
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true
+
+volumes:
+  relay-data:

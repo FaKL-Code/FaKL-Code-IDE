@@ -1,0 +1,38 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Saídas de build
+dist/
+out/
+*.tsbuildinfo
+coverage/
+*.vsix
+
+# Build da IDE (código do VS Code baixado e binários gerados)
+/vscode/
+/VSCode-*/
+/assets/
+
+# Ambiente local
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+/.build/
+
+# Relay empacotado para o VPS
+packages/relay/bundle/
+packages/relay/out/
+
+# Cache local do serena (MCP)
+.serena/
+
+# Capturas do servidor MCP do Playwright
+.playwright-mcp/

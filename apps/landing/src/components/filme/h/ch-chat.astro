@@ -1,0 +1,226 @@
+---
+// Cena portada do filme de apresentação (04-chat.html).
+import { langDaUrl, pastaFilme, textos } from '../../../i18n';
+const T = textos(langDaUrl(Astro.url));
+const C = T.cena;
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-ch-chat" data-cena="ch-chat">
+    <div id="ch-glow"></div>
+    <div id="ch-grid"></div>
+    <div id="ch-stage">
+      <div id="ch-win">
+        <div id="ch-tabs">
+          <div class="tab" id="ch-tab1"><span class="bar" id="ch-bar1"></span>users.ts</div>
+          <div class="tab" id="ch-tab2"><span class="bar"></span>{C.chat.branch}</div>
+          <div class="tab">{T.roteiro.mesa.rotulo}</div>
+        </div>
+        <div id="ch-editor">
+          <div class="ln"><span class="n">1</span><span class="m"> </span><span><span class="tk-k">import</span> <span class="tk-o">&#123;</span> db <span class="tk-o">&#125;</span> <span class="tk-k">from</span> <span class="tk-s">'../db'</span>;</span></div>
+          <div class="ln"><span class="n">2</span><span class="m"> </span><span> </span></div>
+          <div class="ln"><span class="n">3</span><span class="m"> </span><span><span class="tk-k">export async function</span> <span class="tk-f">listarUsuarios</span>() <span class="tk-o">&#123;</span></span></div>
+          <div class="ln"><span class="n">4</span><span class="m"> </span><span>  <span class="tk-k">return</span> db.<span class="tk-f">usuarios</span>();</span></div>
+          <div class="ln"><span class="n">5</span><span class="m"> </span><span><span class="tk-o">&#125;</span></span></div>
+          <div class="ln"><span class="n">6</span><span class="m"> </span><span> </span></div>
+          <div class="ln" id="ch-old"><span class="n">7</span><span class="m"> </span><span><span class="tk-c">// TODO: busca</span></span></div>
+          <div class="ln add ch-add"><span class="n">7</span><span class="m">+</span><span><span class="tk-k">export async function</span> <span class="tk-f">buscarUsuarios</span>(<span class="tk-p">termo</span>: <span class="tk-t">string</span>) <span class="tk-o">&#123;</span></span></div>
+          <div class="ln add ch-add"><span class="n">8</span><span class="m">+</span><span>  <span class="tk-k">const</span> alvo = <span class="tk-p">termo</span>.<span class="tk-f">trim</span>().<span class="tk-f">toLowerCase</span>();</span></div>
+          <div class="ln add ch-add"><span class="n">9</span><span class="m">+</span><span>  <span class="tk-k">if</span> (!alvo) <span class="tk-k">return</span> <span class="tk-f">listarUsuarios</span>();</span></div>
+          <div class="ln add ch-add"><span class="n">10</span><span class="m">+</span><span>  <span class="tk-k">const</span> todos = <span class="tk-k">await</span> db.<span class="tk-f">usuarios</span>();</span></div>
+          <div class="ln add ch-add"><span class="n">11</span><span class="m">+</span><span>  <span class="tk-k">return</span> todos.<span class="tk-f">filter</span>((u) =&gt;</span></div>
+          <div class="ln add ch-add"><span class="n">12</span><span class="m">+</span><span>    [u.<span class="tk-pr">nome</span>, u.<span class="tk-pr">email</span>].<span class="tk-f">some</span>((v) =&gt;</span></div>
+          <div class="ln add ch-add"><span class="n">13</span><span class="m">+</span><span>      v.<span class="tk-f">toLowerCase</span>().<span class="tk-f">includes</span>(alvo)),</span></div>
+          <div class="ln add ch-add"><span class="n">14</span><span class="m">+</span><span>  );</span></div>
+          <div class="ln add ch-add"><span class="n">15</span><span class="m">+</span><span><span class="tk-o">&#125;</span></span></div>
+        </div>
+        <div id="ch-aux">
+          <img id="ch-before" class="ch-chat" src={`${F}/chat-before.webp`} alt="" />
+          <img id="ch-after" class="ch-chat" src={`${F}/chat-after.webp`} alt="" />
+        </div>
+        <svg id="ch-cursor" viewBox="0 0 30 40"><path d="M2 2 L2 32 L10 24 L16 38 L21 36 L15 22 L26 22 Z" fill="#e5e7eb" stroke="#0d1117" stroke-width="2.5" stroke-linejoin="round" /></svg>
+        <div id="ch-ripple"></div>
+      </div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-ch-chat {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-ch-chat #ch-glow {
+  position: absolute;
+  left: 500px;
+  top: -60px;
+  width: 1300px;
+  height: 1200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, rgba(37, 99, 235, 0) 65%);
+}
+#cena-ch-chat #ch-grid {
+  position: absolute;
+  inset: -64px;
+  background-image: linear-gradient(rgba(55, 65, 81, 0.5) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(55, 65, 81, 0.5) 2px, transparent 2px);
+  background-size: 64px 64px;
+  opacity: 0.16;
+}
+#cena-ch-chat #ch-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2200px;
+}
+#cena-ch-chat /* Janela da IDE: editor à esquerda,
+#cena-ch-chat chat "Agentes FaKL" na barra lateral direita. */
+        #ch-win {
+  position: absolute;
+  left: 140px;
+  top: 120px;
+  width: 1640px;
+  height: 780px;
+  background: #07090d;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 60px 160px rgba(0, 0, 0, 0.75);
+  transform-origin: 50% 50%;
+}
+#cena-ch-chat #ch-tabs {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1120px;
+  height: 52px;
+  background: #0b0f16;
+  border-bottom: 2px solid #1c2330;
+  display: flex;
+  font-family: var(--sans);
+  font-size: 20px;
+}
+#cena-ch-chat .tab {
+  position: relative;
+  padding: 0 26px;
+  line-height: 50px;
+  color: #6b7480;
+  border-right: 2px solid #1c2330;
+  white-space: nowrap;
+}
+#cena-ch-chat .tab .bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: #22d3ee;
+}
+#cena-ch-chat #ch-tab1 {
+  color: #e6edf3;
+  background: #07090d;
+}
+#cena-ch-chat #ch-tab2 {
+  color: #e6edf3;
+  background: #07090d;
+  opacity: 0;
+}
+#cena-ch-chat #ch-editor {
+  position: absolute;
+  left: 0;
+  top: 52px;
+  width: 1120px;
+  bottom: 0;
+  padding-top: 18px;
+  font-family: var(--mono);
+  font-size: 22px;
+  line-height: 36px;
+  color: #e6edf3;
+}
+#cena-ch-chat .ln > span:last-child {
+  white-space: pre;
+}
+#cena-ch-chat .ln {
+  display: flex;
+  overflow: hidden;
+  height: 36px;
+}
+#cena-ch-chat .ln .n {
+  flex: none;
+  width: 70px;
+  padding-right: 24px;
+  text-align: right;
+  color: #3b4656;
+}
+#cena-ch-chat .ln .m {
+  flex: none;
+  width: 26px;
+  color: #9fb0c3;
+}
+#cena-ch-chat .ln.add {
+  background: rgba(74, 222, 128, 0.09);
+}
+#cena-ch-chat .ln.add .m {
+  color: #4ade80;
+}
+#cena-ch-chat .tk-k {
+  color: #7aa2ff;
+}
+#cena-ch-chat .tk-f {
+  color: #22d3ee;
+}
+#cena-ch-chat .tk-s {
+  color: #86efac;
+}
+#cena-ch-chat .tk-t {
+  color: #fbbf24;
+}
+#cena-ch-chat .tk-p {
+  color: #fcd9a8;
+}
+#cena-ch-chat .tk-c {
+  color: #5b6b80;
+}
+#cena-ch-chat .tk-o {
+  color: #9fb0c3;
+}
+#cena-ch-chat .tk-pr {
+  color: #c4b5fd;
+}
+#cena-ch-chat #ch-aux {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 520px;
+  bottom: 0;
+  background: #0b0f16;
+  border-left: 2px solid #1c2330;
+  overflow: hidden;
+}
+#cena-ch-chat .ch-chat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 520px;
+}
+#cena-ch-chat #ch-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 46px;
+  opacity: 0;
+}
+#cena-ch-chat #ch-ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  opacity: 0;
+}
+</style>

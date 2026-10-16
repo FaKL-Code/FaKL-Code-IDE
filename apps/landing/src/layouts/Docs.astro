@@ -1,0 +1,399 @@
+---
+import { getCollection } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+import Base from './Base.astro';
+import Icon from '../components/Icon.astro';
+import { langDaUrl, rota, textos } from '../i18n';
+
+interface Props {
+  titulo: string;
+  descricao: string;
+  slug: string;
+  headings?: MarkdownHeading[];
+}
+
+const { titulo, descricao, slug, headings = [] } = Astro.props;
+const lang = langDaUrl(Astro.url);
+const T = textos(lang).docs;
+const paginas = (await getCollection(lang === 'en' ? 'docsEn' : 'docs')).sort(
+  (a, b) => a.data.ordem - b.data.ordem,
+);
+const i = paginas.findIndex((p) => p.id === slug);
+const anterior = i > 0 ? paginas[i - 1] : undefined;
+const proxima = i >= 0 ? paginas[i + 1] : paginas[0];
+const indice = paginas.map((p) => ({
+  t: p.data.titulo,
+  d: p.data.descricao,
+  u: rota(lang, `/docs/${p.id}/`),
+  b: (p.body ?? '').replace(/[#*`|>-]/g, ' ').replace(/\s+/g, ' ').slice(0, 2000),
+}));
+const secoes = headings.filter((h) => h.depth === 2);
+---
+
+<Base title={titulo} description={descricao}>
+  <div class="docs wrap">
+    <aside class="docs-lado" aria-label={T.lateral}>
+      <button class="docs-menu" type="button" aria-expanded="false" data-docs-menu>
+        <Icon name="book" />
+        <span>{titulo}</span>
+      </button>
+      <div class="docs-lista" data-docs-lista>
+        <label class="busca">
+          <Icon name="search" size={16} />
+          <span class="sr-only">{T.buscar}</span>
+          <input type="search" placeholder={T.buscarPlaceholder} autocomplete="off" data-busca />
+        </label>
+        <ul class="resultados" data-resultados data-vazio={T.nadaEncontrado} hidden></ul>
+        <nav>
+          <ul>
+            <li>
+              <a href={rota(lang, '/docs/')} aria-current={slug === '' ? 'page' : undefined}>{T.inicio}</a>
+            </li>
+            {
+              paginas.map((p) => (
+                <li>
+                  <a href={rota(lang, `/docs/${p.id}/`)} aria-current={p.id === slug ? 'page' : undefined}>
+                    {p.data.titulo}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <article class="docs-corpo">
+      <p class="kicker">{T.kicker}</p>
+      <h1>{titulo}</h1>
+      <p class="docs-desc">{descricao}</p>
+      <div class="prosa"><slot /></div>
+
+      <nav class="docs-pagina" aria-label={T.paginacao} data-copiar={T.copiar} data-copiado={T.copiado}>
+        {
+          anterior ? (
+            <a href={rota(lang, `/docs/${anterior.id}/`)}>
+              <small>{T.anterior}</small>
+              {anterior.data.titulo}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          proxima && proxima.id !== slug && (
+            <a class="prox" href={rota(lang, `/docs/${proxima.id}/`)}>
+              <small>{T.proxima}</small>
+              {proxima.data.titulo}
+            </a>
+          )
+        }
+      </nav>
+      <p class="docs-nota">{T.nota}</p>
+    </article>
+
+    {
+      secoes.length > 1 && (
+        <aside class="docs-toc" aria-label={T.nestaPagina}>
+          <p>{T.nestaPagina}</p>
+          <ul>
+            {secoes.map((h) => (
+              <li>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+  </div>
+
+  <script type="application/json" id="indice-docs" set:html={JSON.stringify(indice)} />
+</Base>
+
+<script>
+  import { initDocs } from '../scripts/docs';
+  initDocs();
+</script>
+
+<style is:global>
+  .docs {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 200px;
+    gap: 56px;
+    max-width: 1320px;
+    padding-top: calc(var(--nav-h) + 48px);
+    padding-bottom: 96px;
+  }
+  .docs-lado {
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+    align-self: start;
+    max-height: calc(100vh - var(--nav-h) - 48px);
+    overflow: auto;
+  }
+  .docs-menu {
+    display: none;
+  }
+  .busca {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-side);
+    color: var(--muted);
+  }
+  .busca:focus-within {
+    border-color: var(--cyan);
+  }
+  .busca input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+  }
+  .docs-lado ul {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+  }
+  .docs-lado li a {
+    display: block;
+    padding: 7px 12px;
+    border-left: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 15px;
+    text-decoration: none;
+  }
+  .docs-lado li a:hover {
+    color: var(--text);
+  }
+  .docs-lado li a[aria-current='page'] {
+    color: #fff;
+    border-left-color: var(--cyan);
+    background: linear-gradient(90deg, var(--cyan-soft), transparent);
+  }
+  .resultados li a {
+    border-left: 0;
+    padding: 8px 10px;
+    border-radius: 4px;
+  }
+  .resultados li a small {
+    display: block;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .resultados .vazio {
+    padding: 8px 10px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .docs-corpo {
+    min-width: 0;
+    max-width: 760px;
+  }
+  .docs-corpo h1 {
+    margin: 14px 0 10px;
+    font-size: clamp(32px, 4vw, 46px);
+    letter-spacing: -0.03em;
+  }
+  .docs-desc {
+    color: var(--muted);
+    font-size: 19px;
+  }
+  .prosa {
+    margin-top: 36px;
+    color: #d1d5db;
+  }
+  .prosa h2 {
+    margin: 48px 0 14px;
+    font-size: 25px;
+    letter-spacing: -0.02em;
+  }
+  .prosa h3 {
+    margin: 32px 0 10px;
+    font-size: 19px;
+  }
+  .prosa p,
+  .prosa ul,
+  .prosa ol,
+  .prosa table,
+  .prosa pre {
+    margin: 0 0 18px;
+  }
+  .prosa li {
+    margin: 6px 0;
+  }
+  .prosa strong {
+    color: #f3f4f6;
+  }
+  .prosa code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    font: 0.86em var(--mono);
+    color: #e5e7eb;
+  }
+  .prosa pre {
+    position: relative;
+    padding: 18px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-deep) !important;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .prosa pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .copiar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-side);
+    color: var(--muted);
+    font: 12px/1 var(--mono);
+    cursor: pointer;
+  }
+  .prosa table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    display: block;
+    overflow-x: auto;
+  }
+  .prosa th,
+  .prosa td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-soft);
+    text-align: left;
+    vertical-align: top;
+  }
+  .prosa th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .docs-pagina {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 64px;
+  }
+  .docs-pagina a {
+    flex: 1;
+    max-width: 48%;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .docs-pagina a:hover {
+    border-color: var(--cyan);
+  }
+  .docs-pagina .prox {
+    text-align: right;
+    margin-left: auto;
+  }
+  .docs-pagina small {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+  }
+  .docs-nota {
+    margin-top: 32px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .docs-toc {
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+    align-self: start;
+    font-size: 14px;
+  }
+  .docs-toc p {
+    font: 600 12px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .docs-toc ul {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .docs-toc a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .docs-toc a:hover,
+  .docs-toc a[data-on] {
+    color: var(--cyan);
+  }
+  @media (max-width: 1100px) {
+    .docs {
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+    .docs-toc {
+      display: none;
+    }
+  }
+  @media (max-width: 760px) {
+    .docs {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding-top: calc(var(--nav-h) + 20px);
+    }
+    .docs-lado {
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
+    .docs-menu {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-side);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+    }
+    .docs-lista {
+      display: none;
+      margin-top: 12px;
+    }
+    .docs-lista[data-open] {
+      display: block;
+    }
+    .docs-pagina a {
+      max-width: none;
+    }
+    .docs-pagina {
+      flex-direction: column;
+    }
+  }
+</style>

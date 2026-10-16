@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+coverage/
+dist/
+out/
+bundle/
+CHANGELOG.md
+.build/
+.astro/
+

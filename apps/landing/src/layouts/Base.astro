@@ -1,0 +1,424 @@
+---
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import { site } from '../config/site';
+import { langDaUrl, outroIdioma, rota, semIdioma, textos } from '../i18n';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Imagem de prévia social, relativa à raiz do site. */
+  og?: string;
+}
+
+const lang = langDaUrl(Astro.url);
+const T = textos(lang);
+const { title, description = T.site.descricao, og = '/og.png' } = Astro.props;
+const fullTitle = title ? `${title} · ${site.nomeLongo}` : `${site.nomeLongo}: ${T.site.tituloPadrao}`;
+const canonical = new URL(Astro.url.pathname, site.url).toString();
+const nav = [
+  { href: rota(lang, '/#cafe'), label: T.nav.produto },
+  { href: rota(lang, '/#creditos'), label: T.nav.recursos },
+  { href: rota(lang, '/docs/'), label: T.nav.docs },
+];
+const outro = outroIdioma(lang);
+const caminho = semIdioma(Astro.url.pathname);
+const alternativas = (['pt', 'en'] as const).map((l) => ({
+  lang: l,
+  href: new URL(rota(l, caminho), site.url).toString(),
+}));
+const hrefOutro = rota(outro, caminho);
+const ogUrl = new URL(og, site.url).toString();
+---
+
+<!doctype html>
+<html lang={T.lang.html}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#07090d" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={T.lang.og} />
+    {alternativas.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+    <link rel="alternate" hreflang="x-default" href={alternativas[0]?.href} />
+    <meta property="og:site_name" content={site.nomeLongo} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">{T.nav.pular}</a>
+
+    <header class="nav" data-nav>
+      <div class="nav-in">
+        <a class="marca" href={rota(lang, '/')} aria-label={T.nav.inicio}>
+          <img src="/logo.svg" alt="" width="36" height="36" />
+          <span>FaKL-Code<b>IDE</b></span>
+        </a>
+        <nav aria-label={T.nav.principal}>
+          <ul class="nav-links" data-menu>
+            {
+              nav.map((item) => (
+                <li>
+                  <a href={item.href}>{item.label}</a>
+                </li>
+              ))
+            }
+            <li>
+              <a class="nav-repo" href={site.repo} rel="noopener">
+                <Icon name="github" size={18} />
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a
+                class="nav-lang"
+                href={hrefOutro}
+                hreflang={outro}
+                lang={outro}
+                title={T.lang.trocaTitulo}
+                data-lang-troca={outro}>{T.lang.troca}</a
+              >
+            </li>
+            <li class="nav-cta">
+              <a class="btn btn-primary" href={rota(lang, '/download/')}>
+                <Icon name="download" />
+                {T.nav.baixar}
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-label={T.nav.abrirMenu} data-toggle data-abrir={T.nav.abrirMenu} data-fechar={T.nav.fecharMenu}>
+          <Icon name="menu" size={22} />
+        </button>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <slot />
+    </main>
+
+    <footer class="rodape">
+      <div class="wrap rodape-in">
+        <div class="rodape-marca">
+          <a class="marca" href={rota(lang, '/')} aria-label={T.nav.inicio}>
+            <img src="/logo.svg" alt="" width="40" height="40" />
+            <span>FaKL-Code<b>IDE</b></span>
+          </a>
+          <p>{T.rodape.plataformas}</p>
+        </div>
+        <nav aria-label={T.rodape.navegacao} class="rodape-links">
+          <div>
+            <h2>{T.rodape.produto}</h2>
+            <a href={rota(lang, '/#mesa')}>{T.rodape.mesa}</a>
+            <a href={rota(lang, '/#estacoes')}>{T.rodape.vault}</a>
+            <a href={rota(lang, '/#estacoes')}>{T.rodape.integracoes}</a>
+            <a href={rota(lang, '/#cafe')}>{T.rodape.cafe}</a>
+          </div>
+          <div>
+            <h2>{T.rodape.documentacao}</h2>
+            <a href={rota(lang, '/docs/')}>{T.rodape.visaoGeral}</a>
+            <a href={rota(lang, '/docs/instalacao/')}>{T.rodape.instalacao}</a>
+            <a href={rota(lang, '/docs/maestro/')}>{T.rodape.maestro}</a>
+            <a href={rota(lang, '/docs/remoto/')}>{T.rodape.remoto}</a>
+          </div>
+          <div>
+            <h2>{T.rodape.baixar}</h2>
+            <a href={rota(lang, '/download/')}>Windows</a>
+            <a href={rota(lang, '/download/')}>macOS</a>
+          </div>
+          <div>
+            <h2>{T.rodape.codigoAberto}</h2>
+            <a href={site.repo} rel="noopener">{T.rodape.repositorio}</a>
+            <a href={`${site.repo}/blob/main/LICENSE`} rel="noopener">{T.rodape.licenca}</a>
+          </div>
+        </nav>
+      </div>
+      <div class="wrap rodape-fim">
+        <span class="mono">&gt;_ {T.rodape.feitoPor}</span>
+        <span>{T.rodape.base}</span>
+      </div>
+    </footer>
+
+    <dialog class="filme" data-filme aria-label={T.filmeModal.rotulo}>
+      <div class="filme-in">
+        <button class="filme-fechar" type="button" aria-label={T.filmeModal.fechar} data-filme-fechar>
+          <Icon name="x" size={20} />
+        </button>
+        {
+          site.filme ? (
+            <video src={site.filme} controls playsinline preload="none" poster="/og.png" />
+          ) : (
+            <div class="filme-breve">
+              <span class="mono">&gt;_ {T.filmeModal.tag}</span>
+              <p>{T.filmeModal.breve}</p>
+            </div>
+          )
+        }
+      </div>
+    </dialog>
+
+    <script>
+      import { initChrome } from '../scripts/chrome';
+      initChrome();
+    </script>
+
+    <style>
+      .nav {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 50;
+        height: var(--nav-h);
+        background: var(--bg-deep);
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .nav-in {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        height: 100%;
+        max-width: 1320px;
+        margin-inline: auto;
+        padding-inline: var(--gutter);
+      }
+      .marca {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 750;
+        font-size: 17px;
+        letter-spacing: -0.01em;
+      }
+      .marca img {
+        width: 36px;
+        height: 36px;
+        margin: -4px;
+      }
+      .marca b {
+        color: var(--primary-hover);
+        font-weight: 750;
+        margin-left: 1px;
+      }
+      .marca b::before {
+        content: '-';
+        color: var(--primary-hover);
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .nav-links a:not(.btn) {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .nav-lang {
+        font-family: var(--mono);
+        font-size: 13px !important;
+        letter-spacing: 0.04em;
+      }
+      .nav-repo {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 6px;
+      }
+      .nav-links a:not(.btn):hover {
+        color: #fff;
+      }
+      .nav-cta {
+        margin-left: 10px;
+      }
+      .nav-cta .btn {
+        --h: 38px;
+        padding: 0 16px;
+        font-size: 14px;
+      }
+      .nav-toggle {
+        display: none;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+      }
+      @media (max-width: 760px) {
+        .nav-toggle {
+          display: grid;
+        }
+        .nav-links {
+          position: fixed;
+          inset: var(--nav-h) 0 auto;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0;
+          padding: 12px var(--gutter) 20px;
+          background: rgb(7 9 13 / 96%);
+          backdrop-filter: blur(14px);
+          border-bottom: 1px solid var(--border-soft);
+          transform: translateY(-8px);
+          opacity: 0;
+          visibility: hidden;
+          transition:
+            opacity 0.2s,
+            transform 0.3s var(--ease-out),
+            visibility 0.2s;
+        }
+        .nav-links[data-open] {
+          transform: none;
+          opacity: 1;
+          visibility: visible;
+        }
+        .nav-links a:not(.btn) {
+          display: block;
+          padding: 14px 4px;
+          font-size: 17px;
+          border-bottom: 1px solid var(--border-soft);
+        }
+        .nav-cta {
+          margin: 16px 0 0;
+        }
+        .nav-cta .btn {
+          --h: 48px;
+          width: 100%;
+          font-size: 16px;
+        }
+      }
+
+      .rodape {
+        position: relative;
+        border-top: 1px solid var(--border-soft);
+        background: var(--bg-deep);
+        padding: 64px 0 28px;
+        font-size: 15px;
+      }
+      .rodape-in {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 40px;
+      }
+      .rodape-marca p {
+        margin-top: 12px;
+        color: var(--muted);
+      }
+      .rodape-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 48px;
+      }
+      .rodape-links div {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 140px;
+      }
+      .rodape-links h2 {
+        font: 600 12px/1 var(--mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .rodape-links a {
+        color: var(--text);
+        text-decoration: none;
+      }
+      .rodape-links a:hover {
+        color: var(--cyan);
+      }
+      .rodape-fim {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 56px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-soft);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .rodape-fim .mono {
+        color: var(--cyan);
+      }
+
+      .filme {
+        width: min(1100px, calc(100vw - 32px));
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg-deep);
+        color: var(--text);
+      }
+      .filme::backdrop {
+        background: rgb(0 0 0 / 78%);
+        backdrop-filter: blur(6px);
+      }
+      .filme-in {
+        position: relative;
+        aspect-ratio: 16 / 9;
+      }
+      .filme video {
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      .filme-fechar {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        background: rgb(7 9 13 / 80%);
+        color: var(--text);
+        cursor: pointer;
+      }
+      .filme-breve {
+        display: grid;
+        place-content: center;
+        gap: 12px;
+        height: 100%;
+        padding: 24px;
+        text-align: center;
+        background:
+          radial-gradient(60% 60% at 50% 100%, rgb(37 99 235 / 25%), transparent),
+          var(--bg-deep);
+      }
+      .filme-breve .mono {
+        color: var(--cyan);
+      }
+      .filme-breve p {
+        font-size: clamp(18px, 2.4vw, 26px);
+        font-weight: 600;
+      }
+    </style>
+  </body>
+</html>

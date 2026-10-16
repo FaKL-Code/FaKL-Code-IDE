@@ -1,0 +1,12 @@
+{
+  "The IDE is not open on this machine (or remote access is turned off).": "A IDE não está aberta nesta máquina (ou o acesso remoto está desligado).",
+  "This device is no longer paired. Pair it again with the QR code.": "Este dispositivo não está mais pareado. Pareie de novo com o QR code.",
+  "The QR code expired or was already used. Generate another one in the IDE.": "O QR code expirou ou já foi usado. Gere outro na IDE.",
+  "The app and the IDE are on different versions. Reload the page.": "O app e a IDE estão em versões diferentes. Recarregue a página.",
+  "Protocol error.": "Erro de protocolo.",
+  "This device was revoked in the IDE.": "Este dispositivo foi revogado na IDE.",
+  "Pairing was declined in the IDE.": "O pareamento foi recusado na IDE.",
+  "Connection closed.": "Conexão encerrada.",
+  "The IDE did not respond in time.": "A IDE não respondeu a tempo.",
+  "Invalid pairing QR code": "QR de pareamento inválido"
+}

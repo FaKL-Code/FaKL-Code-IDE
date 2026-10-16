@@ -1,0 +1,43 @@
+{
+  "name": "fakl-code-ide",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FaKL-Code IDE: fork do VSCodium com orquestração de agentes de IA, vault Markdown, controle remoto e cyber café.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check:termos": "node build/termos-proibidos.mjs",
+    "check:l10n": "node build/l10n.mjs",
+    "check": "pnpm check:termos && pnpm format:check && pnpm build && pnpm check:l10n && pnpm lint && pnpm typecheck && pnpm test",
+    "prepare": "lefthook install || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.3",
+    "@vscode/l10n-dev": "0.0.35",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.0.0",
+    "lefthook": "^2.2.1",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}

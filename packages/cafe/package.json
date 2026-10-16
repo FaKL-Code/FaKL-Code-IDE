@@ -1,0 +1,32 @@
+{
+  "name": "@fakl/cafe",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A sala do cyber café (SDD 13) em Canvas 2D, usada pelo painel da IDE e pelo app do celular.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "node preview/build.mjs --serve",
+    "preview:build": "node preview/build.mjs"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*",
+    "@fakl/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

@@ -1,0 +1,18 @@
+# Ganchos de git locais. Instalados automaticamente pelo `pnpm install`.
+pre-commit:
+  parallel: true
+  commands:
+    prettier:
+      glob: '*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}'
+      run: pnpm exec prettier --check {staged_files}
+    eslint:
+      glob: '*.{ts,tsx,js,mjs}'
+      run: pnpm exec eslint --max-warnings=0 --no-warn-ignored {staged_files}
+    termos:
+      # Nomes, emails, IPs e caminhos pessoais (build/termos-proibidos.mjs).
+      run: node build/termos-proibidos.mjs {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}

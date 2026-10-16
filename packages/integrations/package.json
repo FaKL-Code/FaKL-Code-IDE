@@ -1,0 +1,30 @@
+{
+  "name": "@fakl/integrations",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Clientes das integrações (SDD 11): API do GitHub e device flow, API da Hostinger, ~/.ssh/config e políticas de comando SSH. Usados pelo Core e pela extensão.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fakl/i18n": "workspace:*",
+    "imapflow": "^2.4.0",
+    "mailparser": "^3.9.38"
+  },
+  "devDependencies": {
+    "@types/mailparser": "^3.9.0"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "FaKL-Code remote",
+  "short_name": "FaKL",
+  "description": "Follow and command the agents in your FaKL-Code IDE.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090d",
+  "theme_color": "#07090d",
+  "lang": "en",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

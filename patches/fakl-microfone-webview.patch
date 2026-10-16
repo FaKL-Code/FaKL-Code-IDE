@@ -1,0 +1,73 @@
+diff --git a/src/vs/code/electron-main/app.ts b/src/vs/code/electron-main/app.ts
+index 80fad559..a95181b0 100644
+--- a/src/vs/code/electron-main/app.ts
++++ b/src/vs/code/electron-main/app.ts
+@@ -270,9 +270,23 @@ export class CodeApplication extends Disposable {
+ 			'deprecated-sync-clipboard-read',
+ 		]);
+ 
++		// FaKL-Code: microfone nos webviews, só áudio, para os comandos por voz (ADR 0031)
++		const isAudioOnlyMediaRequest = (permission: string, details: object) => {
++			if (permission !== 'media') {
++				return false;
++			}
++			// eslint-disable-next-line local/code-no-in-operator
++			if ('mediaTypes' in details) {
++				const mediaTypes = details.mediaTypes;
++				return Array.isArray(mediaTypes) && mediaTypes.length > 0 && mediaTypes.every(type => type === 'audio');
++			}
++			// eslint-disable-next-line local/code-no-in-operator
++			return 'mediaType' in details && details.mediaType === 'audio';
++		};
++
+ 		session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+ 			if (isUrlFromWebview(details.requestingUrl)) {
+-				return callback(allowedPermissionsInWebview.has(permission));
++				return callback(allowedPermissionsInWebview.has(permission) || isAudioOnlyMediaRequest(permission, details));
+ 			}
+ 			if (isRequestFromWindow(webContents, details.requestingUrl, details.isMainFrame)) {
+ 				return callback(allowedPermissionsInCore.has(permission));
+@@ -282,7 +296,7 @@ export class CodeApplication extends Disposable {
+ 
+ 		session.defaultSession.setPermissionCheckHandler((webContents, permission, _origin, details) => {
+ 			if (isUrlFromWebview(details.requestingUrl)) {
+-				return allowedPermissionsInWebview.has(permission);
++				return allowedPermissionsInWebview.has(permission) || isAudioOnlyMediaRequest(permission, details);
+ 			}
+ 			if (isRequestFromWindow(webContents, details.requestingUrl, details.isMainFrame)) {
+ 				return allowedPermissionsInCore.has(permission);
+diff --git a/src/vs/workbench/contrib/webview/browser/pre/index.html b/src/vs/workbench/contrib/webview/browser/pre/index.html
+index 42c7c01a..55688fab 100644
+--- a/src/vs/workbench/contrib/webview/browser/pre/index.html
++++ b/src/vs/workbench/contrib/webview/browser/pre/index.html
+@@ -5,7 +5,7 @@
+ 	<meta charset="UTF-8">
+ 
+ 	<meta http-equiv="Content-Security-Policy"
+-		content="default-src 'none'; script-src 'sha256-FFQoOVVa2tOE3uqUvirwaMNT20TZmrHcL2aaOjJ8BUo=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
++		content="default-src 'none'; script-src 'sha256-+WpVXT346pi7hBGNxVEq2idTFzmTZfOUWh7c1RnQ1+0=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
+ 
+ 	<!-- Disable pinch zooming -->
+ 	<meta name="viewport"
+@@ -1031,7 +1031,7 @@
+ 				}
+ 				newFrame.setAttribute('sandbox', Array.from(sandboxRules).join(' '));
+ 
+-				const allowRules = ['cross-origin-isolated;', 'autoplay;', 'local-network-access;'];
++				const allowRules = ['cross-origin-isolated;', 'autoplay;', 'local-network-access;', 'microphone;'];
+ 				if (!isFirefox && options.allowScripts) {
+ 					allowRules.push('clipboard-read;', 'clipboard-write;');
+ 				}
+diff --git a/src/vs/workbench/contrib/webview/browser/webviewElement.ts b/src/vs/workbench/contrib/webview/browser/webviewElement.ts
+index 6f913921..6212cd58 100644
+--- a/src/vs/workbench/contrib/webview/browser/webviewElement.ts
++++ b/src/vs/workbench/contrib/webview/browser/webviewElement.ts
+@@ -420,7 +420,7 @@ export class WebviewElement extends Disposable implements IWebviewElement, Webvi
+ 		element.className = `webview ${options.customClasses || ''}`;
+ 		element.sandbox.add('allow-scripts', 'allow-same-origin', 'allow-forms', 'allow-pointer-lock', 'allow-downloads');
+ 
+-		const allowRules = ['cross-origin-isolated', 'autoplay', 'local-network-access'];
++		const allowRules = ['cross-origin-isolated', 'autoplay', 'local-network-access', 'microphone'];
+ 		if (!isFirefox) {
+ 			allowRules.push('clipboard-read', 'clipboard-write');
+ 		}

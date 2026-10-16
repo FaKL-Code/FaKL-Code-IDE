@@ -1,0 +1,154 @@
+---
+// Cena portada do filme de apresentação (v3-fechamento.html).
+import { langDaUrl, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+---
+
+<div class="cena" id="cena-vf-fechamento" data-cena="vf-fechamento">
+    <div id="vf-cafe">
+    </div>
+    <div id="vf-dim"></div>
+    <div id="vf-halo"></div>
+    <div id="vf-px"></div>
+    <div id="vf-lock">
+      <svg id="vf-logo" viewBox="0 0 1024 1024">
+        <defs>
+          <linearGradient id="vf-tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#131B2C" /><stop offset="1" stop-color="#05070C" /></linearGradient>
+          <radialGradient id="vf-halo-g" cx="0.6" cy="0.45" r="0.6"><stop offset="0" stop-color="#2563EB" stop-opacity="0.38" /><stop offset="1" stop-color="#2563EB" stop-opacity="0" /></radialGradient>
+          <linearGradient id="vf-side" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1D4ED8" /><stop offset="1" stop-color="#06E0FF" /></linearGradient>
+          <linearGradient id="vf-rim" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2563EB" /><stop offset="1" stop-color="#5EEBFF" /></linearGradient>
+          <linearGradient id="vf-panel" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#202A3B" /><stop offset="0.45" stop-color="#0B0F17" /><stop offset="1" stop-color="#04060A" /></linearGradient>
+          <linearGradient id="vf-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.2" /><stop offset="1" stop-color="#FFFFFF" stop-opacity="0" /></linearGradient>
+          <filter id="vf-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22" /></filter>
+          <filter id="vf-glyphglow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10" /></filter>
+        </defs>
+        <g id="vf-tilegrp" style="transform-origin: 512px 512px">
+          <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#vf-tile)" />
+          <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#vf-halo-g)" />
+        </g>
+        <g id="vf-term" style="transform-origin: 512px 540px">
+          <path d="M283 454 Q280 376 356 358 L680 284 Q756 266 761 344 L783 682 Q788 760 710 767 L372 795 Q294 802 291 724 Z" fill="#2563EB" filter="url(#vf-glow)" opacity="0.85" />
+          <path d="M283 454 Q280 376 356 358 L680 284 Q756 266 761 344 L783 682 Q788 760 710 767 L372 795 Q294 802 291 724 Z" fill="url(#vf-side)" />
+          <path d="M239 424 Q236 346 312 328 L636 254 Q712 236 717 314 L739 652 Q744 730 666 737 L328 765 Q250 772 247 694 Z" fill="url(#vf-panel)" stroke="url(#vf-rim)" stroke-width="10" />
+          <path d="M264 408 Q262 368 301 359 L651 277 Q690 268 695 308 L695 312 Q700 352 663 366 L305 506 Q268 520 266 480 Z" fill="url(#vf-sheen)" />
+        </g>
+        <g fill="none" stroke="#06E0FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="58">
+          <g id="vf-glyphglow-g" filter="url(#vf-glyphglow)" opacity="0">
+            <path d="M344 470 L454 560 L344 650" />
+            <path d="M512 668 H650" />
+          </g>
+          <path id="vf-gt" d="M344 470 L454 560 L344 650" />
+          <path id="vf-us" d="M512 668 H650" />
+        </g>
+      </svg>
+      <div id="vf-word"></div>
+      <div id="vf-tag"><span class="p">&gt;_</span><span id="vf-tagtext"></span><span id="vf-tagsrc" hidden>{C.assinatura}</span></div>
+      <div id="vf-os">Windows · macOS</div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-vf-fechamento {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-vf-fechamento #vf-cafe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  transform-origin: 0 0;
+}
+#cena-vf-fechamento #vf-cafe video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3840px;
+  height: 2160px;
+  image-rendering: pixelated;
+}
+#cena-vf-fechamento #vf-dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, rgba(13, 17, 23, 0.7) 0%, rgba(13, 17, 23, 0.94) 60%);
+  opacity: 0;
+}
+#cena-vf-fechamento #vf-halo {
+  position: absolute;
+  left: 40px;
+  top: 260px;
+  width: 1000px;
+  height: 1000px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, rgba(37, 99, 235, 0) 62%);
+  opacity: 0;
+}
+#cena-vf-fechamento #vf-px {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#cena-vf-fechamento #vf-px i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+}
+#cena-vf-fechamento #vf-lock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 470px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 40%;
+}
+#cena-vf-fechamento #vf-logo {
+  width: 400px;
+  height: 400px;
+  overflow: visible;
+}
+#cena-vf-fechamento #vf-word {
+  margin-top: 10px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 112px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+#cena-vf-fechamento #vf-word span {
+  display: inline-block;
+}
+#cena-vf-fechamento #vf-word .ide {
+  color: var(--primary);
+}
+#cena-vf-fechamento #vf-tag {
+  margin-top: 44px;
+  height: 64px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 50px;
+  color: var(--text);
+  white-space: pre;
+}
+#cena-vf-fechamento #vf-tag .p {
+  color: var(--accent);
+  margin-right: 22px;
+}
+#cena-vf-fechamento #vf-os {
+  margin-top: 22px;
+  font-family: var(--mono);
+  font-size: 32px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+</style>

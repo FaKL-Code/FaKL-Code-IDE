@@ -1,0 +1,251 @@
+import { randomBytes } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
+
+import type { CoreClient, SearchHit } from '@fakl/core';
+import { l10n } from '@fakl/i18n';
+import * as vscode from 'vscode';
+
+import type { AgentEventRouter } from './agents.js';
+import { fillTemplate } from './templates.js';
+import type { GraphFromWebview, GraphToWebview, VaultGraphData } from './vault-graph-protocol.js';
+
+/** Tag ou nota com a tag, na árvore de tags. */
+type TagItem =
+  | { readonly kind: 'tag'; readonly tag: string; readonly count: number }
+  | { readonly kind: 'note'; readonly path: string; readonly title: string };
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Grafo, tags e templates do vault (RF-403): o grafo de notas e links num
+ * painel, a árvore de tags na barra do vault e "Inserir template" no editor.
+ */
+export class VaultGraphUi implements vscode.TreeDataProvider<TagItem>, vscode.Disposable {
+  private readonly disposables: vscode.Disposable[] = [];
+  private readonly changed = new vscode.EventEmitter<undefined>();
+  private client: CoreClient | undefined;
+  private panel: vscode.WebviewPanel | undefined;
+
+  readonly onDidChangeTreeData = this.changed.event;
+
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly root: () => string | undefined,
+    router: AgentEventRouter,
+  ) {
+    this.disposables.push(
+      this.changed,
+      vscode.window.createTreeView('fakl.vault.tags', { treeDataProvider: this }),
+      router.listen((event) => {
+        if (event.topic === 'vault.sync') this.refresh();
+      }),
+      vscode.window.onDidChangeActiveTextEditor(() => {
+        this.postCurrent();
+      }),
+      vscode.workspace.onDidSaveTextDocument((document) => {
+        const root = this.root();
+        if (root && document.uri.fsPath.startsWith(root)) this.refresh();
+      }),
+      vscode.commands.registerCommand('fakl.vault.graph', () => {
+        this.showGraph();
+      }),
+      vscode.commands.registerCommand('fakl.vault.tags.refresh', () => {
+        this.refresh();
+      }),
+      vscode.commands.registerCommand('fakl.vault.insertTemplate', () => this.insertTemplate()),
+    );
+  }
+
+  connected(client: CoreClient): void {
+    this.client = client;
+    this.refresh();
+  }
+
+  disconnected(): void {
+    this.client = undefined;
+    this.changed.fire(undefined);
+  }
+
+  dispose(): void {
+    this.panel?.dispose();
+    for (const disposable of this.disposables) disposable.dispose();
+  }
+
+  private refresh(): void {
+    this.changed.fire(undefined);
+    if (this.panel) void this.postGraph();
+  }
+
+  // ---------------------------------------------------------------- tags
+
+  getTreeItem(item: TagItem): vscode.TreeItem {
+    if (item.kind === 'tag') {
+      const tree = new vscode.TreeItem(`#${item.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
+      tree.description = String(item.count);
+      tree.iconPath = new vscode.ThemeIcon('tag');
+      tree.contextValue = 'tag';
+      return tree;
+    }
+    const tree = new vscode.TreeItem(item.title, vscode.TreeItemCollapsibleState.None);
+    tree.description = item.path;
+    tree.iconPath = new vscode.ThemeIcon('note');
+    tree.command = {
+      command: 'fakl.vault.openNote',
+      title: l10n.t('Open'),
+      arguments: [item.path],
+    };
+    return tree;
+  }
+
+  async getChildren(item?: TagItem): Promise<TagItem[]> {
+    const client = this.client;
+    if (!client || !this.root()) return [];
+    try {
+      if (!item) {
+        const tags = await client.request<Record<string, number>>('vault.tags');
+        return Object.entries(tags)
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .map(([tag, count]) => ({ kind: 'tag', tag, count }));
+      }
+      if (item.kind !== 'tag') return [];
+      const hits = await client.request<SearchHit[]>('vault.search', {
+        query: `tag:${item.tag}`,
+        limite: 100,
+      });
+      return hits
+        .filter((hit) => hit.tags.includes(item.tag))
+        .map((hit) => ({ kind: 'note', path: hit.path, title: hit.title }));
+    } catch {
+      return [];
+    }
+  }
+
+  // ---------------------------------------------------------------- grafo
+
+  private showGraph(): void {
+    if (!this.root()) {
+      void vscode.window.showInformationMessage(l10n.t('Set up the vault first.'));
+      return;
+    }
+    if (this.panel) {
+      this.panel.reveal();
+      return;
+    }
+    const media = vscode.Uri.joinPath(this.extensionUri, 'dist', 'graph');
+    const panel = vscode.window.createWebviewPanel(
+      'fakl.vault.graph',
+      l10n.t('Vault graph'),
+      vscode.ViewColumn.Beside,
+      { enableScripts: true, localResourceRoots: [media] },
+    );
+    this.panel = panel;
+    panel.webview.html = this.html(panel.webview, media);
+    panel.webview.onDidReceiveMessage((message: GraphFromWebview) => {
+      if (message.type === 'ready') void this.postGraph();
+      else void vscode.commands.executeCommand('fakl.vault.openNote', message.path);
+    });
+    panel.onDidDispose(() => {
+      this.panel = undefined;
+    });
+  }
+
+  private currentNote(): string | undefined {
+    const root = this.root();
+    const file = vscode.window.activeTextEditor?.document.uri.fsPath;
+    if (!root || !file?.startsWith(root)) return undefined;
+    return file
+      .slice(root.length + 1)
+      .split('\\')
+      .join('/');
+  }
+
+  private postCurrent(): void {
+    const current = this.currentNote();
+    if (current) this.post({ type: 'current', path: current });
+  }
+
+  private async postGraph(): Promise<void> {
+    const client = this.client;
+    if (!client) return;
+    try {
+      const graph = await client.request<VaultGraphData>('vault.graph');
+      const current = this.currentNote();
+      this.post({ type: 'graph', graph, ...(current ? { current } : {}) });
+    } catch (error) {
+      void vscode.window.showWarningMessage(l10n.t("Couldn't read the graph: {0}", message(error)));
+    }
+  }
+
+  private post(message: GraphToWebview): void {
+    void this.panel?.webview.postMessage(message);
+  }
+
+  private html(webview: vscode.Webview, media: vscode.Uri): string {
+    const nonce = randomBytes(16).toString('base64');
+    const script = webview.asWebviewUri(vscode.Uri.joinPath(media, 'graph.js'));
+    const csp = [
+      "default-src 'none'",
+      `style-src ${webview.cspSource} 'unsafe-inline'`,
+      `script-src 'nonce-${nonce}'`,
+    ].join('; ');
+    return `<!doctype html>
+<html lang="${vscode.env.language}">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #filtro { position: absolute; top: 8px; left: 8px; width: 220px; padding: 4px 6px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent); }
+  #info { position: absolute; bottom: 8px; left: 8px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+</style>
+<title>${l10n.t('Vault graph')}</title>
+</head>
+<body>
+<canvas id="grafo" aria-label="${l10n.t('Graph of vault notes')}"></canvas>
+<input id="filtro" type="search" placeholder="${l10n.t('Filter notes')}" aria-label="${l10n.t('Filter notes')}">
+<div id="info"></div>
+<script nonce="${nonce}" src="${script.toString()}"></script>
+</body>
+</html>`;
+  }
+
+  // ---------------------------------------------------------------- templates
+
+  private async insertTemplate(): Promise<void> {
+    const root = this.root();
+    const editor = vscode.window.activeTextEditor;
+    if (!root) {
+      void vscode.window.showInformationMessage(l10n.t('Set up the vault first.'));
+      return;
+    }
+    if (!editor) {
+      void vscode.window.showInformationMessage(l10n.t('Open a note to insert the template.'));
+      return;
+    }
+    const dir = join(root, 'Templates');
+    const files = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith('.md')).sort();
+    if (files.length === 0) {
+      void vscode.window.showInformationMessage(
+        l10n.t(
+          'No templates in Templates/. Create notes there, with {{title}}, {{date}} and {{time}} wherever you want.',
+        ),
+      );
+      return;
+    }
+    const picked = await vscode.window.showQuickPick(
+      files.map((f) => ({ label: f.replace(/\.md$/, ''), file: f })),
+      { title: l10n.t('Insert template'), placeHolder: l10n.t('Which template?') },
+    );
+    if (!picked) return;
+    const text = await readFile(join(dir, picked.file), 'utf8');
+    const title = basename(editor.document.uri.fsPath).replace(/\.md$/i, '');
+    await editor.edit((edit) => {
+      edit.replace(editor.selection, fillTemplate(text, title));
+    });
+  }
+}

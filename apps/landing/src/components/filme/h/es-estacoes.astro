@@ -1,0 +1,352 @@
+---
+// Cena portada do filme de apresentação (05-estacoes.html).
+import { langDaUrl, pastaFilme, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-es-estacoes" data-cena="es-estacoes">
+    <div id="es-grid"></div>
+    <div id="es-glow"></div>
+    <div id="es-stage">
+      <div id="es-world">
+        <!-- 1. Vault -->
+        <section class="es" id="es-0" style="left: 0px">
+          <div class="tag"><i>01</i><span>VAULT</span></div>
+          <div class="win">
+            <div class="side">
+              <h4>Backlinks</h4>
+              <div class="row es-row0">{C.estacoes.projetos}</div>
+              <div class="row es-row0">{C.estacoes.memoria}</div>
+              <div class="row es-row0">{C.estacoes.diario}</div>
+              <div class="row es-row0">devlog/maestro</div>
+              <h4 style="margin-top: 28px">Tags</h4>
+              <div class="row es-row0">{C.estacoes.tags}</div>
+            </div>
+            <div class="main">
+              <video preload="auto" id="es-graph" muted playsinline><source src={`${F}/vault-graph.webm`} type="video/webm" /><source src={`${F}/vault-graph.mp4`} type="video/mp4" /></video>
+            </div>
+          </div>
+        </section>
+        <!-- 2. SSH -->
+        <section class="es" id="es-1" style="left: 2000px">
+          <div class="tag"><i>02</i><span>SSH</span></div>
+          <div class="win">
+            <div class="side">
+              <h4>{C.estacoes.hostsSsh}</h4>
+              <div class="row on">{C.estacoes.vps}</div>
+              <div class="row sub">{C.estacoes.politica}</div>
+              <div class="row">staging</div>
+              <h4 style="margin-top: 28px">{C.estacoes.agentes}</h4>
+              <div class="row">Infra · claude-sonnet</div>
+            </div>
+            <div class="main"><div class="term" id="es-term"></div></div>
+          </div>
+        </section>
+        <!-- 3. GitHub -->
+        <section class="es" id="es-2" style="left: 4000px">
+          <div class="tag"><i>03</i><span>GITHUB</span></div>
+          <div class="win">
+            <div id="es-gh-wrap" style="position: absolute; left: 0; top: 0; width: 1600px; height: 900px">
+              <img id="es-gh" src={`${F}/github-home.webp`} alt="" />
+              <div id="es-gh-hl"></div>
+            </div>
+          </div>
+        </section>
+        <!-- 4. Hostinger e Lovable -->
+        <section class="es" id="es-3" style="left: 6000px">
+          <div class="tag"><i>04</i><span>HOSTINGER · LOVABLE</span></div>
+          <div class="win">
+            <div class="side">
+              <h4>Hostinger</h4>
+              <div class="row es-row3">VPS</div>
+              <div class="row sub es-row3">{C.estacoes.vpsRodando}</div>
+              <div class="row es-row3">{C.estacoes.dominios}</div>
+              <div class="row sub es-row3">{C.estacoes.dominio}</div>
+              <div class="row sub es-row3">A @ · CNAME www</div>
+              <div class="row es-row3">Firewall</div>
+            </div>
+            <div class="main">
+              <div class="palette" id="es-pal">
+                <div class="qq">&gt; <span id="es-pal-q"></span><span id="es-pal-caret">▏</span></div>
+                <div id="es-pal-sel"></div>
+                <div class="opt" style="position: relative">Lovable: <b>{C.estacoes.lovableAbrir}</b></div>
+                <div class="opt" style="position: relative">{C.estacoes.lovableLigar}</div>
+                <div class="opt" style="position: relative">{C.estacoes.hostingerSnapshot}</div>
+                <div class="opt" style="position: relative">{C.estacoes.hostingerDns}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- 5. Extensões e MCP -->
+        <section class="es" id="es-4" style="left: 8000px">
+          <div class="tag"><i>05</i><span>{C.estacoes.extensoes}</span></div>
+          <div class="win">
+            <div class="side">
+              <h4>{C.estacoes.extensoesOpenVsx}</h4>
+              <div class="row es-row4">ESLint</div>
+              <div class="row es-row4">Prettier</div>
+              <div class="row es-row4">GitLens</div>
+              <div class="row es-row4">Python</div>
+              <h4 style="margin-top: 28px">{C.estacoes.recursosIa}</h4>
+              <div class="row on es-row4">{C.estacoes.servidoresMcp}</div>
+            </div>
+            <div class="main">
+              <div class="mcp-grid">
+                <div class="mcp es-mcp"><span class="inst" id="es-i1">{C.estacoes.instalado}</span><b>github</b><small>{C.estacoes.mcpCodigo}</small></div>
+                <div class="mcp es-mcp"><span class="inst" id="es-i2">{C.estacoes.instalado}</span><b>playwright</b><small>{C.estacoes.mcpNavegador}</small></div>
+                <div class="mcp es-mcp"><b>context7</b><small>{C.estacoes.mcpDocs}</small></div>
+                <div class="mcp es-mcp"><b>sonarqube</b><small>{C.estacoes.mcpCodigo}</small></div>
+                <div class="mcp es-mcp"><b>postman</b><small>{C.estacoes.mcpNavegador}</small></div>
+                <div class="mcp es-mcp"><b>serena</b><small>{C.estacoes.mcpCodigo}</small></div>
+                <div class="mcp es-mcp"><b>filesystem</b><small>{C.estacoes.mcpCodigo}</small></div>
+                <div class="mcp es-mcp"><b>chrome-devtools</b><small>{C.estacoes.mcpNavegador}</small></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-es-estacoes {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-es-estacoes #es-grid {
+  position: absolute;
+  left: -200px;
+  top: 0;
+  width: 12400px;
+  height: 1080px;
+  background-image: linear-gradient(rgba(55, 65, 81, 0.5) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(55, 65, 81, 0.5) 2px, transparent 2px);
+  background-size: 64px 64px;
+  opacity: 0.18;
+}
+#cena-es-estacoes #es-glow {
+  position: absolute;
+  left: 360px;
+  top: 0;
+  width: 1200px;
+  height: 1100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.26) 0%, rgba(37, 99, 235, 0) 65%);
+}
+#cena-es-estacoes #es-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2000px;
+}
+#cena-es-estacoes #es-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-style: preserve-3d;
+}
+#cena-es-estacoes .es {
+  position: absolute;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-style: preserve-3d;
+}
+#cena-es-estacoes .es .tag {
+  position: absolute;
+  left: 160px;
+  top: 66px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+#cena-es-estacoes .es .tag i {
+  font-style: normal;
+  color: var(--muted);
+  margin-right: 18px;
+}
+#cena-es-estacoes .es .win {
+  position: absolute;
+  left: 160px;
+  top: 120px;
+  width: 1600px;
+  height: 740px;
+  background: #07090d;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  font-family: var(--sans);
+  color: #e6edf3;
+  box-shadow: 0 50px 140px rgba(0, 0, 0, 0.7);
+}
+#cena-es-estacoes .side {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 440px;
+  background: #0b0f16;
+  border-right: 2px solid #1c2330;
+  padding: 24px 0;
+  font-size: 23px;
+}
+#cena-es-estacoes .side h4 {
+  margin: 0 0 12px;
+  padding: 0 26px;
+  font-family: var(--mono);
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  color: #9fb0c3;
+  text-transform: uppercase;
+}
+#cena-es-estacoes .side .row {
+  padding: 10px 26px;
+  color: #c9d4df;
+  white-space: nowrap;
+}
+#cena-es-estacoes .side .row.sub {
+  padding-left: 58px;
+  color: #9fb0c3;
+}
+#cena-es-estacoes .side .row.on {
+  background: #2563eb33;
+  color: #e6edf3;
+}
+#cena-es-estacoes .main {
+  position: absolute;
+  left: 440px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+#cena-es-estacoes #es-graph {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1160px;
+  height: 740px;
+  object-fit: cover;
+}
+#cena-es-estacoes .term {
+  padding: 34px 40px;
+  font-family: var(--mono);
+  font-size: 27px;
+  line-height: 1.6;
+  white-space: pre;
+  color: #e6edf3;
+}
+#cena-es-estacoes .term .g {
+  color: #4ade80;
+}
+#cena-es-estacoes .term .c {
+  color: #22d3ee;
+}
+#cena-es-estacoes .term .m {
+  color: #9fb0c3;
+}
+#cena-es-estacoes #es-term-caret {
+  display: inline-block;
+  width: 15px;
+  height: 32px;
+  vertical-align: -6px;
+  background: #22d3ee;
+}
+#cena-es-estacoes #es-gh {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+}
+#cena-es-estacoes #es-gh-hl {
+  position: absolute;
+  left: 46px;
+  top: 556px;
+  width: 1040px;
+  height: 86px;
+  border: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 40px rgba(6, 224, 255, 0.45);
+  opacity: 0;
+}
+#cena-es-estacoes .palette {
+  position: absolute;
+  left: 150px;
+  right: 150px;
+  top: 60px;
+  background: #0b0f16;
+  border: 2px solid #263041;
+  border-radius: 12px;
+  box-shadow: 0 24px 70px #00000099;
+  font-size: 24px;
+  overflow: hidden;
+}
+#cena-es-estacoes .palette .qq {
+  padding: 20px 24px;
+  border-bottom: 2px solid #1c2330;
+  font-family: var(--mono);
+  color: #e6edf3;
+}
+#cena-es-estacoes .palette .opt {
+  padding: 14px 24px;
+  color: #c9d4df;
+}
+#cena-es-estacoes .palette .opt b {
+  color: #22d3ee;
+  font-weight: 600;
+}
+#cena-es-estacoes #es-pal-sel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 76px;
+  height: 56px;
+  background: #2563eb44;
+  border-left: 4px solid var(--accent);
+}
+#cena-es-estacoes .mcp-grid {
+  position: absolute;
+  inset: 26px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-content: start;
+}
+#cena-es-estacoes .mcp {
+  position: relative;
+  padding: 16px 20px;
+  border: 2px solid #1c2330;
+  border-radius: 12px;
+  font-size: 22px;
+  background: #0b0f16;
+}
+#cena-es-estacoes .mcp b {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+#cena-es-estacoes .mcp small {
+  display: block;
+  margin-top: 6px;
+  color: #9fb0c3;
+  font-size: 17px;
+}
+#cena-es-estacoes .mcp .inst {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 17px;
+  color: #0d1117;
+  background: var(--accent);
+  border-radius: 9999px;
+  padding: 4px 12px;
+}
+</style>

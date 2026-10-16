@@ -1,0 +1,219 @@
+---
+// Cena portada do filme de apresentação (03-mesa.html).
+import { langDaUrl, pastaFilme, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-ms-mesa" data-cena="ms-mesa">
+    <div id="ms-glow"></div>
+    <div id="ms-floor"></div>
+    <div id="ms-stage">
+      <div id="ms-world">
+        <img id="ms-base" src={`${F}/mesa-base.webp`} alt="" />
+        <img id="ms-ropes" src={`${F}/mesa-ropes.webp`} alt="" />
+        <img id="ms-a1" class="ms-card" src={`${F}/mesa-card-a1.webp`} alt="" style="left: 876px; top: 166px" />
+        <img id="ms-a2" class="ms-card" src={`${F}/mesa-card-a2.webp`} alt="" style="left: 456px; top: 566px" />
+        <img id="ms-a3" class="ms-card" src={`${F}/mesa-card-a3.webp`} alt="" style="left: 876px; top: 566px" />
+        <img id="ms-a4" class="ms-card" src={`${F}/mesa-card-a4.webp`} alt="" style="left: 1296px; top: 566px" />
+        <div id="ms-r1" class="ms-ring" style="left: 896px; top: 186px"></div>
+        <div id="ms-r2" class="ms-ring" style="left: 476px; top: 586px"></div>
+        <div id="ms-r3" class="ms-ring" style="left: 896px; top: 586px"></div>
+        <div id="ms-r4" class="ms-ring" style="left: 1316px; top: 586px"></div>
+      </div>
+    </div>
+    <div id="ms-rail">
+      <span class="tag">MAESTRO</span>
+      <span class="chip" id="ms-c1">{C.mesa.planejando}</span><span class="arrow">→</span>
+      <span class="chip" id="ms-c2">{C.mesa.execucao}</span><span class="arrow">→</span>
+      <span class="chip" id="ms-c3">{C.mesa.revisao}</span><span class="arrow">→</span>
+      <span class="chip" id="ms-c4">{C.mesa.pr}</span>
+    </div>
+    <div id="ms-cost">
+      <div class="lbl">{C.mesa.gasto}</div>
+      <div id="ms-num"><span class="cur">{C.mesa.moeda}</span><span id="ms-val">0.00</span></div>
+      <div id="ms-bar"><div id="ms-fill"></div></div>
+      <div id="ms-cap-row"><span>{C.mesa.teto}</span><b>{C.mesa.limite}</b></div>
+    </div>
+    <div id="ms-flash"></div>
+  
+</div>
+
+<style is:global>
+#cena-ms-mesa {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-ms-mesa #ms-floor {
+  position: absolute;
+  left: -400px;
+  top: 300px;
+  width: 2720px;
+  height: 1200px;
+  background-image: linear-gradient(rgba(6, 224, 255, 0.16) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(6, 224, 255, 0.16) 2px, transparent 2px);
+  background-size: 80px 80px;
+  transform: perspective(900px) rotateX(62deg);
+  transform-origin: 50% 0;
+  opacity: 0;
+}
+#cena-ms-mesa #ms-glow {
+  position: absolute;
+  left: 360px;
+  top: 40px;
+  width: 1200px;
+  height: 1000px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.32) 0%, rgba(37, 99, 235, 0) 65%);
+}
+#cena-ms-mesa #ms-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2200px;
+  perspective-origin: 50% 45%;
+}
+#cena-ms-mesa #ms-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+}
+#cena-ms-mesa #ms-world img {
+  position: absolute;
+  display: block;
+}
+#cena-ms-mesa #ms-base,
+#cena-ms-mesa #ms-ropes {
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+#cena-ms-mesa #ms-base {
+  box-shadow: 0 0 0 2px #374151, 0 60px 140px rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+}
+#cena-ms-mesa .ms-card {
+  width: 408px;
+  height: 348px;
+}
+#cena-ms-mesa .ms-ring {
+  position: absolute;
+  width: 368px;
+  height: 308px;
+  border: 4px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(6, 224, 255, 0.7);
+  opacity: 0;
+}
+#cena-ms-mesa /* Grafismos planos por cima: trilho do maestro e contador de gasto. */
+        #ms-rail {
+  position: absolute;
+  right: 96px;
+  top: 96px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(13, 17, 23, 0.92);
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 26px;
+  opacity: 0;
+}
+#cena-ms-mesa #ms-rail .tag {
+  color: var(--muted);
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  margin: 0 6px 0 10px;
+}
+#cena-ms-mesa #ms-rail .chip {
+  position: relative;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+#cena-ms-mesa #ms-rail .arrow {
+  color: var(--border);
+}
+#cena-ms-mesa #ms-cost {
+  position: absolute;
+  left: 960px;
+  top: 300px;
+  width: 800px;
+  padding: 34px 44px 40px;
+  background: rgba(13, 17, 23, 0.94);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+}
+#cena-ms-mesa #ms-cost .lbl {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#cena-ms-mesa #ms-num {
+  display: inline-block;
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 150px;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  transform-origin: 0 80%;
+}
+#cena-ms-mesa #ms-num .cur {
+  font-size: 64px;
+  color: var(--muted);
+  margin-right: 18px;
+}
+#cena-ms-mesa #ms-bar {
+  position: relative;
+  margin-top: 34px;
+  height: 22px;
+  background: var(--surface);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+#cena-ms-mesa #ms-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: 0 50%;
+}
+#cena-ms-mesa #ms-cap-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--muted);
+}
+#cena-ms-mesa #ms-cap-row b {
+  color: var(--text);
+}
+#cena-ms-mesa #ms-flash {
+  position: absolute;
+  inset: 0;
+  background: #e5e7eb;
+  opacity: 0;
+}
+</style>

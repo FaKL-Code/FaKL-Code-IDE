@@ -1,0 +1,25 @@
+{
+  "name": "@fakl/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Idioma da interface: detecção do idioma, catálogos pt-BR por área e o l10n.t do @vscode/l10n, o mesmo mecanismo do VS Code, para webviews, app do celular, overlay, Core e CLI.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vscode/l10n": "0.0.18"
+  }
+}

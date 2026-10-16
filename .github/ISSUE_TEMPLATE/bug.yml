@@ -1,0 +1,39 @@
+name: Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu
+      description: Descreva o comportamento observado e o esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abrir ...
+        2. Clicar em ...
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema
+      options: [Windows 11, Windows 10, macOS arm64, macOS x64]
+      multiple: true
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão da FaKL-Code
+      placeholder: Ajuda > Sobre
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Trechos de ~/.fakl/logs. Confira se não há segredos antes de colar.
+      render: text

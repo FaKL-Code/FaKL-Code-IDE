@@ -1,0 +1,11 @@
+# Gera a imagem do relay no próprio VPS em vez de baixar a publicada no GHCR.
+# Precisa do pacote fakl-relay nesta pasta (relay.mjs e public/): o artefato do
+# workflow "Imagem do relay" ou `pnpm --filter @fakl/relay pack:relay`. Some
+# este arquivo ao compose de sempre:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#   docker compose -f docker-compose.traefik.yml -f docker-compose.build.yml up -d --build
+services:
+  relay:
+    build: .
+    image: fakl-relay:local
+    pull_policy: build

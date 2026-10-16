@@ -1,0 +1,15 @@
+# Normaliza finais de linha: LF no repositório, mesmo no Windows.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.png binary
+*.ico binary
+*.icns binary
+*.svg text
+*.woff binary
+*.woff2 binary
+
+pnpm-lock.yaml linguist-generated=true -diff

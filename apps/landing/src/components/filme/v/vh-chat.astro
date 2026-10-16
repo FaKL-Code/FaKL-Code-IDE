@@ -1,0 +1,209 @@
+---
+// Cena portada do filme de apresentação (v-chat.html).
+import { langDaUrl, pastaFilme, textos } from '../../../i18n';
+const C = textos(langDaUrl(Astro.url)).cena;
+const F = pastaFilme(langDaUrl(Astro.url));
+---
+
+<div class="cena" id="cena-vh-chat" data-cena="vh-chat">
+    <div id="vh-glow"></div>
+    <div id="vh-grid"></div>
+    <div id="vh-stage">
+      <div id="vh-chat">
+        <img id="vh-before" class="vh-img" src={`${F}/chat-before.webp`} alt="" />
+        <img id="vh-after" class="vh-img" src={`${F}/chat-after.webp`} alt="" />
+        <svg id="vh-cursor" viewBox="0 0 30 40"><path d="M2 2 L2 32 L10 24 L16 38 L21 36 L15 22 L26 22 Z" fill="#e5e7eb" stroke="#0d1117" stroke-width="2.5" stroke-linejoin="round" /></svg>
+        <div id="vh-ripple"></div>
+      </div>
+      <div id="vh-ed">
+        <div id="vh-tabs"><div class="tab"><span class="bar"></span>{C.chat.branch}</div></div>
+        <div id="vh-code">
+          <div class="ln"><span class="n">3</span><span class="m"> </span><span><span class="tk-k">export async function</span> <span class="tk-f">listarUsuarios</span>() <span class="tk-o">&#123;</span></span></div>
+          <div class="ln"><span class="n">4</span><span class="m"> </span><span>  <span class="tk-k">return</span> db.<span class="tk-f">usuarios</span>();</span></div>
+          <div class="ln"><span class="n">5</span><span class="m"> </span><span><span class="tk-o">&#125;</span></span></div>
+          <div class="ln"><span class="n">6</span><span class="m"> </span><span> </span></div>
+          <div class="ln" id="vh-old"><span class="n">7</span><span class="m"> </span><span><span class="tk-c">// TODO: busca</span></span></div>
+          <div class="ln add vh-add"><span class="n">7</span><span class="m">+</span><span><span class="tk-k">export async function</span> <span class="tk-f">buscarUsuarios</span>(</span></div>
+          <div class="ln add vh-add"><span class="n">8</span><span class="m">+</span><span>  <span class="tk-p">termo</span>: <span class="tk-t">string</span>,</span></div>
+          <div class="ln add vh-add"><span class="n">9</span><span class="m">+</span><span>) <span class="tk-o">&#123;</span></span></div>
+          <div class="ln add vh-add"><span class="n">10</span><span class="m">+</span><span>  <span class="tk-k">const</span> alvo = <span class="tk-p">termo</span>.<span class="tk-f">trim</span>().<span class="tk-f">toLowerCase</span>();</span></div>
+          <div class="ln add vh-add"><span class="n">11</span><span class="m">+</span><span>  <span class="tk-k">if</span> (!alvo) <span class="tk-k">return</span> <span class="tk-f">listarUsuarios</span>();</span></div>
+          <div class="ln add vh-add"><span class="n">12</span><span class="m">+</span><span>  <span class="tk-k">const</span> todos = <span class="tk-k">await</span> db.<span class="tk-f">usuarios</span>();</span></div>
+          <div class="ln add vh-add"><span class="n">13</span><span class="m">+</span><span>  <span class="tk-k">return</span> todos.<span class="tk-f">filter</span>((u) =&gt;</span></div>
+          <div class="ln add vh-add"><span class="n">14</span><span class="m">+</span><span>    [u.<span class="tk-pr">nome</span>, u.<span class="tk-pr">email</span>].<span class="tk-f">some</span>((v) =&gt;</span></div>
+          <div class="ln add vh-add"><span class="n">15</span><span class="m">+</span><span>      v.<span class="tk-f">toLowerCase</span>().<span class="tk-f">includes</span>(alvo)));</span></div>
+          <div class="ln add vh-add"><span class="n">16</span><span class="m">+</span><span><span class="tk-o">&#125;</span></span></div>
+        </div>
+      </div>
+    </div>
+  
+</div>
+
+<style is:global>
+#cena-vh-chat {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+#cena-vh-chat #vh-glow {
+  position: absolute;
+  left: -260px;
+  top: 200px;
+  width: 1600px;
+  height: 1500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, rgba(37, 99, 235, 0) 65%);
+}
+#cena-vh-chat #vh-grid {
+  position: absolute;
+  inset: -64px;
+  background-image: linear-gradient(rgba(55, 65, 81, 0.5) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(55, 65, 81, 0.5) 2px, transparent 2px);
+  background-size: 64px 64px;
+  opacity: 0.16;
+}
+#cena-vh-chat #vh-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 2200px;
+}
+#cena-vh-chat /* Painel do chat "Agentes FaKL" (webview real,
+#cena-vh-chat 480x710 em 2x),
+#cena-vh-chat ampliado 1,
+#cena-vh-chat 8x. */
+        #vh-chat {
+  position: absolute;
+  left: 108px;
+  top: 150px;
+  width: 864px;
+  height: 1278px;
+  background: #0b0f16;
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 60px 160px rgba(0, 0, 0, 0.75);
+  transform-origin: 50% 50%;
+}
+#cena-vh-chat .vh-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 864px;
+}
+#cena-vh-chat #vh-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 60px;
+  opacity: 0;
+}
+#cena-vh-chat #vh-ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 4px solid var(--accent);
+  opacity: 0;
+}
+#cena-vh-chat /* Editor com o diff,
+#cena-vh-chat que sobe por cima do chat. */
+        #vh-ed {
+  position: absolute;
+  left: 40px;
+  top: 520px;
+  width: 1000px;
+  height: 740px;
+  background: #07090d;
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 -30px 120px rgba(0, 0, 0, 0.75);
+  transform-origin: 50% 50%;
+}
+#cena-vh-chat #vh-tabs {
+  height: 64px;
+  background: #0b0f16;
+  border-bottom: 2px solid #1c2330;
+  display: flex;
+  font-family: var(--sans);
+  font-size: 24px;
+}
+#cena-vh-chat .tab {
+  position: relative;
+  padding: 0 28px;
+  line-height: 62px;
+  color: #e6edf3;
+  background: #07090d;
+  border-right: 2px solid #1c2330;
+  white-space: nowrap;
+}
+#cena-vh-chat .tab .bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: #22d3ee;
+}
+#cena-vh-chat #vh-code {
+  padding-top: 16px;
+  font-family: var(--mono);
+  font-size: 26px;
+  line-height: 42px;
+  color: #e6edf3;
+}
+#cena-vh-chat .ln {
+  display: flex;
+  overflow: hidden;
+  height: 42px;
+}
+#cena-vh-chat .ln .n {
+  flex: none;
+  width: 66px;
+  padding-right: 20px;
+  text-align: right;
+  color: #7b8594;
+}
+#cena-vh-chat .ln .m {
+  flex: none;
+  width: 28px;
+}
+#cena-vh-chat .ln > span:last-child {
+  white-space: pre;
+}
+#cena-vh-chat .ln.add {
+  background: rgba(74, 222, 128, 0.09);
+}
+#cena-vh-chat .ln.add .m {
+  color: #4ade80;
+}
+#cena-vh-chat .tk-k {
+  color: #7aa2ff;
+}
+#cena-vh-chat .tk-f {
+  color: #22d3ee;
+}
+#cena-vh-chat .tk-s {
+  color: #86efac;
+}
+#cena-vh-chat .tk-t {
+  color: #fbbf24;
+}
+#cena-vh-chat .tk-p {
+  color: #fcd9a8;
+}
+#cena-vh-chat .tk-c {
+  color: #5b6b80;
+}
+#cena-vh-chat .tk-o {
+  color: #9fb0c3;
+}
+#cena-vh-chat .tk-pr {
+  color: #c4b5fd;
+}
+</style>

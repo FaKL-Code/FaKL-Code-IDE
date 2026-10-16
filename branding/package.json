@@ -1,0 +1,16 @@
+{
+  "name": "@fakl/branding",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Logo, ícones e product.json da FaKL-Code, e o gerador dos ícones de cada plataforma.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "icons": "node scripts/generate-icons.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "png2icons": "^2.0.1"
+  }
+}

@@ -1,0 +1,180 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { site } from '../../config/site';
+import { caminhosPorIdioma, langDaUrl, textos } from '../../i18n';
+
+export const getStaticPaths = caminhosPorIdioma;
+
+const lang = langDaUrl(Astro.url);
+const T = textos(lang);
+const D = T.download;
+---
+
+<Base title={D.titulo} description={D.descricao}>
+  <section class="baixar wrap">
+    <div class="baixar-cab">
+      <img src="/icone.webp" alt="" width="512" height="512" />
+      <p class="kicker">{D.kicker}</p>
+      <h1>{D.h1}</h1>
+      <p class="lead">{D.lead}</p>
+    </div>
+
+    <ul class="plataformas">
+      {
+        site.downloads.map((d) => (
+          <li data-plataforma={d.id}>
+            <Icon name={d.id === 'macos' ? 'laptop' : 'monitor'} size={28} />
+            <div>
+              <h2>{d.plataforma}</h2>
+              <p>
+                {T.site[d.id].formato} · {T.site[d.id].requisito}
+              </p>
+            </div>
+            {d.status === 'disponivel' && d.url ? (
+              <a class="btn btn-primary" href={d.url}>
+                <Icon name="download" />
+                {D.baixar}
+              </a>
+            ) : (
+              <span class="selo">{D.embreve}</span>
+            )}
+            <span class="seu">{D.seuSistema}</span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="codigo">
+      <p>{D.codigo}</p>
+      <a class="btn btn-ghost" href={site.repo}>
+        <Icon name="github" />
+        {D.verCodigo}
+      </a>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform) || /Mac OS/.test(navigator.userAgent);
+  const win = /Win/.test(navigator.platform);
+  const meu = mac ? 'macos' : win ? 'windows' : '';
+  if (meu) document.querySelector(`[data-plataforma="${meu}"]`)?.setAttribute('data-seu', '');
+
+</script>
+
+<style>
+  .baixar {
+    max-width: 880px;
+    padding-top: calc(var(--nav-h) + 72px);
+    padding-bottom: 120px;
+  }
+  .baixar-cab {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+  .baixar-cab img {
+    width: 120px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 24px 50px rgb(37 99 235 / 55%));
+  }
+  .baixar-cab h1 {
+    margin: 14px 0;
+    font-family: var(--mono);
+    font-size: clamp(36px, 5vw, 60px);
+    letter-spacing: -0.04em;
+  }
+  .baixar-cab .lead {
+    color: #c3c9d4;
+    font-size: 19px;
+    max-width: 46ch;
+  }
+  .plataformas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 56px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .plataformas li {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-side);
+  }
+  .plataformas li[data-seu] {
+    border-color: var(--cyan);
+    box-shadow: 0 0 60px -20px rgb(6 224 255 / 45%);
+  }
+  .plataformas svg {
+    color: var(--cyan);
+  }
+  .plataformas h2 {
+    font-size: 20px;
+  }
+  .plataformas p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .selo {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: 12px/1 var(--mono);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .seu {
+    display: none;
+    position: absolute;
+    top: -10px;
+    left: 18px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--cyan);
+    color: #031018;
+    font: 600 11px/1.2 var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  [data-seu] .seu {
+    display: block;
+  }
+  .codigo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 40px;
+    padding: clamp(20px, 4vw, 28px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-side);
+  }
+  .codigo p {
+    max-width: 46ch;
+    margin: 0;
+    color: #c3c9d4;
+  }
+  @media (max-width: 700px) {
+    .plataformas {
+      grid-template-columns: 1fr;
+    }
+    .plataformas li {
+      grid-template-columns: auto 1fr;
+    }
+    .plataformas li > :last-of-type:not(.seu) {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+  }
+</style>

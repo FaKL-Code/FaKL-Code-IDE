@@ -1,0 +1,287 @@
+diff --git a/src/vs/code/electron-main/app.ts b/src/vs/code/electron-main/app.ts
+index 8176a5b..13cce31 100644
+--- a/src/vs/code/electron-main/app.ts
++++ b/src/vs/code/electron-main/app.ts
+@@ -16,6 +16,7 @@ import { getPathLabel } from '../../base/common/labels.js';
+ import { Disposable, DisposableStore, MutableDisposable, toDisposable } from '../../base/common/lifecycle.js';
+ import { Schemas, VSCODE_AUTHORITY } from '../../base/common/network.js';
+ import { join, posix } from '../../base/common/path.js';
++import { startFaklCore } from './faklCore.js';
+ import { IProcessEnvironment, isLinux, isLinuxSnap, isMacintosh, isWindows, OS } from '../../base/common/platform.js';
+ import { assertType } from '../../base/common/types.js';
+ import { URI } from '../../base/common/uri.js';
+@@ -729,6 +730,9 @@ export class CodeApplication extends Disposable {
+ 		// Error telemetry
+ 		appInstantiationService.invokeFunction(accessor => this._register(new ErrorTelemetry(accessor.get(ILogService), accessor.get(ITelemetryService))));
+ 
++		// FaKL Core
++		startFaklCore(this.environmentMainService.appRoot, this.logService, this.lifecycleMainService);
++
+ 		// Agent Host
+ 		// Always instantiate the starter + manager. They are cheap (the
+ 		// constructors only register an IPC listener and emitters) and the agent
+diff --git a/src/vs/code/electron-main/faklCore.ts b/src/vs/code/electron-main/faklCore.ts
+new file mode 100644
+index 0000000..8b7fd14
+--- /dev/null
++++ b/src/vs/code/electron-main/faklCore.ts
+@@ -0,0 +1,259 @@
++/*---------------------------------------------------------------------------------------------
++ *  FaKL-Code: inicia o FaKL Core junto com a IDE e o encerra ao sair (ADR 0005). Mostra as
++ *  notificações nativas dos agentes (RF-109), ao fechar com agentes trabalhando pergunta se
++ *  espera ou para (RF-110, ADR 0006) e reinicia o Core se ele cair (RNF-06). Também liga o Core ao
++ *  overlay dos agentes (ADR 0032, faklOverlay.ts).
++ *--------------------------------------------------------------------------------------------*/
++
++import { dialog, Notification, utilityProcess, type UtilityProcess } from 'electron';
++import { randomBytes } from 'crypto';
++import { existsSync } from 'fs';
++import { join } from '../../base/common/path.js';
++import { createFaklOverlay, ideWindows, type FaklOverlay } from './faklOverlay.js';
++import { ILogService } from '../../platform/log/common/log.js';
++import { ILifecycleMainService } from '../../platform/lifecycle/electron-main/lifecycleMainService.js';
++
++const SHUTDOWN_TIMEOUT_MS = 15000;
++const QUERY_TIMEOUT_MS = 1500;
++
++/** Mensagens do Core (packages/core/src/host.ts). */
++type FromCore =
++	| { type: 'ready'; socketPath: string }
++	| { type: 'notify'; title: string; body: string; sessionId: string; urgent: boolean }
++	| { type: 'overlay'; action: 'show' | 'hide' | 'toggle'; minimizeIde: boolean }
++	| { type: 'reveal' }
++	| { type: 'busy'; agents: string[] }
++	| { type: 'idle' }
++	| { type: 'permission'; sessionId: string; id: string; agent: string; title: string };
++
++function focusIde(): void {
++	// A janela do overlay não conta como IDE.
++	const window = ideWindows()[0];
++	if (window) {
++		if (window.isMinimized()) {
++			window.restore();
++		}
++		window.show();
++		window.focus();
++	}
++}
++
++/**
++ * Notificação do sistema só quando a IDE não está em foco; com ela em foco, a extensão avisa.
++ * Com o overlay visível, o aviso fica no balão do pet e a nativa só sai para pedidos urgentes;
++ * com "Não perturbe", nenhuma sai. Pedido urgente (permissão ou decisão do maestro) sem nenhuma
++ * janela da IDE visível mostra o pet.
++ */
++function notify(message: FromCore & { type: 'notify' }, overlay: FaklOverlay | undefined): void {
++	if (overlay && message.urgent && !overlay.isIdeVisible()) {
++		overlay.showPet();
++	}
++	if (overlay && (overlay.isQuiet() || (overlay.isVisible() && !message.urgent))) {
++		return;
++	}
++	if (!Notification.isSupported() || ideWindows().some(window => window.isFocused())) {
++		return;
++	}
++	const notification = new Notification({ title: message.title, body: message.body, silent: !message.urgent });
++	notification.on('click', () => (overlay ? overlay.reveal() : focusIde()));
++	notification.show();
++}
++
++function request<T extends FromCore['type']>(child: UtilityProcess, send: object, reply: T, timeout: number): Promise<(FromCore & { type: T }) | undefined> {
++	return new Promise(resolve => {
++		const timer = timeout > 0 ? setTimeout(() => done(undefined), timeout) : undefined;
++		const listener = (message: FromCore) => {
++			if (message?.type === reply) {
++				done(message as FromCore & { type: T });
++			}
++		};
++		const done = (value: (FromCore & { type: T }) | undefined) => {
++			clearTimeout(timer);
++			child.off('message', listener);
++			child.off('exit', onExit);
++			resolve(value);
++		};
++		const onExit = () => done(undefined);
++		child.on('message', listener);
++		child.once('exit', onExit);
++		child.postMessage(send);
++	});
++}
++
++/** Fechando com agentes trabalhando: esperar terminarem ou parar agora (RF-110). */
++async function waitForAgents(child: UtilityProcess, logService: ILogService): Promise<void> {
++	const busy = await request(child, { type: 'query-busy' }, 'busy', QUERY_TIMEOUT_MS);
++	if (!busy || busy.agents.length === 0) {
++		return;
++	}
++	const names = busy.agents.join(', ');
++	const { response } = await dialog.showMessageBox({
++		type: 'question',
++		title: 'Agentes trabalhando',
++		message: busy.agents.length === 1 ? `${names} ainda está trabalhando.` : `${busy.agents.length} agentes ainda estão trabalhando: ${names}.`,
++		detail: 'Esperar deixa os agentes terminarem; a IDE fecha sozinha em seguida. Parar agora interrompe os agentes e guarda o que fizeram nos branches deles.',
++		buttons: ['Esperar terminar', 'Parar agora'],
++		defaultId: 0,
++		cancelId: 1,
++		noLink: true
++	});
++	if (response !== 0) {
++		return;
++	}
++	logService.info('[fakl-core] esperando os agentes terminarem para fechar');
++	if (Notification.isSupported()) {
++		new Notification({ title: 'FaKL-Code fecha quando os agentes terminarem', body: names, silent: true }).show();
++	}
++	// Sem janela aberta, pedidos de permissão viram diálogos nativos.
++	const onPermission = (message: FromCore) => {
++		if (message?.type !== 'permission') {
++			return;
++		}
++		void dialog.showMessageBox({
++			type: 'warning',
++			title: `${message.agent} pede permissão`,
++			message: message.title,
++			buttons: ['Permitir', 'Negar'],
++			defaultId: 1,
++			cancelId: 1,
++			noLink: true
++		}).then(({ response }) => child.postMessage({ type: 'permission-answer', sessionId: message.sessionId, id: message.id, allow: response === 0 }));
++	};
++	child.on('message', onPermission);
++	try {
++		await request(child, { type: 'wait-idle' }, 'idle', 0);
++	} finally {
++		child.off('message', onPermission);
++	}
++}
++
++/** Reinícios seguidos permitidos dentro da janela; depois disso, o Core fica parado (RNF-06). */
++const MAX_RESTARTS = 5;
++const RESTART_WINDOW_MS = 10 * 60 * 1000;
++
++export function startFaklCore(appRoot: string, logService: ILogService, lifecycleMainService: ILifecycleMainService): void {
++	const entry = join(appRoot, 'extensions', 'fakl-core', 'dist', 'core.mjs');
++	if (!existsSync(entry)) {
++		logService.warn(`[fakl-core] não encontrado em ${entry}`);
++		return;
++	}
++
++	// O Core já prefixa as próprias linhas; o prefixo aqui é para o resto (erros do Node).
++	const log = (data: unknown) => {
++		for (const line of String(data).trimEnd().split('\n')) {
++			logService.info(line.startsWith('[fakl-core]') ? line : `[fakl-core] ${line}`);
++		}
++	};
++	let child: UtilityProcess;
++	let exited = false;
++	let shuttingDown = false;
++	const restarts: number[] = [];
++	// O overlay (ADR 0032) fala com o Core pelo socket; cria a janela só quando alguém pede.
++	const overlay = createFaklOverlay(appRoot, logService, lifecycleMainService);
++
++	const spawn = (restarted: boolean) => {
++		// O token protege a API local; o Core o grava em ~/.fakl/run/core.json,
++		// legível só pelo usuário, para extensões e CLI. Um reinício gera outro.
++		const token = randomBytes(32).toString('base64url');
++		const env: NodeJS.ProcessEnv = { ...process.env, FAKL_CORE_TOKEN: token };
++		if (restarted) {
++			// O Core retoma sozinho as execuções que a queda interrompeu.
++			env.FAKL_CORE_RESTARTED = '1';
++		}
++		const current = utilityProcess.fork(entry, [], { serviceName: 'FaKL Core', stdio: 'pipe', env });
++		child = current;
++		exited = false;
++		current.stdout?.on('data', log);
++		current.stderr?.on('data', log);
++		current.on('message', (message: FromCore) => {
++			if (current !== child) {
++				return;
++			}
++			switch (message?.type) {
++				case 'ready':
++					// A cada ready, inclusive depois de um reinício, o overlay reconecta com o token novo.
++					overlay?.connect(message.socketPath, token);
++					break;
++				case 'notify':
++					notify(message, overlay);
++					break;
++				case 'overlay':
++					if (message.action === 'hide') {
++						overlay?.hide();
++					} else if (message.action === 'toggle') {
++						overlay?.toggle(message.minimizeIde);
++					} else {
++						overlay?.show(message.minimizeIde);
++					}
++					break;
++				case 'reveal':
++					if (overlay) {
++						overlay.reveal();
++					} else {
++						focusIde();
++					}
++					break;
++			}
++		});
++		current.on('exit', code => {
++			if (current !== child) {
++				return;
++			}
++			exited = true;
++			logService.info(`[fakl-core] encerrado com código ${code}`);
++			if (!shuttingDown) {
++				restart(code);
++			}
++		});
++	};
++
++	// Se o Core cair com a IDE aberta, ele volta; as extensões reconectam sozinhas.
++	const restart = (code: number) => {
++		const now = Date.now();
++		while (restarts.length > 0 && now - restarts[0] > RESTART_WINDOW_MS) {
++			restarts.shift();
++		}
++		if (restarts.length >= MAX_RESTARTS) {
++			logService.error(`[fakl-core] caiu ${MAX_RESTARTS} vezes em 10 minutos; não reinicia mais até a IDE abrir de novo`);
++			if (Notification.isSupported()) {
++				new Notification({ title: 'O FaKL Core parou', body: 'Ele caiu várias vezes seguidas. Reabra a IDE; o log está em Saída > Principal.' }).show();
++			}
++			return;
++		}
++		restarts.push(now);
++		const delay = 1000 * 2 ** (restarts.length - 1);
++		logService.warn(`[fakl-core] caiu (código ${code}); reiniciando em ${delay} ms`);
++		setTimeout(() => {
++			if (!shuttingDown) {
++				spawn(true);
++			}
++		}, delay);
++	};
++
++	spawn(false);
++
++	lifecycleMainService.onWillShutdown(e => {
++		shuttingDown = true;
++		if (exited) {
++			return;
++		}
++		const current = child;
++		e.join('faklCore', (async () => {
++			await waitForAgents(current, logService).catch(error => logService.error(`[fakl-core] ${error}`));
++			if (exited) {
++				return;
++			}
++			await new Promise<void>(resolve => {
++				const timer = setTimeout(() => {
++					current.kill();
++					resolve();
++				}, SHUTDOWN_TIMEOUT_MS);
++				current.once('exit', () => {
++					clearTimeout(timer);
++					resolve();
++				});
++				current.postMessage({ type: 'shutdown' });
++			});
++		})());
++	});
++}

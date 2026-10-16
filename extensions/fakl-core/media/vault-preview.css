@@ -1,0 +1,77 @@
+/* Prévia de Markdown com o vault (RF-404): wikilinks e callouts como no Obsidian. */
+
+.fakl-wikilink {
+  text-decoration: none;
+  border-bottom: 1px dotted var(--vscode-textLink-foreground);
+}
+
+.fakl-wikilink-missing {
+  opacity: 0.65;
+  border-bottom-style: dashed;
+}
+
+.fakl-callout {
+  --fakl-callout: var(--vscode-textLink-foreground, #4a8fd9);
+  border-left: 4px solid var(--fakl-callout);
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  background: color-mix(in srgb, var(--fakl-callout) 10%, transparent);
+}
+
+.fakl-callout-title {
+  font-weight: 600;
+  color: var(--fakl-callout);
+  margin-bottom: 0.25em;
+}
+
+.fakl-callout-tip,
+.fakl-callout-success,
+.fakl-callout-check,
+.fakl-callout-done {
+  --fakl-callout: #2ea043;
+}
+
+.fakl-callout-warning,
+.fakl-callout-caution,
+.fakl-callout-attention,
+.fakl-callout-question,
+.fakl-callout-help,
+.fakl-callout-faq {
+  --fakl-callout: #d29922;
+}
+
+.fakl-callout-danger,
+.fakl-callout-error,
+.fakl-callout-failure,
+.fakl-callout-fail,
+.fakl-callout-missing,
+.fakl-callout-bug {
+  --fakl-callout: #e5534b;
+}
+
+.fakl-callout-example {
+  --fakl-callout: #a371f7;
+}
+
+.fakl-callout-quote,
+.fakl-callout-cite {
+  --fakl-callout: #8b949e;
+}
+
+/* Diagramas Mermaid. */
+.fakl-mermaid {
+  margin: 1em 0;
+  text-align: center;
+}
+
+.fakl-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.fakl-mermaid-erro {
+  text-align: left;
+  color: var(--vscode-errorForeground);
+  font-family: var(--vscode-editor-font-family);
+  white-space: pre-wrap;
+}

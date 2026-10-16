@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - apps/*
+  - extensions/*
+  - branding
+
+# Só estas dependências podem rodar scripts de instalação.
+onlyBuiltDependencies:
+  - lefthook

@@ -1,0 +1,19 @@
+{
+  "name": "@fakl/overlay",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Modo minimizado (ADR 0032): o pet e o painel dos agentes numa janela pequena por cima de tudo, montados em extensions/fakl-core/dist/overlay/.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "node preview/build.mjs"
+  },
+  "devDependencies": {
+    "@fakl/conversa": "workspace:*",
+    "@fakl/i18n": "workspace:*",
+    "@fakl/protocol": "workspace:*",
+    "esbuild": "^0.28.2"
+  }
+}

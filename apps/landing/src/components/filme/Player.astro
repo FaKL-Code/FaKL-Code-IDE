@@ -1,0 +1,119 @@
+---
+/*
+ * O player: um só para a página inteira. Ele guarda as cenas do filme (16:9 e
+ * 9:16) e voa de um monitor a outro conforme a rolagem passa pelas seções.
+ */
+import G1 from './h/g1-gancho.astro';
+import Cf from './h/cf-cafe.astro';
+import Ms from './h/ms-mesa.astro';
+import Ch from './h/ch-chat.astro';
+import Es from './h/es-estacoes.astro';
+import Cl from './h/cl-celular.astro';
+import Mk from './h/mk-marca.astro';
+import V1 from './v/v1-gancho.astro';
+import Vc from './v/vc-cafe.astro';
+import Vt from './v/vt-trav.astro';
+import Vm from './v/vm-mesa.astro';
+import Vh from './v/vh-chat.astro';
+import Ve from './v/ve-estacoes.astro';
+import Vp from './v/vp-celular.astro';
+import Vf from './v/vf-fechamento.astro';
+
+---
+
+<div class="player" data-player aria-hidden="true">
+  <div class="palco palco-h" data-palco="h">
+    <G1 /><Cf /><Ms /><Ch /><Es /><Cl /><Mk />
+  </div>
+  <div class="palco palco-v" data-palco="v">
+    <V1 /><Vc /><Vt /><Vm /><Vh /><Ve /><Vp /><Vf />
+  </div>
+  <div class="wipe" data-wipe></div>
+</div>
+
+<style is:global>
+  /* Fica no palco; o filme.ts põe ele sobre o monitor da seção da vez. */
+  .player {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: 2;
+    overflow: hidden;
+    background: #0d1117;
+    border-radius: var(--raio, 0px);
+    box-shadow: 0 0 0 1px rgb(55 65 81 / var(--borda, 0));
+    pointer-events: none;
+    will-change: transform, width, height;
+    visibility: hidden;
+  }
+  .player[data-no-ar] {
+    visibility: visible;
+  }
+  .palco {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(var(--s, 0.5));
+    overflow: hidden;
+    background: #0d1117;
+    contain: layout paint;
+    --bg: #0d1117;
+    --surface: #1f2937;
+    --border: #374151;
+    --text: #e5e7eb;
+    --muted: #a1a1aa;
+    --primary: #2563eb;
+    --accent: #06e0ff;
+    --mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  }
+  .palco-h {
+    width: 1920px;
+    height: 1080px;
+  }
+  .palco-v {
+    width: 1080px;
+    height: 1920px;
+    display: none;
+  }
+  @media (max-aspect-ratio: 17/20) {
+    .palco-h {
+      display: none;
+    }
+    .palco-v {
+      display: block;
+    }
+  }
+  .palco .cena {
+    visibility: hidden;
+  }
+  .palco .cena.no-ar {
+    visibility: visible;
+  }
+  .palco .cena i {
+    font-style: normal;
+  }
+  /* A sala ao vivo: 1280x720 ampliada 3x, no espaço 6x dos clipes do filme. */
+  .sala {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    transform: scale(3);
+    transform-origin: 0 0;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+  .sala-berco {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    visibility: hidden;
+  }
+</style>

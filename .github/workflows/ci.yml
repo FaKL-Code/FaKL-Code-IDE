@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Tudo roda nos runners hospedados do GitHub: código de terceiros (PRs de forks)
+  # nunca roda na máquina de ninguém.
+  quality:
+    name: Qualidade (formato, lint, tipos, testes)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Num Windows com WSL, o primeiro bash do PATH é o do WSL; os passos precisam do Git Bash.
+      - name: Git Bash no PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\bin"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          # Um pnpm por runner: vários runners na mesma máquina disputavam ~/setup-pnpm (EBUSY).
+          dest: ${{ runner.tool_cache }}/setup-pnpm
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm build
+      - name: Tradução pt-BR completa
+        run: pnpm check:l10n
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - name: Shellcheck dos scripts de build
+        # O pacote npm baixa o binário do shellcheck do sistema do runner.
+        run: pnpm dlx shellcheck@4.1.0 -x build/*.sh
+
+  branding:
+    # Monta a árvore de build sem compilar e confere a marca. Barato; o build
+    # completo fica no build.yml, sob demanda.
+    name: Marca na árvore de build
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Git Bash no PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\bin"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          # Um pnpm por runner: vários runners na mesma máquina disputavam ~/setup-pnpm (EBUSY).
+          dest: ${{ runner.tool_cache }}/setup-pnpm
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: build/prepare.sh
+      - run: build/check-branding.sh
+
+  segredos:
+    # Nada de segredo nem de dado pessoal no repositório: gitleaks no histórico
+    # e na árvore, mais a lista de termos proibidos (só hashes) nos arquivos e
+    # nos emails dos commits do PR.
+    name: Segredos e termos proibidos
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - name: Git Bash no PATH
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\bin"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Termos proibidos
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ -n "${BASE}" ]]; then
+            node build/termos-proibidos.mjs --commits "${BASE}..${HEAD}"
+          else
+            node build/termos-proibidos.mjs
+          fi
+      # Binário oficial da release, conferido contra o SHA-256 fixado aqui.
+      - name: Instalar o gitleaks (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        # .NET direto: em runners com política de execução restrita, os módulos
+        # de script do PowerShell não carregam (Get-FileHash, Expand-Archive).
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'gitleaks.zip'
+          $dest = Join-Path $env:RUNNER_TEMP 'gitleaks'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/gitleaks/gitleaks/releases/download/v$env:GITLEAKS_VERSION/gitleaks_$($env:GITLEAKS_VERSION)_windows_x64.zip", $zip)
+          $stream = [System.IO.File]::OpenRead($zip)
+          try {
+            $hash = -join ([System.Security.Cryptography.SHA256]::Create().ComputeHash($stream) | ForEach-Object { $_.ToString('x2') })
+          } finally {
+            $stream.Close()
+          }
+          if ($hash -ne 'd29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e') { throw "SHA-256 inesperado: $hash" }
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $dest)
+          Add-Content -Path $env:GITHUB_PATH -Value $dest
+      - name: Instalar o gitleaks (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          curl -fsSL -o "${RUNNER_TEMP}/gitleaks.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  ${RUNNER_TEMP}/gitleaks.tar.gz" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/gitleaks"
+          tar -xzf "${RUNNER_TEMP}/gitleaks.tar.gz" -C "${RUNNER_TEMP}/gitleaks" gitleaks
+          echo "${RUNNER_TEMP}/gitleaks" >> "${GITHUB_PATH}"
+      - name: gitleaks no histórico
+        run: gitleaks git . --no-banner --redact --config .gitleaks.toml
+      - name: gitleaks na árvore
+        run: gitleaks dir . --no-banner --redact --config .gitleaks.toml

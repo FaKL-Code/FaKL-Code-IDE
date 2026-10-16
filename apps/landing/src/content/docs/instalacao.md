@@ -1,0 +1,27 @@
+---
+titulo: Instalação
+descricao: Plataformas, distribuição e os primeiros passos depois de instalar.
+ordem: 2
+---
+
+## Plataformas
+
+| Sistema | Instalador    | Requisito                    |
+| ------- | ------------- | ---------------------------- |
+| Windows | x64           | Windows 10 ou 11, 64 bits    |
+| macOS   | Apple Silicon | Mac com chip M1 ou mais novo |
+
+Os instaladores ainda não foram publicados. Quando saírem, ficam na página [Baixar](/download/). Enquanto isso, o código está aberto no [GitHub](https://github.com/FaKL-Code/FaKL-Code-IDE).
+
+## Depois de instalar
+
+1. **Instale as CLIs dos agentes que quiser usar** e entre com a sua conta em cada uma: Claude Code, Codex e Gemini CLI. A IDE usa os logins delas; o Core não lê credenciais.
+2. **Modelos locais (opcional):** instale o Ollama ou o LM Studio. O adaptador local da IDE fala com eles e dá ao modelo as ferramentas de ler, buscar, editar e rodar comandos dentro do worktree.
+3. **Ponha a CLI no PATH:** rode o comando **Pôr a CLI fakl no PATH do sistema** pela paleta de comandos para usar `fakl` em qualquer terminal.
+4. **Entre no GitHub** pelo comando **Entrar no GitHub** e, se usar, **Conectar à Hostinger**.
+5. **Configure o vault** com **Configurar o vault**, apontando para a sua pasta de notas.
+6. **Pareie o celular** com **Parear aparelho para acesso remoto**, se quiser acompanhar de longe.
+
+## Atualizações
+
+Ainda não há atualização automática. Cada versão nova chega como um instalador novo.

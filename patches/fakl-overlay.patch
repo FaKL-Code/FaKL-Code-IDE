@@ -1,0 +1,730 @@
+diff --git a/src/vs/code/electron-main/faklOverlay.ts b/src/vs/code/electron-main/faklOverlay.ts
+new file mode 100644
+index 0000000..301f5c7
+--- /dev/null
++++ b/src/vs/code/electron-main/faklOverlay.ts
+@@ -0,0 +1,685 @@
++/*---------------------------------------------------------------------------------------------
++ *  FaKL-Code: overlay dos agentes, o "modo minimizado" (ADR 0032). Uma janela pequena, sem moldura
++ *  e sempre no topo (pet de 72x72 ou painel de 380x560) que acompanha e comanda os agentes sem a
++ *  IDE na tela. É uma página local (extensions/fakl-core/dist/overlay) sem acesso ao Node: este
++ *  arquivo conecta ao Core pelo socket, faz o session.hello com o token que o processo principal
++ *  gerou e repassa as linhas JSON-RPC pelo preload. Também cuida da bandeja, do atalho global e de
++ *  esconder/mostrar as janelas da IDE.
++ *
++ *  Fechar a IDE com o overlay aberto: no Windows e no Linux o lifecycleMainService dispara o
++ *  onWillShutdown (que encerra o Core) quando a última janela registrada fecha. Esconder essa
++ *  janela em vez de fechá-la não serve: o lifecycle só deixa o 'close' passar depois de descarregar
++ *  o renderer, e a janela não volta usável. Por isso o overlay pede ao lifecycle que se comporte
++ *  como no macOS (setFaklKeepAlive, um caminho que o Code já exercita): a janela fecha de verdade e
++ *  libera a memória, e o aplicativo segue com o Core, os agentes, o overlay e a bandeja. A janela do
++ *  overlay também segura o `window-all-closed` do Electron. A saída efetiva é um quit explícito
++ *  ("Sair", Arquivo > Sair), que passa pelo diálogo de agentes da ADR 0006; o overlay só fecha no
++ *  onWillShutdown, com a saída já confirmada (um quit vetado por arquivo não salvo não o toca).
++ *--------------------------------------------------------------------------------------------*/
++
++import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, screen, Tray, type IpcMainEvent, type NativeImage, type Rectangle } from 'electron';
++import { spawn } from 'child_process';
++import { connect, type Socket } from 'net';
++import { existsSync, readFileSync, writeFileSync } from 'fs';
++import { FileAccess } from '../../base/common/network.js';
++import { join } from '../../base/common/path.js';
++import { URI } from '../../base/common/uri.js';
++import { ILogService } from '../../platform/log/common/log.js';
++import { ILifecycleMainService, setFaklKeepAlive } from '../../platform/lifecycle/electron-main/lifecycleMainService.js';
++
++const PET_SIZE = 72;
++const PANEL_WIDTH = 380;
++const PANEL_HEIGHT = 560;
++/** Largura da janela com o balão ao lado do pet (o balão tem no máximo 220px, ver overlay.css). */
++const BALLOON_WIDTH = 304;
++/** Distância da borda da tela em que o pet fica preso ao soltar. */
++const EDGE_MARGIN = 8;
++const RECONNECT_MIN_MS = 500;
++const RECONNECT_MAX_MS = 15000;
++/** Uma linha maior que isso não é JSON-RPC do Core: derruba a conexão. */
++const MAX_LINE_CHARS = 32 * 1024 * 1024;
++const HELLO_ID = 'overlay-hello';
++const GLOBAL_SHORTCUT = 'CommandOrControl+Alt+Space';
++
++/** `balao` é o pet com espaço ao lado para o balão. */
++type Mode = 'pet' | 'painel' | 'balao';
++/** Lado do pet para onde o balão abre. */
++type Side = 'esquerda' | 'direita';
++type Status = 'online' | 'offline';
++type Command = 'compor' | 'painel' | 'pet';
++
++interface SavedState {
++	x?: number;
++	y?: number;
++	quiet?: boolean;
++}
++
++/** PNG 16x16 verde, usado na bandeja quando o aplicativo não traz um ícone. */
++const FALLBACK_ICON = 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAG0lEQVR4nGPQW+D8nxLMMGrAqAGjBvwfJgYAALfREB+vzaqXAAAAAElFTkSuQmCC';
++
++/** Janela do overlay; fica fora das funções da IDE (focusIde, esconder, mostrar). */
++let overlayWindow: BrowserWindow | undefined;
++
++/** Janelas da IDE (workbench), sem a do overlay. */
++export function ideWindows(): BrowserWindow[] {
++	return BrowserWindow.getAllWindows().filter(window => window !== overlayWindow && !window.isDestroyed());
++}
++
++export interface FaklOverlay {
++	/** Endereço e token do Core; chamado a cada `ready`, inclusive depois de um reinício do Core. */
++	connect(socketPath: string, token: string): void;
++	/** Mostra o overlay; com `minimizeIde`, esconde as janelas da IDE. */
++	show(minimizeIde: boolean): void;
++	hide(): void;
++	toggle(minimizeIde: boolean): void;
++	/** Mostra só o pet, sem tirar o foco de quem está usando outro programa. */
++	showPet(): void;
++	/** Traz a IDE para a frente. */
++	reveal(): void;
++	isVisible(): boolean;
++	/** Há janela da IDE visível e não minimizada. */
++	isIdeVisible(): boolean;
++	/** Não perturbe: sem notificações nativas nem balões; a bandeja e o painel leem daqui. */
++	isQuiet(): boolean;
++}
++
++export function createFaklOverlay(appRoot: string, logService: ILogService, lifecycleMainService: ILifecycleMainService): FaklOverlay | undefined {
++	const dir = join(appRoot, 'extensions', 'fakl-core', 'dist', 'overlay');
++	const index = join(dir, 'index.html');
++	if (!existsSync(index)) {
++		logService.warn(`[fakl-overlay] não encontrado em ${index}`);
++		return undefined;
++	}
++
++	const statePath = join(app.getPath('userData'), 'fakl-overlay.json');
++	const state = loadState(statePath, logService);
++	const hiddenIde = new Set<BrowserWindow>();
++	let tray: Tray | undefined;
++	let mode: Mode = 'pet';
++	let petBounds: Rectangle | undefined;
++	let side: Side = 'esquerda';
++	// Só vira true no onWillShutdown, com a saída confirmada; um quit vetado não mexe nele.
++	let shuttingDown = false;
++	let loaded = false;
++	let pendingCommand: Command | undefined;
++	// A IDE só some depois que a página do overlay respondeu: sem pet na tela, ela não pode sumir.
++	let hideIdeWhenReady = false;
++
++	// Conexão com o Core.
++	let target: { socketPath: string; token: string } | undefined;
++	let socket: Socket | undefined;
++	let status: Status = 'offline';
++	let attempt = 0;
++	let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
++
++	const send = (channel: string, ...args: unknown[]) => {
++		if (overlayWindow && !overlayWindow.isDestroyed() && loaded) {
++			overlayWindow.webContents.send(channel, ...args);
++		}
++	};
++
++	const setStatus = (next: Status) => {
++		status = next;
++		send('fakl-overlay:status', status);
++	};
++
++	const disconnect = () => {
++		clearTimeout(reconnectTimer);
++		reconnectTimer = undefined;
++		const current = socket;
++		socket = undefined;
++		current?.removeAllListeners();
++		current?.on('error', () => undefined);
++		current?.destroy();
++		setStatus('offline');
++	};
++
++	const scheduleReconnect = () => {
++		if (!target || shuttingDown || reconnectTimer || !overlayWindow) {
++			return;
++		}
++		const delay = Math.min(RECONNECT_MIN_MS * 2 ** attempt, RECONNECT_MAX_MS);
++		attempt++;
++		reconnectTimer = setTimeout(() => {
++			reconnectTimer = undefined;
++			openSocket();
++		}, delay);
++	};
++
++	const openSocket = () => {
++		if (!target || socket || shuttingDown) {
++			return;
++		}
++		const { socketPath, token } = target;
++		let buffer = '';
++		let authenticated = false;
++		const current = connect(socketPath);
++		socket = current;
++		current.setEncoding('utf8');
++		current.on('connect', () => {
++			current.write(`${JSON.stringify({ jsonrpc: '2.0', id: HELLO_ID, method: 'session.hello', params: { token, client: 'overlay' } })}\n`);
++		});
++		current.on('data', (chunk: string) => {
++			buffer += chunk;
++			if (buffer.length > MAX_LINE_CHARS) {
++				current.destroy();
++				return;
++			}
++			let newline = buffer.indexOf('\n');
++			while (newline >= 0) {
++				const line = buffer.slice(0, newline).trim();
++				buffer = buffer.slice(newline + 1);
++				newline = buffer.indexOf('\n');
++				if (!line) {
++					continue;
++				}
++				if (authenticated) {
++					send('fakl-overlay:frame', line);
++					continue;
++				}
++				// Antes do hello respondido só vem a resposta dele.
++				try {
++					const reply = JSON.parse(line) as { id?: unknown; error?: unknown };
++					if (reply.id !== HELLO_ID || reply.error) {
++						logService.warn(`[fakl-overlay] o Core recusou o session.hello: ${line}`);
++						current.destroy();
++						return;
++					}
++				} catch {
++					current.destroy();
++					return;
++				}
++				authenticated = true;
++				attempt = 0;
++				setStatus('online');
++			}
++		});
++		// 'error' sempre é seguido de 'close'; a reconexão fica no 'close'.
++		current.on('error', error => logService.trace(`[fakl-overlay] socket: ${error.message}`));
++		current.on('close', () => {
++			if (socket !== current) {
++				return;
++			}
++			socket = undefined;
++			setStatus('offline');
++			scheduleReconnect();
++		});
++	};
++
++	const restartBridge = () => {
++		if (!overlayWindow) {
++			return;
++		}
++		disconnect();
++		attempt = 0;
++		openSocket();
++	};
++
++	const saveState = () => {
++		try {
++			writeFileSync(statePath, JSON.stringify(state));
++		} catch (error) {
++			logService.warn(`[fakl-overlay] não foi possível gravar ${statePath}: ${error}`);
++		}
++	};
++
++	const workArea = (bounds: Rectangle) => screen.getDisplayMatching(bounds).workArea;
++
++	/** Posição do pet: a salva, se ainda cabe em alguma tela; senão, o canto inferior direito. */
++	const initialPetBounds = (): Rectangle => {
++		if (typeof state.x === 'number' && typeof state.y === 'number') {
++			const saved = { x: state.x, y: state.y, width: PET_SIZE, height: PET_SIZE };
++			const fits = screen.getAllDisplays().some(({ workArea: a }) =>
++				saved.x >= a.x && saved.y >= a.y && saved.x + PET_SIZE <= a.x + a.width && saved.y + PET_SIZE <= a.y + a.height);
++			if (fits) {
++				return saved;
++			}
++		}
++		const area = screen.getPrimaryDisplay().workArea;
++		return { x: area.x + area.width - PET_SIZE - EDGE_MARGIN * 2, y: area.y + area.height - PET_SIZE - EDGE_MARGIN * 2, width: PET_SIZE, height: PET_SIZE };
++	};
++
++	const applyBounds = (bounds: Rectangle) => {
++		if (!overlayWindow) {
++			return;
++		}
++		// Janelas não redimensionáveis ignoram setBounds em alguns gerenciadores de janela.
++		overlayWindow.setResizable(true);
++		overlayWindow.setBounds(bounds);
++		overlayWindow.setResizable(false);
++	};
++
++	/** Painel que abre para dentro da tela: alinha com a borda do pet que está mais perto do centro da tela. */
++	const panelBoundsFor = (pet: Rectangle): Rectangle => {
++		const area = workArea(pet);
++		const alignRight = pet.x + pet.width / 2 > area.x + area.width / 2;
++		const alignBottom = pet.y + pet.height / 2 > area.y + area.height / 2;
++		const x = alignRight ? pet.x + pet.width - PANEL_WIDTH : pet.x;
++		const y = alignBottom ? pet.y + pet.height - PANEL_HEIGHT : pet.y;
++		return {
++			x: Math.max(area.x, Math.min(x, area.x + area.width - PANEL_WIDTH)),
++			y: Math.max(area.y, Math.min(y, area.y + area.height - PANEL_HEIGHT)),
++			width: PANEL_WIDTH,
++			height: PANEL_HEIGHT
++		};
++	};
++
++	/** O balão abre para o lado do centro da tela, longe da borda em que o pet está preso. */
++	const sideFor = (pet: Rectangle): Side => {
++		const area = workArea(pet);
++		return pet.x + pet.width / 2 > area.x + area.width / 2 ? 'esquerda' : 'direita';
++	};
++
++	/** Onde o pet está dentro da janela larga do balão (x relativo); acompanha um arrasto com o balão aberto. */
++	let balloonPetOffset = 0;
++
++	/** Onde o pet está agora na tela. */
++	const currentPet = (): Rectangle => {
++		if (!overlayWindow || mode === 'painel') {
++			return petBounds ?? initialPetBounds();
++		}
++		const { x, y } = overlayWindow.getBounds();
++		return { x: mode === 'balao' ? x + balloonPetOffset : x, y, width: PET_SIZE, height: PET_SIZE };
++	};
++
++	/** Aplica a forma atual a partir da posição do pet. */
++	const applyShape = (pet: Rectangle) => {
++		if (!overlayWindow) {
++			return;
++		}
++		// Só a forma com balão deixa passar cliques pela área vazia (canal click-through).
++		overlayWindow.setIgnoreMouseEvents(false);
++		if (mode === 'painel') {
++			applyBounds(panelBoundsFor(pet));
++		} else if (mode === 'balao') {
++			side = sideFor(pet);
++			send('fakl-overlay:side', side);
++			const area = workArea(pet);
++			const wanted = side === 'esquerda' ? pet.x + pet.width - BALLOON_WIDTH : pet.x;
++			const x = Math.max(area.x, Math.min(wanted, area.x + area.width - BALLOON_WIDTH));
++			balloonPetOffset = pet.x - x;
++			applyBounds({ x, y: pet.y, width: BALLOON_WIDTH, height: PET_SIZE });
++		} else {
++			applyBounds(pet);
++		}
++	};
++
++	const setMode = (next: Mode) => {
++		if (!overlayWindow || next === mode) {
++			return;
++		}
++		petBounds = currentPet();
++		mode = next;
++		applyShape(petBounds);
++	};
++
++	/** Ao soltar o pet, prende na borda mais próxima da tela e guarda a posição. */
++	const snapPet = () => {
++		if (!overlayWindow || mode === 'painel') {
++			return;
++		}
++		const bounds = currentPet();
++		const area = workArea(bounds);
++		const toLeft = bounds.x - area.x;
++		const toRight = area.x + area.width - (bounds.x + bounds.width);
++		const toTop = bounds.y - area.y;
++		const toBottom = area.y + area.height - (bounds.y + bounds.height);
++		const nearest = Math.min(toLeft, toRight, toTop, toBottom);
++		let { x, y } = bounds;
++		if (nearest === toLeft) {
++			x = area.x + EDGE_MARGIN;
++		} else if (nearest === toRight) {
++			x = area.x + area.width - bounds.width - EDGE_MARGIN;
++		} else if (nearest === toTop) {
++			y = area.y + EDGE_MARGIN;
++		} else {
++			y = area.y + area.height - bounds.height - EDGE_MARGIN;
++		}
++		x = Math.max(area.x, Math.min(x, area.x + area.width - bounds.width));
++		y = Math.max(area.y, Math.min(y, area.y + area.height - bounds.height));
++		petBounds = { x, y, width: PET_SIZE, height: PET_SIZE };
++		applyShape(petBounds);
++		// A página precisa do lado do balão antes de mostrar o próximo.
++		side = sideFor(petBounds);
++		send('fakl-overlay:side', side);
++		state.x = x;
++		state.y = y;
++		saveState();
++	};
++
++	/** Só o webContents do overlay fala com este processo. */
++	const fromOverlay = (event: IpcMainEvent): boolean => !!overlayWindow && !overlayWindow.isDestroyed() && event.sender === overlayWindow.webContents;
++
++	const handlers: Record<string, (event: IpcMainEvent, ...args: unknown[]) => void> = {
++		'fakl-overlay:send': (event, frame) => {
++			if (fromOverlay(event) && typeof frame === 'string' && status === 'online') {
++				socket?.write(`${frame}\n`);
++			}
++		},
++		'fakl-overlay:mode': (event, next) => {
++			if (fromOverlay(event) && (next === 'pet' || next === 'painel' || next === 'balao')) {
++				setMode(next);
++			}
++		},
++		'fakl-overlay:set-quiet': (event, quiet) => {
++			if (fromOverlay(event) && typeof quiet === 'boolean') {
++				setQuiet(quiet);
++			}
++		},
++		// Com o balão, a página diz se o ponteiro está na área vazia: ali os cliques passam para o que
++		// está embaixo, e `forward` mantém os movimentos chegando para ela desfazer ao voltar ao pet.
++		// No Linux não há `forward`: a área vazia segura os cliques enquanto o balão está na tela.
++		'fakl-overlay:click-through': (event, through) => {
++			if (fromOverlay(event) && typeof through === 'boolean' && mode === 'balao' && process.platform !== 'linux') {
++				overlayWindow?.setIgnoreMouseEvents(through, { forward: true });
++			}
++		},
++		'fakl-overlay:hide': event => {
++			if (fromOverlay(event)) {
++				overlayWindow?.hide();
++			}
++		},
++		'fakl-overlay:quit': event => {
++			if (fromOverlay(event)) {
++				app.quit();
++			}
++		},
++		'fakl-overlay:ready': event => {
++			if (!fromOverlay(event)) {
++				return;
++			}
++			loaded = true;
++			if (hideIdeWhenReady) {
++				hideIdeWhenReady = false;
++				hideIde();
++			}
++			send('fakl-overlay:status', status);
++			send('fakl-overlay:quiet', !!state.quiet);
++			send('fakl-overlay:side', side);
++			if (pendingCommand) {
++				send('fakl-overlay:command', pendingCommand);
++				pendingCommand = undefined;
++			}
++		}
++	};
++
++	const loadIcon = (): NativeImage => {
++		const candidates = [join(dir, 'tray.png'), join(appRoot, 'resources', 'linux', 'code.png'), join(appRoot, 'resources', 'win32', 'code_150x150.png')];
++		for (const path of candidates) {
++			if (existsSync(path)) {
++				const image = nativeImage.createFromPath(path);
++				if (!image.isEmpty()) {
++					return image.resize({ width: 16, height: 16 });
++				}
++			}
++		}
++		return nativeImage.createFromBuffer(Buffer.from(FALLBACK_ICON, 'base64'));
++	};
++
++	// O menu é refeito a cada mudança: no Linux, mudar o item não redesenha a bandeja.
++	const updateTrayMenu = () => {
++		tray?.setContextMenu(Menu.buildFromTemplate([
++			{ label: 'Mostrar overlay', click: () => overlay.show(false) },
++			{ label: 'Abrir IDE', click: () => overlay.reveal() },
++			{ label: 'Não perturbe', type: 'checkbox', checked: !!state.quiet, click: item => setQuiet(item.checked) },
++			{ type: 'separator' },
++			{ label: 'Sair', click: () => app.quit() }
++		]));
++	};
++
++	/** "Não perturbe" mora aqui, gravado junto com a posição; a bandeja e o painel pedem e escutam. */
++	const setQuiet = (quiet: boolean) => {
++		if (!!state.quiet !== quiet) {
++			state.quiet = quiet;
++			saveState();
++		}
++		updateTrayMenu();
++		send('fakl-overlay:quiet', quiet);
++	};
++
++	const createTray = () => {
++		try {
++			tray = new Tray(loadIcon());
++			tray.setToolTip('FaKL-Code');
++			tray.on('click', () => overlay.show(false));
++			updateTrayMenu();
++		} catch (error) {
++			logService.warn(`[fakl-overlay] sem ícone na bandeja: ${error}`);
++			tray = undefined;
++		}
++	};
++
++	const createWindow = (): BrowserWindow => {
++		if (overlayWindow && !overlayWindow.isDestroyed()) {
++			return overlayWindow;
++		}
++		petBounds = initialPetBounds();
++		side = sideFor(petBounds);
++		mode = 'pet';
++		loaded = false;
++		const window = new BrowserWindow({
++			...petBounds,
++			frame: false,
++			transparent: true,
++			hasShadow: false,
++			alwaysOnTop: true,
++			skipTaskbar: true,
++			resizable: false,
++			maximizable: false,
++			fullscreenable: false,
++			show: false,
++			webPreferences: {
++				preload: join(dir, 'preload.cjs'),
++				contextIsolation: true,
++				sandbox: true,
++				nodeIntegration: false
++			}
++		});
++		overlayWindow = window;
++		window.setAlwaysOnTop(true, process.platform === 'darwin' ? 'screen-saver' : 'floating');
++		if (process.platform === 'darwin') {
++			window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
++		}
++		// Nada de abrir janelas nem navegar para fora da página local.
++		window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
++		window.webContents.on('will-navigate', event => event.preventDefault());
++		// 'moved' (Windows e macOS) vem uma vez ao soltar o pet; no Linux o pet só fica onde foi solto.
++		window.on('moved', snapPet);
++		// Alt+F4 e um quit ainda não confirmado escondem: a janela só fecha no onWillShutdown.
++		window.on('close', event => {
++			if (!shuttingDown) {
++				event.preventDefault();
++				window.hide();
++			}
++		});
++		window.on('closed', () => {
++			if (overlayWindow === window) {
++				overlayWindow = undefined;
++				loaded = false;
++				disconnect();
++			}
++		});
++		// A página não carregou ou caiu: o overlay some e a IDE escondida volta, para nada ficar sem tela.
++		const recover = (reason: string) => {
++			logService.error(`[fakl-overlay] ${reason}`);
++			loaded = false;
++			hideIdeWhenReady = false;
++			restoreIde();
++			if (!window.isDestroyed()) {
++				window.hide();
++			}
++		};
++		window.webContents.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
++			// Depois de carregada, um will-navigate barrado também chega aqui (-3): não é falha.
++			if (isMainFrame && !loaded) {
++				recover(`não carregou ${url}: ${description} (${code})`);
++			}
++		});
++		window.webContents.on('render-process-gone', (_event, details) => recover(`a página parou: ${details.reason}`));
++		// O Code recusa file:// no processo principal (protocolMainService); a página vem pelo
++		// vscode-file://, como o workbench, e a pasta dela fica dentro do appRoot.
++		window.loadURL(FileAccess.uriToBrowserUri(URI.file(index)).toString(true)).catch(error => recover(String(error)));
++		if (!tray) {
++			createTray();
++		}
++		restartBridge();
++		return window;
++	};
++
++	const hideIde = () => {
++		for (const window of ideWindows()) {
++			if (window.isVisible()) {
++				hiddenIde.add(window);
++				window.once('closed', () => hiddenIde.delete(window));
++				window.hide();
++			}
++		}
++	};
++
++	/** Mostra de volta as janelas que o modo minimizado escondeu. */
++	const restoreIde = () => {
++		for (const window of hiddenIde) {
++			if (!window.isDestroyed()) {
++				window.show();
++			}
++		}
++		hiddenIde.clear();
++	};
++
++	/** Sem nenhuma janela da IDE, relança o executável sem argumentos: ele cai na instância única e abre uma janela. */
++	const openWorkbench = () => {
++		const env = { ...process.env };
++		delete env.ELECTRON_RUN_AS_NODE;
++		try {
++			spawn(process.execPath, [], { detached: true, stdio: 'ignore', env }).unref();
++		} catch (error) {
++			logService.warn(`[fakl-overlay] não foi possível abrir uma janela da IDE: ${error}`);
++		}
++	};
++
++	const command = (value: Command) => {
++		if (value !== 'pet') {
++			setMode('painel');
++		}
++		if (loaded) {
++			send('fakl-overlay:command', value);
++		} else {
++			pendingCommand = value;
++		}
++	};
++
++	const overlay: FaklOverlay = {
++		connect(socketPath, token) {
++			target = { socketPath, token };
++			restartBridge();
++		},
++		show(minimizeIde) {
++			const window = createWindow();
++			if (minimizeIde) {
++				if (loaded) {
++					hideIde();
++				} else {
++					hideIdeWhenReady = true;
++				}
++			}
++			window.show();
++			if (mode === 'painel') {
++				window.focus();
++			}
++		},
++		hide() {
++			overlayWindow?.hide();
++		},
++		toggle(minimizeIde) {
++			if (overlay.isVisible()) {
++				overlay.hide();
++			} else {
++				overlay.show(minimizeIde);
++			}
++		},
++		showPet() {
++			const window = createWindow();
++			if (!window.isVisible()) {
++				window.showInactive();
++			}
++		},
++		reveal() {
++			const candidates = ideWindows().filter(window => window.isVisible() || hiddenIde.has(window));
++			if (candidates.length === 0) {
++				openWorkbench();
++			} else {
++				for (const window of candidates) {
++					if (window.isMinimized()) {
++						window.restore();
++					}
++					window.show();
++				}
++				(candidates.find(window => window.isFocused()) ?? candidates[0]).focus();
++			}
++			hiddenIde.clear();
++			// A IDE voltou: o painel recolhe para o pet.
++			if (overlay.isVisible()) {
++				setMode('pet');
++				send('fakl-overlay:command', 'pet');
++			}
++		},
++		isVisible: () => !!overlayWindow && !overlayWindow.isDestroyed() && overlayWindow.isVisible(),
++		isIdeVisible: () => ideWindows().some(window => window.isVisible() && !window.isMinimized()),
++		isQuiet: () => !!state.quiet
++	};
++
++	for (const [channel, handler] of Object.entries(handlers)) {
++		ipcMain.on(channel, handler);
++	}
++
++	// O atalho abre o painel já no compositor, de qualquer programa.
++	try {
++		const registered = globalShortcut.register(GLOBAL_SHORTCUT, () => {
++			overlay.show(false);
++			command('compor');
++		});
++		if (!registered) {
++			logService.warn(`[fakl-overlay] o atalho ${GLOBAL_SHORTCUT} já está em uso`);
++		}
++	} catch (error) {
++		logService.warn(`[fakl-overlay] não foi possível registrar ${GLOBAL_SHORTCUT}: ${error}`);
++	}
++
++	// Com o overlay aberto, fechar a última janela da IDE não encerra o aplicativo (ver o topo do arquivo).
++	setFaklKeepAlive(() => !shuttingDown && !!overlayWindow && !overlayWindow.isDestroyed());
++	lifecycleMainService.onBeforeCloseWindow(window => {
++		// A última janela da IDE fecha e o aplicativo fica: o pet aparece para mostrar que ele segue.
++		const last = !ideWindows().some(other => other !== window.win && other.isVisible());
++		if (last && !lifecycleMainService.quitRequested && overlayWindow && !overlayWindow.isDestroyed()) {
++			overlay.showPet();
++		}
++	});
++	// Saída confirmada (nenhuma janela vetou): o overlay fecha e solta o aplicativo.
++	lifecycleMainService.onWillShutdown(() => {
++		shuttingDown = true;
++		overlayWindow?.close();
++	});
++	app.on('will-quit', () => {
++		globalShortcut.unregister(GLOBAL_SHORTCUT);
++		for (const [channel, handler] of Object.entries(handlers)) {
++			ipcMain.removeListener(channel, handler);
++		}
++		disconnect();
++		tray?.destroy();
++		tray = undefined;
++	});
++
++	return overlay;
++}
++
++function loadState(path: string, logService: ILogService): SavedState {
++	try {
++		if (existsSync(path)) {
++			const parsed = JSON.parse(readFileSync(path, 'utf8')) as SavedState | null;
++			return typeof parsed === 'object' && parsed ? parsed : {};
++		}
++	} catch (error) {
++		logService.warn(`[fakl-overlay] não foi possível ler ${path}: ${error}`);
++	}
++	return {};
++}
+diff --git a/src/vs/platform/lifecycle/electron-main/lifecycleMainService.ts b/src/vs/platform/lifecycle/electron-main/lifecycleMainService.ts
+index f039180..3e0eb3c 100644
+--- a/src/vs/platform/lifecycle/electron-main/lifecycleMainService.ts
++++ b/src/vs/platform/lifecycle/electron-main/lifecycleMainService.ts
+@@ -23,6 +23,16 @@ import { getAllWindowsExcludingOffscreen } from '../../windows/electron-main/win
+ 
+ export const ILifecycleMainService = createDecorator<ILifecycleMainService>('lifecycleMainService');
+ 
++/**
++ * FaKL-Code (ADR 0032): com o overlay dos agentes aberto, fechar a última janela no Windows e no
++ * Linux não encerra o aplicativo: ele segue como no macOS (Core, agentes e overlay continuam) até
++ * um quit explícito. O overlay (faklOverlay.ts) diz aqui quando está aberto.
++ */
++let faklKeepAlive: () => boolean = () => false;
++export function setFaklKeepAlive(keepAlive: () => boolean): void {
++	faklKeepAlive = keepAlive;
++}
++
+ interface WindowLoadEvent {
+ 
+ 	/**
+@@ -291,7 +301,7 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
+ 			// macOS: can run without any window open. in that case we fire
+ 			// the onWillShutdown() event directly because there is no veto
+ 			// to be expected.
+-			if (isMacintosh && this.windowCounter === 0) {
++			if ((isMacintosh || faklKeepAlive()) && this.windowCounter === 0) {
+ 				this.fireOnWillShutdown(ShutdownReason.QUIT);
+ 			}
+ 		};
+@@ -469,7 +479,7 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
+ 			// if there are no more code windows opened, fire the onWillShutdown event, unless
+ 			// we are on macOS where it is perfectly fine to close the last window and
+ 			// the application continues running (unless quit was actually requested)
+-			if (this.windowCounter === 0 && (!isMacintosh || this._quitRequested)) {
++			if (this.windowCounter === 0 && ((!isMacintosh && !faklKeepAlive()) || this._quitRequested)) {
+ 				this.fireOnWillShutdown(ShutdownReason.QUIT);
+ 			}
+ 		}));

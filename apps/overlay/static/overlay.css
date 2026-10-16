@@ -1,0 +1,1251 @@
+/*
+ * Modo minimizado (ADR 0032), na marca Terminal (ADR 0015) e com as cores do
+ * tema FaKL Noite da IDE (extensions/fakl-core/themes): superfícies, bordas,
+ * texto e estados são os mesmos da barra lateral, dos widgets e do terminal. A janela é
+ * transparente: o pet e o painel desenham as próprias formas. O pet é o
+ * prompt `>_` da marca; o anel e o fio do topo do painel dizem o estado.
+ */
+
+:root {
+  --noite: #0b0f16; /* sideBar.background */
+  --placa: #0f141d; /* editorWidget.background */
+  --placa-2: #151b25;
+  --fio: #263041; /* widget.border */
+  --texto: #e6edf3; /* foreground */
+  --suave: #8b949e; /* descriptionForeground */
+  --primaria: #2563eb;
+  --primaria-texto: #ffffff;
+  --primaria-hover: #1d4ed8;
+  /* editor.background: fundo de campos, código e da tela do pet. */
+  --fundo: #07090d;
+  --link: #7dd3fc; /* textLink.foreground */
+  /* Cores de estado, como preenchimento (anel, pontos) e como tinta (texto). */
+  --ciano: #06e0ff;
+  --ciano-tinta: #5ee9ff;
+  --ambar: #fbbf24; /* terminal.ansiYellow */
+  --ambar-tinta: #fcd34d;
+  --brasa: #f87171; /* terminal.ansiRed */
+  --brasa-tinta: #fca5a5;
+  --violeta: #a78bfa;
+  --verde: #4ade80;
+  --quieto: #3a4456;
+  /* Padrões da cor do agente e do estado; os atributos data-familia e data-tom trocam. */
+  --familia: #22d3ee; /* terminal.ansiCyan */
+  --estado: var(--suave);
+  --sombra: 0 10px 28px rgba(0, 0, 0, 0.5);
+  /* A mesma pilha de fontes do workbench do VS Code. */
+  --sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans',
+    sans-serif;
+  --mono: 'Cascadia Code', 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--texto);
+  font: 13px/1.45 var(--sans);
+  overflow: hidden;
+  user-select: none;
+}
+
+#app {
+  height: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ciano);
+  outline-offset: 2px;
+}
+
+.meta {
+  color: var(--suave);
+  font-weight: 400;
+}
+
+.sem-ponte {
+  margin: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--noite);
+  border: 1px solid var(--fio);
+}
+
+/* ------------------------------------------------------------------ pet */
+
+.pet {
+  position: fixed;
+  inset: 0;
+  --anel: var(--quieto);
+  --tinta: var(--suave);
+}
+
+.pet[data-anel='trabalhando'] {
+  --anel: var(--ciano);
+  --tinta: var(--ciano);
+}
+
+.pet[data-anel='espera'] {
+  --anel: var(--ambar);
+  --tinta: var(--ambar);
+}
+
+.pet[data-anel='falha'] {
+  --anel: var(--brasa);
+  --tinta: var(--brasa);
+}
+
+.pet-corpo {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  /* A face do terminal da marca: escura, com brilho no topo. */
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(37, 99, 235, 0.35), transparent 60%), var(--noite);
+  box-shadow:
+    inset 0 0 0 1px var(--fio),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+
+/* O anel: uma coroa desenhada por máscara, para girar sem mexer no rosto. */
+.pet-anel {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: conic-gradient(var(--anel) 0 100%);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
+}
+
+.pet[data-anel='quieto'] .pet-anel {
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+}
+
+.pet[data-anel='trabalhando'] .pet-anel {
+  background: conic-gradient(from 0deg, transparent 0 8%, var(--anel) 62%, transparent 63%);
+  animation: giro 1.4s linear infinite;
+}
+
+.pet[data-anel='espera'] .pet-anel {
+  animation: chamado 1.6s ease-in-out infinite;
+}
+
+.pet-rosto {
+  position: absolute;
+  inset: 9px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--fundo);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  display: grid;
+  place-items: center;
+}
+
+.pet-rosto:focus-visible {
+  outline-offset: 4px;
+}
+
+.pet-glifo {
+  font: 600 19px/1 var(--mono);
+  letter-spacing: -0.5px;
+  color: #06e0ff;
+  text-shadow: 0 0 8px rgba(6, 224, 255, 0.55);
+  transform: translateY(-1px);
+}
+
+.pet-cursor {
+  display: inline-block;
+  min-width: 0.6em;
+  color: var(--tinta);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--tinta) 60%, transparent);
+}
+
+.pet[data-anel='quieto'] .pet-glifo {
+  color: var(--suave);
+  text-shadow: none;
+}
+
+.pet[data-anel='quieto'] .pet-cursor {
+  color: var(--suave);
+  text-shadow: none;
+}
+
+.pet[data-anel='trabalhando'] .pet-cursor {
+  animation: cursor 1.05s steps(1) infinite;
+}
+
+.pet[data-conexao='offline'] .pet-glifo {
+  opacity: 0.45;
+}
+
+.pet-selo {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--anel);
+  color: var(--noite);
+  font: 700 11px/20px var(--sans);
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--noite);
+  -webkit-app-region: no-drag;
+  pointer-events: none;
+}
+
+.pet[data-anel='quieto'] .pet-selo {
+  display: none;
+}
+
+/*
+ * Com o balão, a janela se alarga (forma `balao` da ponte) para o lado do
+ * centro da tela, dito em data-lado; o pet fica no canto oposto.
+ */
+.pet[data-lado='direita'] .pet-corpo {
+  right: auto;
+  left: 4px;
+}
+
+/* O balão: para fora do pet, do lado oposto à borda em que ele está preso. */
+.balao {
+  position: absolute;
+  right: 76px;
+  bottom: 18px;
+  max-width: 220px;
+  padding: 7px 11px;
+  border-radius: 12px 12px 3px 12px;
+  background: var(--noite);
+  border: 1px solid var(--fio);
+  box-shadow: var(--sombra);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: balao 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pet[data-lado='direita'] .balao {
+  right: auto;
+  left: 76px;
+  border-radius: 12px 12px 12px 3px;
+}
+
+.pet[data-anel='espera'] .balao {
+  border-color: color-mix(in srgb, var(--ambar) 55%, var(--fio));
+}
+
+.pet[data-anel='falha'] .balao {
+  border-color: color-mix(in srgb, var(--brasa) 55%, var(--fio));
+}
+
+/* ------------------------------------------------------------------ painel */
+
+.painel {
+  position: fixed;
+  inset: 4px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--noite);
+  border: 1px solid var(--fio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  user-select: text;
+  --anel: var(--quieto);
+  animation: abre 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: bottom right;
+}
+
+.painel[data-anel='trabalhando'] {
+  --anel: var(--ciano);
+}
+
+.painel[data-anel='espera'] {
+  --anel: var(--ambar);
+}
+
+.painel[data-anel='falha'] {
+  --anel: var(--brasa);
+}
+
+/* O fio do topo é o anel do pet, esticado. */
+.painel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--anel);
+  opacity: 0.9;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px 10px 14px;
+  border-bottom: 1px solid var(--fio);
+  -webkit-app-region: drag;
+}
+
+.topo button {
+  -webkit-app-region: no-drag;
+}
+
+.marca {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fundo);
+  box-shadow: inset 0 0 0 1px var(--fio);
+  font: 600 13px/1 var(--mono);
+  color: #06e0ff;
+}
+
+.marca span {
+  color: var(--anel);
+}
+
+.painel[data-anel='quieto'] .marca span {
+  color: #06e0ff;
+}
+
+.topo-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.topo h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.resumo {
+  margin: 1px 0 0;
+  color: var(--suave);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fio) transparent;
+}
+
+.inicio {
+  padding: 4px 0 12px;
+}
+
+/* Só recebe o foco ao abrir o painel; as setas levam às linhas. */
+.inicio:focus-visible {
+  outline: none;
+}
+
+.secao {
+  padding: 8px 10px 4px;
+}
+
+.secao:empty {
+  display: none;
+}
+
+.secao h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 6px 4px 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.secao h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 10px 4px 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--suave);
+}
+
+.conta {
+  color: var(--suave);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.vazio {
+  margin: 4px 4px 8px;
+  color: var(--suave);
+}
+
+/* ------------------------------------------------------------------ botões */
+
+button {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+.acoes button,
+.conta-claude button,
+.abrir-ide,
+.nova-fim button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--fio);
+  background: var(--placa);
+  font-weight: 550;
+}
+
+.acoes button:hover,
+.conta-claude button:hover,
+.abrir-ide:hover {
+  background: var(--placa-2);
+}
+
+button.primario {
+  background: var(--primaria);
+  border-color: var(--primaria);
+  color: var(--primaria-texto);
+}
+
+button.primario:hover {
+  background: var(--primaria-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.icone {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--suave);
+}
+
+.icone:hover {
+  background: var(--placa-2);
+  color: var(--texto);
+}
+
+.icone[aria-pressed='true'] {
+  color: var(--ciano-tinta);
+  background: color-mix(in srgb, var(--ciano) 12%, transparent);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ciano-tinta);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ esperando você */
+
+.espera {
+  padding-top: 10px;
+}
+
+.pedido {
+  position: relative;
+  margin: 0 0 8px;
+  padding: 9px 12px 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ambar) 7%, var(--noite));
+  border: 1px solid color-mix(in srgb, var(--ambar) 22%, var(--fio));
+}
+
+.pedido::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ambar);
+}
+
+.pedido[data-tipo='limite'] {
+  background: color-mix(in srgb, var(--brasa) 7%, var(--noite));
+  border-color: color-mix(in srgb, var(--brasa) 25%, var(--fio));
+}
+
+.pedido[data-tipo='limite']::before {
+  background: var(--brasa);
+}
+
+.pedido-quem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 600;
+  color: var(--ambar-tinta);
+}
+
+.pedido[data-tipo='limite'] .pedido-quem {
+  color: var(--brasa-tinta);
+}
+
+.pedido-quem .meta {
+  margin-left: auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pedido-texto {
+  margin: 4px 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.pedido-detalhe {
+  margin: -4px 0 8px;
+  padding: 6px 8px;
+  max-height: 72px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 11.5px/1.4 var(--mono);
+  white-space: pre-wrap;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.md-linha code,
+.md code {
+  font: 0.92em var(--mono);
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--placa-2);
+}
+
+/* ------------------------------------------------------------------ agentes */
+
+.agente {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9px;
+}
+
+.agente:hover,
+.agente:focus-within {
+  background: var(--placa);
+}
+
+[data-familia='claude'] {
+  --familia: #fbbf24;
+}
+
+[data-familia='codex'] {
+  --familia: #34d399;
+}
+
+[data-familia='gemini'] {
+  --familia: #a78bfa;
+}
+
+[data-familia='local'] {
+  --familia: #f472b6;
+}
+
+[data-tom='ativo'] {
+  --estado: var(--ciano-tinta);
+}
+
+[data-tom='atencao'] {
+  --estado: var(--ambar-tinta);
+}
+
+[data-tom='ruim'] {
+  --estado: var(--brasa-tinta);
+}
+
+[data-tom='pausa'] {
+  --estado: var(--violeta);
+}
+
+.agente-abrir {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 7px 4px 7px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  text-align: left;
+}
+
+.agente-ponto {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--familia);
+}
+
+[data-tom='ativo'] .agente-ponto {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ciano) 22%, transparent);
+  animation: respira 1.8s ease-in-out infinite;
+}
+
+[data-tom='neutro'] .agente-ponto,
+[data-tom='bom'] .agente-ponto {
+  opacity: 0.55;
+}
+
+.agente-texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.agente-nome {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.agente-nome strong {
+  flex: none;
+  font-weight: 600;
+}
+
+.agente-nome span {
+  min-width: 0;
+  color: var(--suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agente-fala {
+  color: color-mix(in srgb, var(--texto) 82%, var(--suave));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agente-estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--estado);
+}
+
+.agente-medidas {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+  font-size: 11.5px;
+  color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.anel-mini {
+  flex: none;
+}
+
+.anel-trilho {
+  fill: none;
+  stroke: var(--fio);
+  stroke-width: 2.4;
+}
+
+.anel-valor {
+  fill: none;
+  stroke: var(--ciano);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.anel-mini.cheio .anel-valor {
+  stroke: var(--ambar);
+}
+
+/* As ações cobrem as medidas ao passar o mouse ou com o foco na linha. */
+.agente-acoes {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--placa);
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.agente:hover .agente-acoes,
+.agente:focus-within .agente-acoes {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.encerrados {
+  margin-top: 6px;
+}
+
+.encerrados summary {
+  margin: 0 4px;
+  padding: 4px 0;
+  color: var(--suave);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.encerrados .agente {
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------------------ tarefas e uso */
+
+.tarefa,
+.provedor,
+.conta-claude {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 6px 8px;
+}
+
+.tarefa-texto,
+.provedor-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tarefa-texto strong {
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tarefa[data-veredito='falhou'] .meta {
+  color: var(--brasa-tinta);
+}
+
+.provedor {
+  flex-wrap: wrap;
+}
+
+.medidor {
+  flex-basis: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--placa-2);
+  overflow: hidden;
+}
+
+.medidor span {
+  display: block;
+  height: 100%;
+  width: calc(var(--fracao, 0) * 100%);
+  border-radius: 2px;
+  background: var(--ciano);
+}
+
+.provedor[data-estado='perto'] .medidor span {
+  background: var(--ambar);
+}
+
+.provedor[data-estado='bloqueado'] .medidor span {
+  background: var(--brasa);
+}
+
+.provedor[data-estado='bloqueado'] .meta {
+  color: var(--brasa-tinta);
+}
+
+.conta-claude button {
+  min-height: 26px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.selo-ativa {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--ciano-tinta);
+  background: color-mix(in srgb, var(--ciano) 12%, transparent);
+}
+
+/* ------------------------------------------------------------------ conversa */
+
+.conversa {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.conversa-topo {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 8px 8px 6px;
+  border-bottom: 1px solid var(--fio);
+}
+
+.conversa-quem {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.conversa-falas {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fio) transparent;
+}
+
+.fala {
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+
+.fala.voce {
+  margin-left: 18%;
+  padding: 7px 10px;
+  border-radius: 12px 12px 3px 12px;
+  background: color-mix(in srgb, var(--primaria) 22%, var(--noite));
+  white-space: pre-wrap;
+}
+
+.md > :first-child {
+  margin-top: 0;
+}
+
+.md > :last-child {
+  margin-bottom: 0;
+}
+
+.md p,
+.md ul,
+.md ol,
+.md blockquote {
+  margin: 0 0 6px;
+}
+
+.md ul,
+.md ol {
+  padding-left: 18px;
+}
+
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.md pre {
+  margin: 4px 0 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--fundo);
+  color: var(--texto);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fio) transparent;
+  font: 11.5px/1.45 var(--mono);
+}
+
+.md pre code {
+  padding: 0;
+  background: none;
+}
+
+.md a {
+  color: var(--ciano-tinta);
+}
+
+.md blockquote {
+  padding-left: 10px;
+  border-left: 2px solid var(--fio);
+  color: var(--suave);
+}
+
+.passos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 0 10px;
+  font-size: 12px;
+  color: var(--suave);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.passos .meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passos::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 1px;
+  background: var(--fio);
+}
+
+.passos[data-rodando]::before {
+  background: var(--ciano);
+}
+
+.passos[data-resposta='negado'] {
+  color: var(--brasa-tinta);
+}
+
+.nota {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--suave);
+}
+
+.nota[data-tom='error'] {
+  color: var(--brasa-tinta);
+}
+
+.compositor {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--fio);
+}
+
+.compositor-linha {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+textarea,
+input[type='text'],
+select {
+  border: 1px solid var(--fio);
+  border-radius: 9px;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+textarea {
+  flex: 1;
+  min-height: 38px;
+  max-height: 120px;
+  padding: 8px 10px;
+  resize: none;
+  line-height: 1.4;
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: var(--suave);
+}
+
+.enviar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--primaria);
+}
+
+.compositor-opcoes {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.compositor-opcoes:empty {
+  display: none;
+}
+
+.campo-curto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--suave);
+}
+
+.campo-curto select {
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+/* ------------------------------------------------------------------ nova conversa */
+
+.nova {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 14px 14px;
+}
+
+.nova-topo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px -8px;
+}
+
+.nova-topo h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.rotulo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--suave);
+}
+
+.nova textarea {
+  min-height: 96px;
+  max-height: 180px;
+}
+
+.nova input[type='text'] {
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.nova select {
+  padding: 6px 8px;
+}
+
+.nova-linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.marcar input {
+  accent-color: var(--primaria);
+}
+
+.nova-fim {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+/* ------------------------------------------------------------------ rodapé */
+
+.aviso {
+  margin: 0;
+  padding: 7px 14px;
+  border-top: 1px solid var(--fio);
+  background: var(--placa);
+  font-size: 12px;
+}
+
+.aviso[data-tom='erro'] {
+  color: var(--brasa-tinta);
+}
+
+.rodape {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px 6px 14px;
+  border-top: 1px solid var(--fio);
+  font-size: 12px;
+}
+
+.conexao {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conexao::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--verde);
+}
+
+.conexao[data-estado='conectando']::before {
+  background: var(--ambar);
+}
+
+.conexao[data-estado='offline']::before {
+  background: var(--brasa);
+}
+
+.rodape .abrir-ide {
+  min-height: 28px;
+  padding: 2px 10px;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ movimento */
+
+@keyframes giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chamado {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    opacity: 0.55;
+    filter: drop-shadow(0 0 4px var(--ambar));
+  }
+}
+
+@keyframes cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes respira {
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--ciano) 8%, transparent);
+  }
+}
+
+@keyframes balao {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+
+@keyframes abre {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Sem giro, o trabalho aparece como o anel inteiro. */
+  .pet[data-anel='trabalhando'] .pet-anel {
+    background: conic-gradient(var(--anel) 0 100%);
+  }
+}

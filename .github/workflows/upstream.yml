@@ -1,0 +1,55 @@
+name: Versão nova do VS Code
+
+# Toda segunda-feira confere se o VSCodium publicou uma versão estável baseada
+# num VS Code mais novo que o fixado em upstream/. Se sim, abre uma issue com o
+# que mudar. A atualização em si entra por PR, com o build completo rodando
+# antes do merge (docs/build.md).
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - id: upstream
+        run: build/check-upstream.sh >> "$GITHUB_OUTPUT"
+
+      - name: Abrir issue
+        if: steps.upstream.outputs.outdated == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT: ${{ steps.upstream.outputs.current }}
+          LATEST: ${{ steps.upstream.outputs.latest }}
+          VSCODIUM_TAG: ${{ steps.upstream.outputs.vscodium_tag }}
+          VSCODIUM_COMMIT: ${{ steps.upstream.outputs.vscodium_commit }}
+        run: |
+          title="build(upstream): atualizar code-oss para ${LATEST}"
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"${title}\" in:title" --json number --jq 'length')"
+          if [[ "${existing}" != "0" ]]; then
+            echo "Issue já aberta para ${LATEST}."
+            exit 0
+          fi
+          gh label create upstream --repo "$GITHUB_REPOSITORY" --color 0E8A16 \
+            --description "Atualização do VS Code ou do VSCodium" 2>/dev/null || true
+          body="$(cat <<EOF
+          O VSCodium publicou a versão \`${VSCODIUM_TAG}\`, baseada no VS Code \`${LATEST}\`. Estamos em \`${CURRENT}\`.
+
+          Para atualizar:
+
+          1. Em \`upstream/vscodium.json\`, use a tag \`${VSCODIUM_TAG}\` e o commit \`${VSCODIUM_COMMIT}\`.
+          2. Copie o \`upstream/stable.json\` dessa versão do VSCodium.
+          3. Abra o PR \`build(upstream): atualiza code-oss para ${LATEST}\` com o label \`build\` e confira os patches de \`patches/\`.
+          EOF
+          )"
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "${title}" --label upstream --body "${body}"
