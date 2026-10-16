@@ -10,6 +10,11 @@ on:
       tag:
         description: Versão a publicar (ex. v0.1.0)
         required: true
+      plataformas:
+        description: Plataformas da release
+        type: choice
+        options: [todas, windows, macos]
+        default: todas
 
 permissions:
   contents: read
@@ -18,14 +23,14 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
     with:
-      plataformas: todas
+      plataformas: ${{ inputs.plataformas }}
 
   # Assina os instaladores .exe no SignPath (programa gratuito para open source).
   # Só roda quando o repositório define a variável SIGNPATH_ORGANIZATION_ID; sem ela
   # a release sai com o Windows sem assinatura. Veja docs/assinatura.md.
   assinar-windows:
     needs: build
-    if: vars.SIGNPATH_ORGANIZATION_ID != ''
+    if: vars.SIGNPATH_ORGANIZATION_ID != '' && inputs.plataformas != 'macos'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -90,6 +95,24 @@ jobs:
         with:
           name: windows-assinado
           path: dist
+
+      # Nomes fixos dos instaladores (o do Windows é o por usuário, sem pedir
+      # admin), para o site apontar para releases/download/<tag>/<nome>.
+      - name: Nomes fixos dos instaladores
+        working-directory: dist
+        run: |
+          shopt -s nullglob
+          setup=(*UserSetup-x64-*.exe)
+          if (( ${#setup[@]} == 0 )); then
+            setup=(*Setup-x64-*.exe)
+          fi
+          if (( ${#setup[@]} >= 1 )); then
+            cp -- "${setup[0]}" FaKL-Code-Windows-x64.exe
+          fi
+          mac=(*-darwin-arm64-*.zip)
+          if (( ${#mac[@]} >= 1 )); then
+            cp -- "${mac[0]}" FaKL-Code-macOS-arm64.zip
+          fi
 
       - name: Checksums
         working-directory: dist

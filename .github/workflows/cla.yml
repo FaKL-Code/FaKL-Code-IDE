@@ -33,4 +33,5 @@ jobs:
           path-to-signatures: .github/cla/assinaturas.json
           path-to-document: https://github.com/${{ github.repository }}/blob/main/CLA.md
           branch: cla-assinaturas
-          allowlist: dependabot[bot],github-actions[bot]
+          # O dono do projeto é o titular do CLA e não precisa assiná-lo.
+          allowlist: FaKL-Code,dependabot[bot],github-actions[bot]
