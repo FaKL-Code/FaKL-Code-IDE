@@ -96,9 +96,9 @@ jobs:
           name: windows-assinado
           path: dist
 
-      # Nome fixo do instalador do Windows (por usuário, sem pedir admin), para o
-      # site apontar para releases/download/<tag>/FaKL-Code-Windows-x64.exe.
-      - name: Nome fixo do instalador do Windows
+      # Nomes fixos dos instaladores (o do Windows é o por usuário, sem pedir
+      # admin), para o site apontar para releases/download/<tag>/<nome>.
+      - name: Nomes fixos dos instaladores
         working-directory: dist
         run: |
           shopt -s nullglob
@@ -108,6 +108,10 @@ jobs:
           fi
           if (( ${#setup[@]} >= 1 )); then
             cp -- "${setup[0]}" FaKL-Code-Windows-x64.exe
+          fi
+          mac=(*-darwin-arm64-*.zip)
+          if (( ${#mac[@]} >= 1 )); then
+            cp -- "${mac[0]}" FaKL-Code-macOS-arm64.zip
           fi
 
       - name: Checksums
