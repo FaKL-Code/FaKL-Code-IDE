@@ -2405,7 +2405,7 @@
     "@types/vscode": "~1.140.0",
     "esbuild": "^0.28.2",
     "markdown-it": "^14.3.2",
-    "mermaid": "^11.17.2",
+    "mermaid": "^12.2.0",
     "qrcode": "^1.5.4"
   }
 }
