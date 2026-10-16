@@ -11,7 +11,10 @@ ordem: 2
 | Windows | x64           | Windows 10 ou 11, 64 bits    |
 | macOS   | Apple Silicon | Mac com chip M1 ou mais novo |
 
-Os instaladores ainda não foram publicados. Quando saírem, ficam na página [Baixar](/download/). Enquanto isso, o código está aberto no [GitHub](https://github.com/FaKL-Code/FaKL-Code-IDE).
+Baixe na página [Baixar](/download/) ou nas [Releases do GitHub](https://github.com/FaKL-Code/FaKL-Code-IDE/releases) e confira o hash em `SHA256SUMS.txt`. Os instaladores ainda não têm assinatura digital:
+
+- **Windows:** o SmartScreen mostra "O Windows protegeu o computador". Clique em **Mais informações** e em **Executar assim mesmo**.
+- **macOS:** descompacte o `.zip`, mova o app para Aplicativos e, uma vez, abra com o botão direito, **Abrir**. Também funciona rodar `xattr -dr com.apple.quarantine "/Applications/FaKL-Code IDE.app"` no Terminal.
 
 ## Depois de instalar
 

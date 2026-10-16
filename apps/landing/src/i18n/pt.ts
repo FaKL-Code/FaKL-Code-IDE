@@ -220,13 +220,18 @@ export const pt = {
     descricao: 'Baixe a FaKL-Code IDE para Windows e macOS.',
     kicker: 'Download',
     h1: 'Baixar FaKL-Code',
-    lead: 'Os instaladores ainda não foram publicados. Eles aparecem aqui assim que saírem.',
+    lead: 'Versão 0.1.0, sem assinatura digital por enquanto. O download vem direto da release no GitHub.',
     baixar: 'Baixar',
     embreve: 'Em breve',
     seuSistema: 'seu sistema',
     codigo:
-      'Enquanto isso, o código da IDE está aberto no GitHub, sob a licença AGPL. Dá para acompanhar o desenvolvimento e compilar por conta própria.',
+      'O código da IDE está aberto no GitHub, sob a licença AGPL. Lá ficam todas as versões, os hashes em SHA256SUMS.txt e o código para compilar por conta própria.',
     verCodigo: 'Ver no GitHub',
+    semAssinatura: 'Na primeira abertura',
+    avisoWindows:
+      'O SmartScreen mostra "O Windows protegeu o computador": clique em Mais informações e em Executar assim mesmo.',
+    avisoMacos:
+      'Descompacte, mova o app para Aplicativos e abra com o botão direito, Abrir. O macOS pede essa confirmação uma vez.',
   },
   docs: {
     tituloIndice: 'Documentação da FaKL-Code IDE',
