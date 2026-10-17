@@ -41,7 +41,9 @@ jobs:
           # Todos os jobs rodam nos runners hospedados do GitHub.
           # [string[]]: no PowerShell 5.1, o array vindo do ConvertFrom-Json vira
           # {"value": [...], "Count": n} no ConvertTo-Json.
-          [string[]]$windows = 'windows-latest'
+          # windows-2022 porque o preinstall do Code-OSS só aceita o Visual Studio
+          # 2022 ou 2019, e o windows-latest já vem com uma versão mais nova.
+          [string[]]$windows = 'windows-2022'
           $all = @(
             [ordered]@{ name = 'macOS arm64'; runner = @('macos-14'); os_name = 'osx'; arch = 'arm64' },
             [ordered]@{ name = 'Windows x64'; runner = $windows; os_name = 'windows'; arch = 'x64' }
