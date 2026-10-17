@@ -956,5 +956,10 @@
   "FaKL-Code {0} is available.": "A FaKL-Code {0} está disponível.",
   "Later": "Depois",
   "The official {0} extension keeps its own conversations, separate from the Desk, the café and the Maestro. Agents started from the IDE show up there and use the same account.": "A extensão oficial {0} tem as próprias conversas, separadas da Mesa, do café e do Maestro. Os agentes iniciados pela IDE aparecem lá e usam a mesma conta.",
-  "Got it": "Entendi"
+  "Got it": "Entendi",
+  "update available": "atualização disponível",
+  "$(cloud-download) Update {0} ({1} → {2})": "$(cloud-download) Atualizar {0} ({1} → {2})",
+  "Update": "Atualizar",
+  "Run `{0}`?": "Rodar `{0}`?",
+  "Updates the {0} agent on this machine. Sessions already open keep the old version until they restart.": "Atualiza o agente {0} nesta máquina. As sessões já abertas continuam na versão antiga até reiniciarem."
 }

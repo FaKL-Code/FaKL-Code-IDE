@@ -8,6 +8,7 @@ import {
   localProfile,
   pickLocalModel,
   PROVIDER_CLIS,
+  PROVIDER_PACKAGES,
   providerCommands,
   providerProfiles,
   type AgentProfile,
@@ -29,6 +30,7 @@ import {
   type ProvidersDetectResult,
   type ProvidersGenerateResult,
   type ProviderStatus,
+  type ProviderUpdate,
 } from '@fakl/protocol';
 
 import { parseAuthStatus } from './claude-accounts.js';
@@ -68,6 +70,8 @@ export interface ProviderServiceOptions {
   readonly claudeAccountsLoggedIn?: () => Promise<boolean>;
   readonly runCli?: CliRunner;
   readonly fetch?: FetchLike;
+  /** Última versão publicada de um pacote no npm; `undefined` quando não deu para saber. */
+  readonly latestVersion?: (pacote: string) => Promise<string | undefined>;
   readonly platform?: NodeJS.Platform;
   readonly log?: (message: string) => void;
 }
@@ -75,9 +79,13 @@ export interface ProviderServiceOptions {
 export interface DetectOptions {
   /** Roda `--version` nos CLIs encontrados; a geração de perfis pula isso. */
   readonly versions?: boolean;
+  /** Compara as versões instaladas com a última do npm (precisa de `versions`). */
+  readonly updates?: boolean;
 }
 
 const VERSION_TIMEOUT_MS = 5_000;
+const REGISTRY_TIMEOUT_MS = 3_000;
+const REGISTRY_CACHE_MS = 60 * 60_000;
 const LOCAL_TIMEOUT_MS = 1_500;
 /** Login por credencial da nuvem do Google, sem arquivo de OAuth. */
 const GEMINI_CLOUD_AUTH = new Set(['vertex-ai', 'compute-default-credentials', 'cloud-shell']);
@@ -132,6 +140,46 @@ function field(value: unknown, ...path: string[]): unknown {
     current = (current as Record<string, unknown>)[key];
   }
   return current;
+}
+
+/** `a` é mais nova que `b`, comparando major.minor.patch; pré-lançamento vale como a versão final. */
+export function isNewer(a: string, b: string): boolean {
+  const parts = (version: string): number[] =>
+    (version.split(/[-+]/)[0] ?? '').split('.').map((part) => Number.parseInt(part, 10) || 0);
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const diff = (x[i] ?? 0) - (y[i] ?? 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return false;
+}
+
+const registryCache = new Map<string, { at: number; version: string }>();
+
+/**
+ * Última versão de um pacote no registro do npm. Uma consulta curta, sem
+ * identificador do usuário (só o nome do pacote vai na URL), com tempo limite
+ * e guardada por uma hora; sem rede ou com resposta estranha, `undefined`.
+ */
+export async function npmLatestVersion(
+  pacote: string,
+  fetcher: FetchLike = (input, init) => fetch(input, init),
+): Promise<string | undefined> {
+  const cached = registryCache.get(pacote);
+  if (cached && Date.now() - cached.at < REGISTRY_CACHE_MS) return cached.version;
+  try {
+    const response = await fetcher(`https://registry.npmjs.org/${pacote}/latest`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(REGISTRY_TIMEOUT_MS),
+    });
+    if (!response.ok) return undefined;
+    const version = field(await response.json(), 'version');
+    if (typeof version !== 'string' || !/^\d+\.\d+\.\d+/.test(version)) return undefined;
+    registryCache.set(pacote, { at: Date.now(), version });
+    return version;
+  } catch {
+    return undefined;
+  }
 }
 
 /** "2.1.3" de "2.1.3 (Claude Code)" ou "codex-cli 0.98.0". */
@@ -209,9 +257,12 @@ export class ProviderService {
     const loginPath = cli.command === command.command ? agentPath : cliPath;
     const chave = this.options.hasKey(id);
     const chaveEnv = PROVIDER_KEY_ENV[id];
-    const [logado, versao] = await Promise.all([
+    const [logado, versao, atualizacoes] = await Promise.all([
       this.loggedIn(id, loginPath),
       options.versions ? this.version(loginPath ?? agentPath) : Promise.resolve(undefined),
+      options.versions && options.updates
+        ? this.updatesOf(id, agentPath, cliPath)
+        : Promise.resolve([]),
     ]);
     const instalado = agentPath !== undefined;
     const modo: ProviderMode | undefined = !instalado
@@ -252,8 +303,50 @@ export class ProviderService {
       ...(missing.length > 0 ? { instalar: missing.join(' && ') } : {}),
       login: cli.login,
       perfis: this.profilesOf(id),
+      ...(atualizacoes.length > 0 ? { atualizacoes } : {}),
       ...(aviso ? { aviso } : {}),
     };
+  }
+
+  /**
+   * Adaptador ACP e CLI do provedor contra a última versão do npm. O adaptador
+   * é quem traz o Codex ou o Claude Code embutido, então um adaptador velho
+   * pode esconder modelos novos mesmo com o login em dia.
+   */
+  private async updatesOf(
+    id: CliProvider,
+    agentPath: string | undefined,
+    cliPath: string | undefined,
+  ): Promise<ProviderUpdate[]> {
+    const packages = PROVIDER_PACKAGES[id];
+    const targets = [
+      { pacote: packages.adapter, comando: providerCommands()[id].command, path: agentPath },
+      ...(packages.cli === packages.adapter
+        ? []
+        : [{ pacote: packages.cli, comando: PROVIDER_CLIS[id].command, path: cliPath }]),
+    ];
+    const latest =
+      this.options.latestVersion ??
+      ((pacote: string) => npmLatestVersion(pacote, this.options.fetch));
+    const found = await Promise.all(
+      targets.map(async ({ pacote, comando, path }): Promise<ProviderUpdate | undefined> => {
+        if (!path) return undefined;
+        const [instalada, ultima] = await Promise.all([
+          this.version(path),
+          latest(pacote).catch(() => undefined),
+        ]);
+        if (!instalada || !ultima) return undefined;
+        return {
+          pacote,
+          comando,
+          instalada,
+          ultima,
+          desatualizada: isNewer(ultima, instalada),
+          atualizar: `npm install -g ${pacote}@latest`,
+        };
+      }),
+    );
+    return found.filter((item): item is ProviderUpdate => item !== undefined);
   }
 
   /**
@@ -462,9 +555,12 @@ export class ProviderService {
   }
 
   register(router: Router): void {
-    router.register('providers.detect', async (): Promise<ProvidersDetectResult> => ({
-      provedores: await this.detect({ versions: true }),
-    }));
+    router.register('providers.detect', async (params): Promise<ProvidersDetectResult> => {
+      const raw = params === undefined || params === null ? {} : objectParams(params);
+      return {
+        provedores: await this.detect({ versions: true, updates: raw.atualizacoes === true }),
+      };
+    });
     router.register('providers.generateProfiles', (params) => {
       const raw = params === undefined || params === null ? {} : objectParams(params);
       const list = raw.provedores;

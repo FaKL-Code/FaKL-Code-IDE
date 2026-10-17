@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   fixCommands,
   keyTargets,
+  outdated,
   parseArgs,
   parseEnvPairs,
   statusLine,
@@ -74,6 +75,30 @@ describe('provedores na extensão', () => {
     expect(
       fixCommands(status({ id: 'ollama', tipo: 'local', instalar: 'baixe o Ollama' })),
     ).toEqual([]);
+  });
+
+  it('avisa do adaptador desatualizado e só marca o que ficou para trás', () => {
+    const update = (instalada: string, ultima: string, desatualizada: boolean) => ({
+      pacote: '@agentclientprotocol/codex-acp',
+      comando: 'codex-acp',
+      instalada,
+      ultima,
+      desatualizada,
+      atualizar: 'npm install -g @agentclientprotocol/codex-acp@latest',
+    });
+    const old = status({
+      instalado: true,
+      pronto: true,
+      modo: 'assinatura',
+      atualizacoes: [update('1.0.0', '2.2.2', true), update('2.2.2', '2.2.2', false)],
+    });
+    expect(outdated(old)).toHaveLength(1);
+    expect(statusLine(old)).toMatchObject({
+      description: 'ready via subscription · update available',
+      detail: 'codex-acp 1.0.0 → 2.2.2',
+    });
+    expect(outdated(status({ atualizacoes: [update('2.2.2', '2.2.2', false)] }))).toEqual([]);
+    expect(statusLine(status({ instalado: true })).description).toBe('not ready');
   });
 
   it('descreve o estado em pt-BR', () => {

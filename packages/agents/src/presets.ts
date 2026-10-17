@@ -58,6 +58,18 @@ export const PROVIDER_CLIS: Readonly<Record<CliProvider, ProviderCli>> = {
   google: { command: 'gemini', install: 'npm install -g @google/gemini-cli', login: 'gemini' },
 };
 
+/** Pacotes npm de cada provedor: o adaptador ACP que a IDE sobe e o CLI oficial. */
+export const PROVIDER_PACKAGES: Readonly<
+  Record<CliProvider, { readonly adapter: string; readonly cli: string }>
+> = {
+  anthropic: {
+    adapter: '@agentclientprotocol/claude-agent-acp',
+    cli: '@anthropic-ai/claude-code',
+  },
+  openai: { adapter: '@agentclientprotocol/codex-acp', cli: '@openai/codex' },
+  google: { adapter: '@google/gemini-cli', cli: '@google/gemini-cli' },
+};
+
 /** Agente compatível com ACP de terceiros que a IDE já sabe cadastrar. */
 export interface AcpAgentPreset {
   readonly id: string;
