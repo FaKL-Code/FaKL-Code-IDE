@@ -954,5 +954,7 @@
   "FaKL-Code is up to date.": "A FaKL-Code está atualizada.",
   "Download": "Baixar",
   "FaKL-Code {0} is available.": "A FaKL-Code {0} está disponível.",
-  "Later": "Depois"
+  "Later": "Depois",
+  "The official {0} extension keeps its own conversations, separate from the Desk, the café and the Maestro. Agents started from the IDE show up there and use the same account.": "A extensão oficial {0} tem as próprias conversas, separadas da Mesa, do café e do Maestro. Os agentes iniciados pela IDE aparecem lá e usam a mesma conta.",
+  "Got it": "Entendi"
 }
