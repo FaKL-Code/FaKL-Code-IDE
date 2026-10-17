@@ -142,6 +142,8 @@ jobs:
   # Imagem do relay com as tags da versão (X.Y.Z e X.Y) no GHCR.
   relay:
     needs: publish
+    # Sem o if, o assinar-windows pulado (sem SignPath) pula o relay junto.
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     uses: ./.github/workflows/relay.yml
     permissions:
       contents: read
