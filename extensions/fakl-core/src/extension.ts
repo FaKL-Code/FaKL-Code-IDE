@@ -36,6 +36,7 @@ import { VaultUi } from './vault.js';
 import { VaultGraphUi } from './vault-graph.js';
 import { vaultMarkdown } from './vault-markdown.js';
 import { VozUi } from './voz.js';
+import { UpdateNoticeUi } from './update-notice.js';
 import { UsageWindowsView } from './windows.js';
 
 const RETRY_MS = 2_000;
@@ -110,6 +111,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   const lovable = new LovableUi(github);
   const claudeAccounts = new ClaudeAccountsUi(context, agentEvents);
   const setup = new SetupUi(context);
+  const updateNotice = new UpdateNoticeUi(context);
   agents.pickClaudeAccount = (profileId) => claudeAccounts.pickForNewAgent(profileId);
   // Partes da IDE que falam com o Core: avisadas quando a conexão abre e cai.
   const coreParts = [
@@ -169,6 +171,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     vault,
     remote,
     setup,
+    updateNotice,
     profiles.onDidChangeProfiles(() => {
       chat.refreshProfiles();
     }),
@@ -300,6 +303,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   );
 
   void connect();
+  updateNotice.start();
   mesa.openOnStartup();
   // Por último, para a jornada ficar na frente na primeira abertura.
   setup.openOnFirstRun(existingUser);

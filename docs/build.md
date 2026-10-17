@@ -46,13 +46,38 @@ dependem de uma conta no Apple Developer Program (SDD 15.2).
 
 O `release.yml` só roda quando alguém pede: **Run workflow** na aba Actions, na
 `main`, informando a versão (`v0.1.0`). Ele cria a tag no commit escolhido, roda
-o build de todas as plataformas e publica uma GitHub Release **neste repositório
-privado**, com os instaladores e um `SHA256SUMS.txt`. Versões `0.x` saem como
-pré-release.
+o build de todas as plataformas e publica uma GitHub Release **neste repositório**,
+com os instaladores e um `SHA256SUMS.txt`. Versões `0.x` saem como pré-release.
 
-A atualização automática está desligada por decisão do projeto: a IDE vai
-guardar dados sensíveis e os binários não ficam em lugar público. Novas versões
-são instaladas a partir das Releases.
+## Atualização automática
+
+A IDE se atualiza pelos GitHub Releases (ADR 0037). Três peças:
+
+- **Versão do app.** O `build.yml` passa a tag da release ao `build/versao.mjs`, que
+  monta o RELEASE_VERSION do VSCodium: `vX.Y.Z` vira `X*10000 + Y*100 + Z` em seis
+  dígitos, sobre a tag do Code-OSS. Tags com sufixo (`v0.2.0-rc1`) e builds manuais
+  sem tag usam a versão da data do build e não entram na atualização.
+- **Manifestos.** Depois de criar a release, o `release.yml` roda
+  `build/manifestos-update.mjs` e publica os `latest.json` na branch `atualizacoes`.
+  O `updateUrl` do `branding/product.json` aponta para ela. Cada arquivo leva a URL do
+  instalador na release e o SHA-1 e o SHA-256 do arquivo já assinado.
+- **Windows nativo, macOS por aviso.** O Windows se atualiza sozinho (instalador por
+  usuário, do sistema ou `.zip`, conforme a instalação). O macOS não tem manifesto
+  nativo, porque o atualizador dele exige app assinado pela Apple; a extensão
+  `fakl-core` lê o `latest.json` da raiz da branch e avisa da versão nova.
+
+| Tag da release | RELEASE_VERSION (Code-OSS 1.135.0) | Versão em **Sobre** |
+| -------------- | ---------------------------------- | ------------------- |
+| `v0.1.0`       | `1.135.0000100`                    | `1.135.100`         |
+| `v0.1.1`       | `1.135.0000101`                    | `1.135.101`         |
+| `v0.2.0`       | `1.135.0000200`                    | `1.135.200`         |
+| `v1.0.0`       | `1.135.0010000`                    | `1.135.10000`       |
+
+A v0.1.0 saiu antes disso (versão `1.135.06960`, da data) e não se atualiza: a
+v0.1.1 em diante sim. Para retirar uma release ruim, reverta o commit dela na
+branch `atualizacoes`; o padrão `update.minReleaseAge` de 24 horas dá esse tempo
+antes de a IDE aceitar a atualização. A tabela usa o Code-OSS 1.135.0; com outro
+só muda o prefixo, e um Code-OSS mais novo sempre conta como versão mais nova.
 
 ## Localmente
 

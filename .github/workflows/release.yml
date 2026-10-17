@@ -24,6 +24,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       plataformas: ${{ inputs.plataformas }}
+      versao: ${{ inputs.tag }}
 
   # Assina os instaladores .exe no SignPath (programa gratuito para open source).
   # Só roda quando o repositório define a variável SIGNPATH_ORGANIZATION_ID; sem ela
@@ -138,6 +139,35 @@ jobs:
             --title "FaKL-Code ${version} (Code-OSS ${code_oss})" \
             --generate-notes \
             ${prerelease}
+
+      # Manifestos que o serviço de atualização da IDE lê (ADR 0037). Vão para a
+      # branch `atualizacoes` depois da release, quando os instaladores já existem
+      # nas URLs. A tag precisa ser vX.Y.Z; as outras não entram na atualização.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !contains(inputs.tag, '-') }}
+        with:
+          ref: atualizacoes
+          path: atualizacoes
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: ${{ !contains(inputs.tag, '-') }}
+        with:
+          node-version-file: .nvmrc
+
+      - name: Manifestos de atualização
+        if: ${{ !contains(inputs.tag, '-') }}
+        run: |
+          node build/manifestos-update.mjs dist atualizacoes "${TAG}" "${GITHUB_REPOSITORY}"
+          cd atualizacoes
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "manifestos já em dia"
+          else
+            git commit -q -m "chore: manifestos de atualização da ${TAG}"
+            git push origin HEAD:atualizacoes
+          fi
 
   # Imagem do relay com as tags da versão (X.Y.Z e X.Y) no GHCR.
   relay:

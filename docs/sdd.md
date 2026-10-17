@@ -790,7 +790,7 @@ Os builds completos da IDE são longos e pesados, então rodam só quando necess
 
 - **macOS:** Developer ID Application e notarização pela Apple. Sem isso o Gatekeeper bloqueia a abertura. Requer conta no Apple Developer Program.
 - **Windows:** certificado de assinatura de código opcional no M1. Sem ele, o SmartScreen mostra aviso na instalação.
-- **Atualização:** o serviço de update do VS Code apontado para um manifesto JSON publicado no GitHub Release mais recente. Canais `stable` e `insider`, escolhíveis nas configurações.
+- **Atualização:** o serviço de update do VS Code apontado para manifestos JSON que a release publica na branch `atualizacoes` (ADR 0037). Windows se atualiza sozinho; no macOS, sem notarização, a IDE só avisa da versão nova. Só o canal `stable` existe por enquanto.
 
 ### 15.3 Estratégia de testes
 
