@@ -79,6 +79,16 @@
         "icon": "$(coffee)"
       },
       {
+        "command": "fakl.externas.ativar",
+        "title": "%command.externas.ativar%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.externas.desativar",
+        "title": "%command.externas.desativar%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.agents.send",
         "title": "%command.agents.send%",
         "category": "FaKL",

@@ -4,6 +4,8 @@ import type {
   AgentProfileAvailability,
   AgentSessionInfo,
   CostSummary,
+  ExternalListResult,
+  ExternalSource,
   PermissionPolicyName,
   VozStatus,
 } from '@fakl/protocol';
@@ -214,6 +216,11 @@ const transcripts = new Map<string, ChatItem[]>();
 const changes = new Map<string, readonly AgentChangedFile[]>();
 const drafts = new Map<string, string>();
 let usage: CostSummary | undefined;
+let external: ExternalListResult = { ativo: false, sessoes: [] };
+const EXTERNAL_NAMES: Record<ExternalSource, string> = {
+  codex: 'Codex',
+  'claude-code': 'Claude Code',
+};
 
 /** Notas e prévias: o que fica na mesa além dos agentes. */
 function freeRects(): Rect[] {
@@ -284,6 +291,22 @@ const floorsTitle = el('h2', {}, l10n.t('Floors'));
 const floorsList = el('ul', { class: 'floors' });
 const agentsTitle = el('h2', {}, l10n.t('Agents'));
 const agentsList = el('ul', { class: 'agents' });
+// Conversas das extensões do Codex e do Claude Code: só leitura (ADR 0039).
+const externalTitle = el('h2', {}, l10n.t('Other tools'));
+const externalNote = el('p', { class: 'external-note' });
+const externalEnable = el(
+  'button',
+  {
+    type: 'button',
+    class: 'link',
+    title: l10n.t('FaKL reads the local history of the Codex and Claude Code extensions'),
+  },
+  l10n.t('Show their conversations…'),
+);
+externalEnable.addEventListener('click', () => {
+  post({ type: 'externasAtivar' });
+});
+const externalList = el('ul', { class: 'agents external' });
 const sideFooter = el('div', { class: 'side-footer' });
 const clearButton = el('button', { type: 'button', class: 'ghost' }, l10n.t('Clear finished'));
 clearButton.addEventListener('click', () => {
@@ -313,6 +336,10 @@ sidebar.append(
   floorsList,
   agentsTitle,
   agentsList,
+  externalTitle,
+  externalNote,
+  externalEnable,
+  externalList,
   sideFooter,
 );
 
@@ -559,6 +586,7 @@ function render(): void {
   ensurePlaced();
   renderSidebar();
   renderUsage();
+  renderExternal();
   renderCards();
   renderZones();
   renderRopes();
@@ -652,6 +680,59 @@ function renderSidebar(): void {
       return li;
     }),
   );
+}
+
+function renderExternal(): void {
+  externalEnable.hidden = external.ativo;
+  externalNote.hidden = external.ativo && external.sessoes.length > 0;
+  externalNote.textContent = external.ativo
+    ? l10n.t('No recent conversations in the Codex or Claude Code extensions.')
+    : l10n.t('Conversations from the Codex and Claude Code extensions, read-only.');
+  externalList.replaceChildren(
+    ...external.sessoes.map((session) => {
+      const li = el('li');
+      const row = el('div', {
+        class: `agent-row external-row ${session.estado === 'ativa' ? 'busy' : ''}`,
+        title: session.pasta,
+      });
+      const avatar = el('span', { class: 'avatar small' });
+      paintAvatar(avatar, EXTERNAL_NAMES[session.fonte], session.provedor, 14);
+      avatar.style.setProperty('--accent', accentFor(session.provedor));
+      row.append(
+        avatar,
+        el('span', { class: 'agent-name' }, session.titulo ?? folderName(session.pasta)),
+        el(
+          'span',
+          { class: 'agent-state' },
+          `${EXTERNAL_NAMES[session.fonte]} · ${
+            session.estado === 'ativa' ? l10n.t('active') : l10n.t('idle')
+          }`,
+        ),
+        el('span', { class: 'chip external-chip' }, l10n.t('external')),
+      );
+      const open = el(
+        'button',
+        {
+          type: 'button',
+          class: 'land',
+          title: l10n.t(
+            'Open this conversation in its own extension; the Desk cannot send messages to it',
+          ),
+        },
+        l10n.t('Open in extension'),
+      );
+      open.addEventListener('click', () => {
+        post({ type: 'externasAbrir', id: session.id });
+      });
+      li.append(row, open);
+      return li;
+    }),
+  );
+}
+
+function folderName(path: string): string {
+  const parts = path.split(/[\\/]+/).filter(Boolean);
+  return parts[parts.length - 1] ?? path;
 }
 
 const RING = 2 * Math.PI * 15;
@@ -2363,6 +2444,10 @@ window.addEventListener('message', (event: MessageEvent<ToMesa>) => {
       if (first && Object.keys(layout.cards).length === 0 && sessions.length > 0) fitAll();
       return;
     }
+    case 'externas':
+      external = { ativo: message.ativo, sessoes: message.sessoes };
+      renderExternal();
+      return;
     case 'transcript': {
       transcripts.set(message.sessionId, [...message.items]);
       refreshCard(message.sessionId);

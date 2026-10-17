@@ -96,6 +96,40 @@ body {
   outline: none;
 }
 
+.tela.externa {
+  border-style: dashed;
+  border-left-style: solid;
+  cursor: default;
+}
+
+.tela.externa:hover {
+  background: var(--vscode-sideBar-background);
+}
+
+.selo-externa {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.externa-abrir {
+  align-self: flex-start;
+  padding: 2px 8px;
+  font: inherit;
+  color: var(--vscode-button-secondaryForeground, inherit);
+  background: var(--vscode-button-secondaryBackground, transparent);
+  border: 1px solid var(--vscode-panel-border, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#externas {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px 8px;
+  overflow-x: auto;
+  background: var(--vscode-editor-background);
+}
+
 .tela-abrir {
   display: flex;
   flex-direction: column;

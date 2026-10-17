@@ -301,6 +301,35 @@ kbd {
   font-size: 11px;
 }
 
+.external-note {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.external-row {
+  cursor: default;
+}
+
+.external li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.external .agent-row {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.external-chip {
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
 .agent-row.attention .agent-state {
   color: var(--amber);
 }

@@ -43,3 +43,4 @@
 | [0036](adr/0036-idioma-do-sistema-com-pacote-pt-br-embutido.md)           | Idioma do sistema, com o pacote pt-BR embutido        |
 | [0037](adr/0037-atualizacao-automatica-pelos-github-releases.md)          | Atualização automática pelos GitHub Releases          |
 | [0038](adr/0038-adaptadores-acp-em-dia-e-codex-path.md)                   | Adaptadores ACP em dia e o CODEX_PATH                 |
+| [0039](adr/0039-conversas-das-extensoes-do-codex-e-do-claude-code.md)     | Conversas das extensões do Codex e do Claude Code     |

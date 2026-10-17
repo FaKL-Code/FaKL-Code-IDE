@@ -38,6 +38,8 @@
   "command.mesa.open": "Abrir a Mesa",
   "command.mesa.focus": "Mesa em foco (esconde as barras)",
   "command.cafe.open": "Abrir o cyber café",
+  "command.externas.ativar": "Mostrar as conversas das extensões do Codex e do Claude Code (só leitura)",
+  "command.externas.desativar": "Parar de mostrar as conversas das extensões do Codex e do Claude Code",
   "command.agents.send": "Conversar com o agente",
   "command.agents.pause": "Pausar agente",
   "command.agents.resume": "Retomar agente",

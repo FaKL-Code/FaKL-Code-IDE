@@ -42,6 +42,7 @@ import { registerUi } from './ui.js';
 import { SecretVault } from './secrets.js';
 import { Approvals } from './security/approvals.js';
 import { CafeService } from './cafe.js';
+import { ExternalSessionsService } from './external-sessions.js';
 import { AuditLog } from './security/audit.js';
 import { redactSecrets } from './security/scan.js';
 import { AgentTokens } from './tokens.js';
@@ -486,6 +487,20 @@ export function createCore(options: CoreOptions): Core {
   orchestrator.register(router);
   const cafe = new CafeService({ bus, agents, orchestrator, costs: tracker });
   cafe.register(router);
+  new ExternalSessionsService({
+    home: options.configHome ?? homedir(),
+    env: options.env ?? {},
+    enabled: () => config?.config.sessoesExternas === true,
+    ...(config
+      ? {
+          save: async (enabled: boolean) => {
+            await config.setExternalSessions(enabled);
+            await config.reload();
+          },
+        }
+      : {}),
+    redact,
+  }).register(router);
   const guards = { approvals, audit };
   const github: GitHubService = new GitHubService({
     ...guards,
