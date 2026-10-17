@@ -30,5 +30,9 @@
   },
   "licenseUrl": "https://github.com/FaKL-Code/FaKL-Code-IDE/blob/main/LICENSE",
   "reportIssueUrl": "https://github.com/FaKL-Code/FaKL-Code-IDE/issues/new/choose",
-  "downloadUrl": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases"
+  "downloadUrl": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases",
+  "updateUrl": "https://raw.githubusercontent.com/FaKL-Code/FaKL-Code-IDE/atualizacoes",
+  "configurationDefaults": {
+    "update.minReleaseAge": 24
+  }
 }

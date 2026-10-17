@@ -23,7 +23,7 @@ expect_product() {
 }
 
 for key in nameShort nameLong applicationName dataFolderName urlProtocol darwinBundleIdentifier \
-  win32AppId win32x64AppId win32UserAppId win32x64UserAppId win32DirName win32MutexName; do
+  win32AppId win32x64AppId win32UserAppId win32x64UserAppId win32DirName win32MutexName   updateUrl downloadUrl; do
   expect_product "${key}"
 done
 
@@ -36,6 +36,14 @@ while IFS= read -r -d '' file; do
   relative="${file#"${ROOT}/branding/resources/stable/"}"
   cmp -s "${file}" "${DEST}/src/stable/${relative}" || fail "ícone não aplicado: ${relative}"
 done < <(find "${ROOT}/branding/resources/stable" -type f -print0)
+
+# A atualização aponta para os manifestos da FaKL-Code, nunca para os do VSCodium, e
+# o env.sh não a desliga (ADR 0037).
+jq -e '(.updateUrl | startswith("https://raw.githubusercontent.com/FaKL-Code/"))
+  and (.downloadUrl | contains("VSCodium") | not)' "${DEST}/product.json" >/dev/null \
+  || fail "product.json: updateUrl ou downloadUrl fora da FaKL-Code (ADR 0037)"
+grep -q 'DISABLE_UPDATE:-no' "${ROOT}/build/env.sh" \
+  || fail "build/env.sh deve deixar a atualização automática ligada (DISABLE_UPDATE:-no)"
 
 if grep -nE '"(short_)?name" "VSCodium"|\|VSCodium\||https://vscodium\.com' "${DEST}/prepare_vscode.sh"; then
   fail "prepare_vscode.sh ainda escreve o nome ou o site do VSCodium"

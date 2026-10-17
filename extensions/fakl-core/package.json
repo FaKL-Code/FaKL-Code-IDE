@@ -537,6 +537,11 @@
         "category": "FaKL"
       },
       {
+        "command": "fakl.update.check",
+        "title": "%command.update.check%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.github.login",
         "title": "%command.github.login%",
         "category": "FaKL",
@@ -2185,6 +2190,11 @@
           "type": "boolean",
           "default": true,
           "description": "%config.mesa.abrirAoIniciar%"
+        },
+        "fakl.update.notify": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.update.notify%"
         },
         "fakl.claude.perguntarConta": {
           "type": "boolean",

@@ -947,5 +947,14 @@
   "Use anyway": "Usar mesmo assim",
   "{0} is public: your settings would be visible to anyone.": "{0} é público: suas configurações ficariam visíveis para qualquer pessoa.",
   "FaKL: Sync": "FaKL: sincronização",
-  "FaKL-Code IDE synced settings": "Configuração sincronizada da FaKL-Code IDE"
+  "FaKL-Code IDE synced settings": "Configuração sincronizada da FaKL-Code IDE",
+  "Could not check for updates: {0}": "Não foi possível procurar atualização: {0}",
+  "Could not read the update information.": "Não foi possível ler as informações de atualização.",
+  "There is no FaKL-Code build for this system in the latest release.": "A última versão não tem build da FaKL-Code para este sistema.",
+  "FaKL-Code is up to date.": "A FaKL-Code está atualizada.",
+  "Download": "Baixar",
+  "FaKL-Code {0} is available.": "A FaKL-Code {0} está disponível.",
+  "Later": "Depois",
+  "The official {0} extension keeps its own conversations, separate from the Desk, the café and the Maestro. Agents started from the IDE show up there and use the same account.": "A extensão oficial {0} tem as próprias conversas, separadas da Mesa, do café e do Maestro. Os agentes iniciados pela IDE aparecem lá e usam a mesma conta.",
+  "Got it": "Entendi"
 }

@@ -10,10 +10,10 @@ export ASSETS_REPOSITORY="FaKL-Code/FaKL-Code-IDE"
 export GLOBAL_DIRNAME="fakl-code"
 export VSCODE_QUALITY="stable"
 
-# A atualização automática pelos GitHub Releases (RF-003) entra num PR próprio.
-# Até lá o serviço de update fica desligado, para nunca oferecer uma versão do
-# VSCodium no lugar da FaKL-Code.
-export DISABLE_UPDATE="${DISABLE_UPDATE:-yes}"
+# Atualização automática (RF-003, ADR 0037): o updateUrl da FaKL-Code, no
+# branding/product.json, aponta para os manifestos que a release publica. Com
+# DISABLE_UPDATE=yes o VSCodium aplicaria um patch que desliga o serviço de vez.
+export DISABLE_UPDATE="${DISABLE_UPDATE:-no}"
 
 # Artefatos que ainda não usamos. O servidor remoto (REH) volta no M3 (RF-304).
 export SHOULD_BUILD_CLI="${SHOULD_BUILD_CLI:-no}"
