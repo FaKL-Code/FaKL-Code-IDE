@@ -129,6 +129,8 @@ export const CoreMethods = {
   audit: ['list', 'verify'],
   /** Cyber café (SDD 13): liga as miniaturas enquanto a sala está aberta. */
   cafe: ['open', 'close', 'state'],
+  /** Conversas das extens�es do Codex e do Claude Code, s� leitura e s� com consentimento (ADR 0038). */
+  external: ['status', 'setEnabled', 'list'],
   remote: [
     'status',
     /** Confere o relay (HTTPS, WebSocket e chave) sem mexer na conexão; a jornada usa. */

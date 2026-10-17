@@ -3,6 +3,7 @@ import type {
   AgentProfileAvailability,
   AgentSessionInfo,
   CostSummary,
+  ExternalListResult,
   PermissionPolicyName,
 } from '@fakl/protocol';
 
@@ -49,6 +50,8 @@ export type ToMesa =
   | { readonly type: 'usage'; readonly summary: CostSummary }
   /** Arquivos da pasta que batem com o que foi digitado depois de #. */
   | { readonly type: 'files'; readonly requestId: number; readonly files: readonly string[] }
+  /** Conversas das extensões do Codex e do Claude Code, só leitura (ADR 0038). */
+  | ({ readonly type: 'externas' } & ExternalListResult)
   | { readonly type: 'error'; readonly text: string }
   | { readonly type: 'offline' }
   /** Status da voz e transcrições do microfone dos cartões. */
@@ -102,6 +105,8 @@ export type FromMesa =
   | { readonly type: 'findFiles'; readonly requestId: number; readonly query: string }
   | { readonly type: 'openExternal'; readonly url: string }
   | { readonly type: 'clearFinished' }
+  | { readonly type: 'externasAtivar' }
+  | { readonly type: 'externasAbrir'; readonly id: string }
   | FromVoz;
 
 /** Comandos da IDE que a barra de ferramentas da Mesa dispara. */

@@ -38,6 +38,8 @@
   "command.mesa.open": "Open the Desk",
   "command.mesa.focus": "Desk in focus (hides the bars)",
   "command.cafe.open": "Open the cyber café",
+  "command.externas.ativar": "Show conversations from the Codex and Claude Code extensions (read-only)",
+  "command.externas.desativar": "Stop showing conversations from the Codex and Claude Code extensions",
   "command.agents.send": "Talk to the agent",
   "command.agents.pause": "Pause agent",
   "command.agents.resume": "Resume agent",

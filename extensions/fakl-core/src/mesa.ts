@@ -6,6 +6,7 @@ import type { CostSummary, Run, Task } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
 import type { AgentControl, AgentEventRouter } from './agents.js';
+import type { ExternalSessionsFeed } from './externas.js';
 import { MESA_COMMANDS, type FromMesa, type ToMesa } from './mesa-protocol.js';
 import { moveToNewWindow } from './janelas.js';
 import type { VozUi } from './voz.js';
@@ -25,14 +26,19 @@ export class MesaUi implements vscode.Disposable {
   private roles: MesaRole[] = [];
   private rolesTimer: NodeJS.Timeout | undefined;
   private usageTimer: NodeJS.Timeout | undefined;
+  private watching: vscode.Disposable | undefined;
 
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly agents: AgentControl,
     router: AgentEventRouter,
     private readonly voz: VozUi,
+    private readonly externas: ExternalSessionsFeed,
   ) {
     this.disposables.push(
+      externas.onDidChange(() => {
+        this.postExternas();
+      }),
       voz.onDidChangeStatus(() => {
         this.postVoz();
       }),
@@ -76,6 +82,7 @@ export class MesaUi implements vscode.Disposable {
   dispose(): void {
     clearTimeout(this.rolesTimer);
     clearTimeout(this.usageTimer);
+    this.watching?.dispose();
     this.panel?.dispose();
     for (const disposable of this.disposables) disposable.dispose();
   }
@@ -133,8 +140,13 @@ export class MesaUi implements vscode.Disposable {
     panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'agents.svg');
     panel.webview.html = this.html(panel.webview, this.media);
     panel.webview.onDidReceiveMessage((message: FromMesa) => void this.receive(message));
+    this.watching?.dispose();
+    this.watching = this.externas.watch();
     panel.onDidDispose(() => {
-      if (this.panel === panel) this.panel = undefined;
+      if (this.panel !== panel) return;
+      this.panel = undefined;
+      this.watching?.dispose();
+      this.watching = undefined;
     });
   }
 
@@ -150,6 +162,7 @@ export class MesaUi implements vscode.Disposable {
             profiles: await this.agents.detect(true),
           });
           this.postSessions();
+          this.postExternas();
           this.postVoz();
           this.scheduleUsage();
           for (const session of this.agents.sessions()) {
@@ -219,6 +232,12 @@ export class MesaUi implements vscode.Disposable {
             sessionId: message.sessionId,
           });
           return;
+        case 'externasAtivar':
+          await vscode.commands.executeCommand('fakl.externas.ativar');
+          return;
+        case 'externasAbrir':
+          await this.externas.open(message.id);
+          return;
         case 'clearFinished':
           await vscode.commands.executeCommand('fakl.agents.clearFinished');
           return;
@@ -252,6 +271,10 @@ export class MesaUi implements vscode.Disposable {
   private postVoz(): void {
     const status = this.voz.status;
     this.post(status ? { type: 'vozStatus', status } : { type: 'vozStatus' });
+  }
+
+  private postExternas(): void {
+    this.post({ type: 'externas', ...this.externas.state });
   }
 
   private postSessions(): void {

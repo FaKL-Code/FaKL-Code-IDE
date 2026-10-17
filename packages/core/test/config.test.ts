@@ -57,6 +57,12 @@ describe('parseProfile', () => {
     expect(parseConfig({ permissoes: 'autopilot' }, 'c').permissoes).toBe('autopilot');
   });
 
+  it('mantém as conversas das extensões desligadas até o consentimento', () => {
+    expect(parseConfig({}, 'c').sessoesExternas).toBeUndefined();
+    expect(parseConfig({ sessoesExternas: 'sim' }, 'c').sessoesExternas).toBeUndefined();
+    expect(parseConfig({ sessoesExternas: true }, 'c').sessoesExternas).toBe(true);
+  });
+
   it('recusa id inválido, campo faltando e tipos errados', () => {
     expect(() => parseProfile({ id: 'Com Espaço', nome: 'x', provedor: 'y' }, 'a')).toThrow(
       ConfigError,

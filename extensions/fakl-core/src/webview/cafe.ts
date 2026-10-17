@@ -1,6 +1,8 @@
 import { isMaestro, mountCafe, OTHER_COLORS, PROVIDER_COLORS, STATE_LABEL } from '@fakl/cafe';
 import { l10n, useLocale } from '@fakl/i18n';
 
+import type { ExternalSession } from '@fakl/protocol';
+
 import type { FromCafe, ToCafe } from '../cafe-protocol.js';
 
 /*
@@ -159,6 +161,55 @@ function renderStrip(): void {
     : l10n.t('Nobody in the café. Use + Agent or + Task and whoever arrives takes a PC.');
 }
 
+const externalStrip = document.getElementById('externas') as HTMLDivElement;
+const EXTERNAL_NAMES = { codex: 'Codex', 'claude-code': 'Claude Code' } as const;
+
+function folderName(path: string): string {
+  const parts = path.split(/[\\/]+/).filter(Boolean);
+  return parts[parts.length - 1] ?? path;
+}
+
+/** Conversas das extensões do Codex e do Claude Code: só leitura, marcadas como externas. */
+function renderExternal(sessions: readonly ExternalSession[]): void {
+  externalStrip.replaceChildren(
+    ...sessions.map((session) => {
+      const card = document.createElement('article');
+      card.className = 'tela externa';
+      card.setAttribute('role', 'listitem');
+      card.dataset.estado = session.estado;
+      const [color] = PROVIDER_COLORS[session.provedor] ?? OTHER_COLORS;
+      card.style.setProperty('--cor', color);
+      const head = document.createElement('div');
+      head.className = 'cabeca';
+      const name = document.createElement('strong');
+      name.textContent = EXTERNAL_NAMES[session.fonte];
+      const state = document.createElement('span');
+      state.textContent = session.estado === 'ativa' ? l10n.t('active') : l10n.t('idle');
+      head.append(name, state);
+      const title = document.createElement('div');
+      title.className = 'titulo';
+      title.textContent = session.titulo ?? folderName(session.pasta);
+      title.title = session.pasta;
+      const badge = document.createElement('span');
+      badge.className = 'selo-externa';
+      badge.textContent = l10n.t('external, read-only');
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'externa-abrir';
+      open.textContent = l10n.t('Open in extension');
+      open.title = l10n.t(
+        'Open this conversation in its own extension; the café cannot send messages to it',
+      );
+      open.addEventListener('click', () => {
+        vscode.postMessage({ type: 'externasAbrir', id: session.id });
+      });
+      card.append(head, title, badge, open);
+      return card;
+    }),
+  );
+  externalStrip.hidden = sessions.length === 0;
+}
+
 window.addEventListener('message', (event: MessageEvent<ToCafe>) => {
   const message = event.data;
   switch (message.type) {
@@ -169,8 +220,12 @@ window.addEventListener('message', (event: MessageEvent<ToCafe>) => {
     case 'event':
       room.onEvent(message.event);
       return;
+    case 'externas':
+      renderExternal(message.sessoes);
+      return;
     case 'offline':
       room.setOffline(true);
+      renderExternal([]);
       return;
   }
 });

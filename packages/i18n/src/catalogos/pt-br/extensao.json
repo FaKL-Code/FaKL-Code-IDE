@@ -956,5 +956,10 @@
   "FaKL-Code {0} is available.": "A FaKL-Code {0} está disponível.",
   "Later": "Depois",
   "The official {0} extension keeps its own conversations, separate from the Desk, the café and the Maestro. Agents started from the IDE show up there and use the same account.": "A extensão oficial {0} tem as próprias conversas, separadas da Mesa, do café e do Maestro. Os agentes iniciados pela IDE aparecem lá e usam a mesma conta.",
-  "Got it": "Entendi"
+  "Got it": "Entendi",
+  "Conversations from other tools": "Conversas de outras ferramentas",
+  "Show the conversations of the Codex and Claude Code extensions?": "Mostrar as conversas das extensões do Codex e do Claude Code?",
+  "FaKL will read the local history files that the Codex and Claude Code extensions keep on this computer, to list their conversations on the Desk and in the café. Only the name, folder, time and state of each conversation are used; the messages are not shown, nothing is written to those files and nothing is sent anywhere. You can turn this off at any time.": "A FaKL vai ler os arquivos de histórico que as extensões do Codex e do Claude Code guardam neste computador, para listar as conversas delas na Mesa e no café. Só o nome, a pasta, o horário e o estado de cada conversa são usados; as mensagens não aparecem, nada é gravado nesses arquivos e nada é enviado para fora. Você pode desligar quando quiser.",
+  "The Claude Code extension is not available.": "A extensão do Claude Code não está disponível.",
+  "The Codex extension is not available.": "A extensão do Codex não está disponível."
 }

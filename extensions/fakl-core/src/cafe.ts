@@ -7,6 +7,7 @@ import type { CafeState } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
 import type { AgentControl, AgentEventRouter } from './agents.js';
+import type { ExternalSessionsFeed } from './externas.js';
 import type { FromCafe, ToCafe } from './cafe-protocol.js';
 import { moveToNewWindow } from './janelas.js';
 
@@ -25,14 +26,19 @@ export class CafeUi implements vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
   private client: CoreClient | undefined;
   private open = false;
+  private watching: vscode.Disposable | undefined;
   private refreshTimer: NodeJS.Timeout | undefined;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
     router: AgentEventRouter,
     agents: AgentControl,
+    private readonly externas: ExternalSessionsFeed,
   ) {
     this.disposables.push(
+      externas.onDidChange(() => {
+        if (this.open) this.postExternas();
+      }),
       vscode.commands.registerCommand('fakl.cafe.open', () => {
         this.show();
       }),
@@ -61,6 +67,7 @@ export class CafeUi implements vscode.Disposable {
 
   dispose(): void {
     clearTimeout(this.refreshTimer);
+    this.watching?.dispose();
     this.panel?.dispose();
     for (const disposable of this.disposables) disposable.dispose();
   }
@@ -126,6 +133,9 @@ export class CafeUi implements vscode.Disposable {
       case 'open':
         await vscode.commands.executeCommand('fakl.chat.open', { sessionId: message.sessionId });
         return;
+      case 'externasAbrir':
+        await this.externas.open(message.id);
+        return;
       case 'newAgent':
         await vscode.commands.executeCommand('fakl.agents.new');
         return;
@@ -144,7 +154,9 @@ export class CafeUi implements vscode.Disposable {
     try {
       const state = await client.request<CafeState>('cafe.open');
       this.open = true;
+      this.watching ??= this.externas.watch();
       this.post({ type: 'state', state });
+      this.postExternas();
     } catch {
       this.post({ type: 'offline' });
     }
@@ -153,8 +165,14 @@ export class CafeUi implements vscode.Disposable {
   private async closeRoom(): Promise<void> {
     if (!this.open) return;
     this.open = false;
+    this.watching?.dispose();
+    this.watching = undefined;
     clearTimeout(this.refreshTimer);
     await this.client?.request('cafe.close').catch(() => undefined);
+  }
+
+  private postExternas(): void {
+    this.post({ type: 'externas', ...this.externas.state });
   }
 
   private scheduleRefresh(): void {
@@ -209,6 +227,7 @@ export class CafeUi implements vscode.Disposable {
 <body>
 <div id="sala" data-assets="${assets.toString()}" data-files="${escapeAttr(this.assetList(media))}"><canvas id="cena" aria-label="${escapeAttr(l10n.t('Cyber café room with the agents'))}"></canvas><p id="aviso" hidden></p><div id="acoes"><button id="novo-agente" type="button" title="${escapeAttr(l10n.t('Chat with a new agent; it sits down at a PC'))}">${l10n.t('+ Agent')}</button><button id="nova-tarefa" type="button" title="${escapeAttr(l10n.t('Task with a maestro, who calls the agents'))}">${l10n.t('+ Task')}</button></div></div>
 <div id="telas" role="list" aria-label="${escapeAttr(l10n.t('Agent screens'))}"></div>
+<div id="externas" role="list" aria-label="${escapeAttr(l10n.t('Conversations from other tools'))}" hidden></div>
 <script nonce="${nonce}" src="${script.toString()}"></script>
 </body>
 </html>`;

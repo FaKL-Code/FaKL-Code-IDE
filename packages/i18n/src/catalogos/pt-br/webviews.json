@@ -538,5 +538,15 @@
   "PR open": "Aberto",
   "{0} failures": "{0} falhas",
   "$": "US$",
-  "/day": "/dia"
+  "/day": "/dia",
+  "external, read-only": "externa, só leitura",
+  "Open in extension": "Abrir na extensão",
+  "Open this conversation in its own extension; the café cannot send messages to it": "Abre esta conversa na própria extensão; o café não envia mensagens para ela",
+  "Other tools": "Outras ferramentas",
+  "FaKL reads the local history of the Codex and Claude Code extensions": "A FaKL lê o histórico local das extensões do Codex e do Claude Code",
+  "Show their conversations…": "Mostrar as conversas delas…",
+  "No recent conversations in the Codex or Claude Code extensions.": "Nenhuma conversa recente nas extensões do Codex ou do Claude Code.",
+  "Conversations from the Codex and Claude Code extensions, read-only.": "Conversas das extensões do Codex e do Claude Code, só leitura.",
+  "external": "externa",
+  "Open this conversation in its own extension; the Desk cannot send messages to it": "Abre esta conversa na própria extensão; a Mesa não envia mensagens para ela"
 }

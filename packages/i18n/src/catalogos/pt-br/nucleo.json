@@ -204,5 +204,6 @@
   "When you finish, reply with a short summary of what you did.": "Quando terminar, responda com um resumo curto do que fez.",
   "Write {0}": "Gravar {0}",
   "You are a programming agent working in a project folder (the worktree).": "Você é um agente de programação trabalhando numa pasta de projeto (o worktree).",
-  "yours": "seu"
+  "yours": "seu",
+  "true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history": "true mostra, só para leitura, as conversas das extensões do Codex e do Claude Code, lendo o histórico local delas"
 }

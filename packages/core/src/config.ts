@@ -52,6 +52,11 @@ export interface FaklConfig {
   readonly lovable?: readonly LovableProject[];
   /** Comandos por voz (`voz.*`): desligada até a pessoa escolher um modo. */
   readonly voz?: VozConfig;
+  /**
+   * Mostra na Mesa e no caf� as conversas das extens�es do Codex e do Claude Code,
+   * lendo o hist�rico local delas (ADR 0038). Desligado at� o usu�rio consentir.
+   */
+  readonly sessoesExternas?: boolean;
 }
 
 /** `voz` no config.yaml: o modo escolhido (ver `VOZ_MODOS` no protocolo). */
@@ -192,6 +197,7 @@ export function configHeader(info: FirstRunInfo = { provedores: [], perfis: [] }
 #   endpoint: http://127.0.0.1:8000/v1   # ${l10n.t('openai, groq and local only; optional')}
 #   idioma: pt
 #   limiteMb: 20       # ${l10n.t('the API key goes in the keychain (voz.token), never here')}
+# sessoesExternas: false  ${l10n.t('true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history')}
 # tetoDiario:          ${l10n.t('maximum spending per provider per day; when reached, agents pause')}
 ${caps.join('\n')}
 `;
@@ -350,6 +356,7 @@ export function parseConfig(raw: unknown, where: string): FaklConfig {
     ...parseRemote(raw.remoto, where),
     ...parseLovable(raw.lovable, where),
     ...parseVoz(raw.voz, where),
+    ...(raw.sessoesExternas === true ? { sessoesExternas: true } : {}),
   };
 }
 
@@ -808,6 +815,11 @@ export class ConfigStore {
     const parsed = parseVoz(raw, 'voz').voz;
     await this.setKey('voz', raw);
     return parsed;
+  }
+
+  /** Grava `sessoesExternas:` no config.yaml; desligar apaga a chave. */
+  async setExternalSessions(enabled: boolean): Promise<void> {
+    await this.setKey('sessoesExternas', enabled ? true : undefined);
   }
 
   /** Grava a lista `lovable:` no config.yaml; lista vazia apaga a chave. */
