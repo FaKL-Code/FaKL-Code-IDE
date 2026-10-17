@@ -2191,6 +2191,11 @@
           "default": true,
           "description": "%config.mesa.abrirAoIniciar%"
         },
+        "fakl.providers.checkUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.providers.checkUpdates%"
+        },
         "fakl.update.notify": {
           "type": "boolean",
           "default": true,
