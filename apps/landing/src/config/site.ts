@@ -1,7 +1,8 @@
 /**
  * Tudo o que muda sem mexer nas páginas: endereço, links de download e filme.
- * Os textos em cada idioma ficam em `src/i18n`. Ainda não há instaladores
- * públicos, então os downloads começam como "em breve".
+ * Os textos em cada idioma ficam em `src/i18n`. Os instaladores saem das
+ * GitHub Releases do repositório: o site só aponta para lá, com os nomes fixos
+ * que a release publica.
  */
 
 export type DownloadStatus = 'em-breve' | 'disponivel';
@@ -30,14 +31,14 @@ export const site = {
     {
       id: 'windows',
       plataforma: 'Windows',
-      status: 'em-breve',
-      url: null,
+      status: 'disponivel',
+      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.0/FaKL-Code-Windows-x64.exe',
     },
     {
       id: 'macos',
       plataforma: 'macOS',
-      status: 'em-breve',
-      url: null,
+      status: 'disponivel',
+      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.0/FaKL-Code-macOS-arm64.zip',
     },
   ] satisfies readonly Download[] as readonly Download[],
 } as const;

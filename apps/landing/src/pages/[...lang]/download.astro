@@ -45,6 +45,12 @@ const D = T.download;
       }
     </ul>
 
+    <div class="aviso-assinatura">
+      <h2>{D.semAssinatura}</h2>
+      <p><b>Windows.</b> {D.avisoWindows}</p>
+      <p><b>macOS.</b> {D.avisoMacos}</p>
+    </div>
+
     <div class="codigo">
       <p>{D.codigo}</p>
       <a class="btn btn-ghost" href={site.repo}>
@@ -147,6 +153,28 @@ const D = T.download;
   }
   [data-seu] .seu {
     display: block;
+  }
+  .aviso-assinatura {
+    display: grid;
+    gap: 8px;
+    margin-top: 24px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .aviso-assinatura h2 {
+    margin: 0 0 4px;
+    font: 700 11px/1 var(--mono);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .aviso-assinatura p {
+    margin: 0;
+  }
+  .aviso-assinatura b {
+    color: var(--text);
+    font-weight: 600;
   }
   .codigo {
     display: flex;
