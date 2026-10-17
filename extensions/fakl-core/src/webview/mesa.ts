@@ -291,7 +291,7 @@ const floorsTitle = el('h2', {}, l10n.t('Floors'));
 const floorsList = el('ul', { class: 'floors' });
 const agentsTitle = el('h2', {}, l10n.t('Agents'));
 const agentsList = el('ul', { class: 'agents' });
-// Conversas das extensões do Codex e do Claude Code: só leitura (ADR 0038).
+// Conversas das extensões do Codex e do Claude Code: só leitura (ADR 0039).
 const externalTitle = el('h2', {}, l10n.t('Other tools'));
 const externalNote = el('p', { class: 'external-note' });
 const externalEnable = el(

@@ -50,7 +50,7 @@ export type ToMesa =
   | { readonly type: 'usage'; readonly summary: CostSummary }
   /** Arquivos da pasta que batem com o que foi digitado depois de #. */
   | { readonly type: 'files'; readonly requestId: number; readonly files: readonly string[] }
-  /** Conversas das extensões do Codex e do Claude Code, só leitura (ADR 0038). */
+  /** Conversas das extensões do Codex e do Claude Code, só leitura (ADR 0039). */
   | ({ readonly type: 'externas' } & ExternalListResult)
   | { readonly type: 'error'; readonly text: string }
   | { readonly type: 'offline' }

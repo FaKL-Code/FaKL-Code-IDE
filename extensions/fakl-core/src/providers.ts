@@ -4,6 +4,7 @@ import {
   apiKeySecretName,
   isProviderId,
   type AgentProfileDefinition,
+  type ProvidersDetectParams,
   type ProvidersDetectResult,
   type ProvidersGenerateResult,
   type ProviderStatus,
@@ -14,6 +15,7 @@ import {
   fixCommands,
   keyTargets,
   parseArgs,
+  outdated,
   parseEnvPairs,
   statusLine,
   type KeyTarget,
@@ -101,7 +103,16 @@ export class ProvidersUi implements vscode.Disposable {
       return undefined;
     }
     try {
-      return [...(await this.client.request<ProvidersDetectResult>('providers.detect')).provedores];
+      // A consulta ao npm (versão mais nova dos adaptadores) é desligável.
+      const params: ProvidersDetectParams = {
+        atualizacoes: vscode.workspace
+          .getConfiguration('fakl')
+          .get<boolean>('providers.checkUpdates', true),
+      };
+      return [
+        ...(await this.client.request<ProvidersDetectResult>('providers.detect', params))
+          .provedores,
+      ];
     } catch (error) {
       void vscode.window.showErrorMessage(
         l10n.t('Could not detect the providers: {0}', message(error)),
@@ -140,10 +151,21 @@ export class ProvidersUi implements vscode.Disposable {
   /** Oferece os comandos que faltam num terminal (sem rodar: o usuário confere e aperta Enter). */
   private async fix(status: ProviderStatus): Promise<void> {
     const commands = fixCommands(status);
+    const updates = outdated(status);
     const options = [
-      ...commands.map((command) => ({ label: `$(terminal) ${command}`, command })),
+      ...updates.map((item) => ({
+        label: l10n.t(
+          '$(cloud-download) Update {0} ({1} → {2})',
+          item.comando,
+          item.instalada,
+          item.ultima,
+        ),
+        command: '',
+        update: item.atualizar,
+      })),
+      ...commands.map((command) => ({ label: `$(terminal) ${command}`, command, update: '' })),
       ...(status.chaveEnv && !status.chave
-        ? [{ label: l10n.t('$(key) Use an API key'), command: '' }]
+        ? [{ label: l10n.t('$(key) Use an API key'), command: '', update: '' }]
         : []),
     ];
     if (options.length === 0) {
@@ -161,10 +183,31 @@ export class ProvidersUi implements vscode.Disposable {
       placeHolder: status.aviso ?? l10n.t('What do you want to do?'),
     });
     if (!picked) return;
+    if (picked.update) return this.update(status, picked.update);
     if (!picked.command) return this.setKey(status.id);
     const terminal = vscode.window.createTerminal({ name: `FaKL: ${status.nome}` });
     terminal.show();
     terminal.sendText(picked.command, false);
+  }
+
+  /** Atualiza um pacote com `npm install -g`, só depois de o usuário confirmar; a saída aparece no terminal. */
+  private async update(status: ProviderStatus, command: string): Promise<void> {
+    const yes = l10n.t('Update');
+    const answer = await vscode.window.showWarningMessage(
+      l10n.t('Run `{0}`?', command),
+      {
+        modal: true,
+        detail: l10n.t(
+          'Updates the {0} agent on this machine. Sessions already open keep the old version until they restart.',
+          status.nome,
+        ),
+      },
+      yes,
+    );
+    if (answer !== yes) return;
+    const terminal = vscode.window.createTerminal({ name: `FaKL: ${status.nome}` });
+    terminal.show();
+    terminal.sendText(command, true);
   }
 
   private async pickTarget(

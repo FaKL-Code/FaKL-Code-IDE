@@ -1,6 +1,6 @@
 /**
  * Conversas das extensões oficiais do Codex e do Claude Code, só para olhar
- * (ADR 0038). O Core lê os metadados que as duas ferramentas guardam em disco;
+ * (ADR 0039). O Core lê os metadados que as duas ferramentas guardam em disco;
  * não existe API para falar com essas conversas, então nada vai para elas.
  */
 export const EXTERNAL_SOURCES = ['codex', 'claude-code'] as const;

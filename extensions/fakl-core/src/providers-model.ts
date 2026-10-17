@@ -4,7 +4,13 @@
  */
 
 import { l10n } from '@fakl/i18n';
-import { CLI_PROVIDERS, PROVIDER_KEY_ENV, providerName, type ProviderStatus } from '@fakl/protocol';
+import {
+  CLI_PROVIDERS,
+  PROVIDER_KEY_ENV,
+  providerName,
+  type ProviderStatus,
+  type ProviderUpdate,
+} from '@fakl/protocol';
 
 /** Provedor que aceita chave de API: os três com CLI e os agentes ACP que declararam a variável. */
 export interface KeyTarget {
@@ -73,6 +79,7 @@ export function statusLine(status: ProviderStatus): {
       ? l10n.t('ready via {0}', modeLabels()[status.modo ?? ''] ?? status.modo ?? '')
       : l10n.t('not ready'),
     ...(status.versao ? [`v${status.versao}`] : []),
+    ...(outdated(status).length > 0 ? [l10n.t('update available')] : []),
     ...(status.perfis.length > 0 ? [l10n.t('profiles: {0}', status.perfis.join(', '))] : []),
   ];
   return {
@@ -80,8 +87,18 @@ export function statusLine(status: ProviderStatus): {
     description: parts.join(' · '),
     detail:
       status.aviso ??
+      (outdated(status).length > 0
+        ? outdated(status)
+            .map((item) => `${item.comando} ${item.instalada} → ${item.ultima}`)
+            .join(' · ')
+        : undefined) ??
       (status.modelos?.length ? l10n.t('models: {0}', status.modelos.join(', ')) : ''),
   };
+}
+
+/** Pacotes do provedor com versão publicada mais nova que a instalada. */
+export function outdated(status: ProviderStatus): ProviderUpdate[] {
+  return (status.atualizacoes ?? []).filter((item) => item.desatualizada);
 }
 
 /** Comandos de terminal que resolvem o que falta (instalar, depois login). */

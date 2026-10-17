@@ -19,10 +19,13 @@ import {
   CoreClient,
   createCore,
   createSessionToken,
+  isNewer,
+  npmLatestVersion,
   parseVersion,
   providerKeyEnv,
   ProviderService,
   type CliRunner,
+  type ProviderServiceOptions,
 } from '../src/index.js';
 import { testSocket } from './helpers.js';
 
@@ -102,6 +105,7 @@ describe('ProviderService', () => {
   function service(
     fetchModels: Partial<Record<'ollama' | 'lmstudio', string[]>> = {},
     env: Record<string, string> = {},
+    extra: Partial<ProviderServiceOptions> = {},
   ): ProviderService {
     return new ProviderService({
       profiles: () => store.profiles,
@@ -113,6 +117,7 @@ describe('ProviderService', () => {
       stateFile: join(store.dir, 'data', 'providers.json'),
       runCli: versions,
       fetch: localServers(fetchModels),
+      ...extra,
     });
   }
 
@@ -162,6 +167,81 @@ describe('ProviderService', () => {
     const { criados } = await providers.generateProfiles();
     expect([...criados].sort()).toEqual(['claude', 'claude-haiku', 'claude-opus', 'claude-sonnet']);
     expect(ids()).toEqual(['claude', 'claude-haiku', 'claude-opus', 'claude-sonnet']);
+  });
+
+  it('compara adaptador e CLI com a última versão do npm, só quando pedido', async () => {
+    await m.install('codex-acp', 'codex', 'claude-agent-acp');
+    const asked: string[] = [];
+    const latest: Record<string, string> = {
+      '@agentclientprotocol/codex-acp': '2.0.0',
+      '@openai/codex': '1.2.3',
+    };
+    const providers = service(
+      {},
+      {},
+      {
+        latestVersion: (pacote) => {
+          asked.push(pacote);
+          return Promise.resolve(latest[pacote]);
+        },
+      },
+    );
+    const plain = await providers.detect({ versions: true });
+    expect(byId(plain, 'openai').atualizacoes).toBeUndefined();
+    expect(asked).toEqual([]);
+
+    const list = await providers.detect({ versions: true, updates: true });
+    expect(byId(list, 'openai').atualizacoes).toEqual([
+      {
+        pacote: '@agentclientprotocol/codex-acp',
+        comando: 'codex-acp',
+        instalada: '1.2.3',
+        ultima: '2.0.0',
+        desatualizada: true,
+        atualizar: 'npm install -g @agentclientprotocol/codex-acp@latest',
+      },
+      {
+        pacote: '@openai/codex',
+        comando: 'codex',
+        instalada: '1.2.3',
+        ultima: '1.2.3',
+        desatualizada: false,
+        atualizar: 'npm install -g @openai/codex@latest',
+      },
+    ]);
+    // Sem resposta do npm (offline) ou sem o executável, nada é afirmado.
+    expect(byId(list, 'anthropic').atualizacoes).toBeUndefined();
+    expect(byId(list, 'google').atualizacoes).toBeUndefined();
+    expect(asked).not.toContain('@google/gemini-cli');
+  });
+
+  it('versões: compara major.minor.patch e ignora pré-lançamento', () => {
+    expect(isNewer('2.10.0', '2.9.9')).toBe(true);
+    expect(isNewer('0.93.0', '0.89.1')).toBe(true);
+    expect(isNewer('1.2.3', '1.2.3')).toBe(false);
+    expect(isNewer('1.2.3', '1.2.3-alpha.4')).toBe(false);
+    expect(isNewer('1.2', '1.2.1')).toBe(false);
+  });
+
+  it('npm: lê a versão, guarda por uma hora e devolve vazio quando falha', async () => {
+    let calls = 0;
+    const urls: string[] = [];
+    const ok = (input: string): Promise<Response> => {
+      calls++;
+      urls.push(input);
+      return Promise.resolve(new Response(JSON.stringify({ version: '3.4.5' }), { status: 200 }));
+    };
+    expect(await npmLatestVersion('@scope/pacote-teste', ok)).toBe('3.4.5');
+    expect(await npmLatestVersion('@scope/pacote-teste', ok)).toBe('3.4.5');
+    expect(calls).toBe(1);
+    expect(urls).toEqual(['https://registry.npmjs.org/@scope/pacote-teste/latest']);
+    const fail = (): Promise<Response> => Promise.reject(new Error('ENOTFOUND'));
+    expect(await npmLatestVersion('pacote-offline', fail)).toBeUndefined();
+    const odd = (): Promise<Response> =>
+      Promise.resolve(new Response(JSON.stringify({ version: 'latest' }), { status: 200 }));
+    expect(await npmLatestVersion('pacote-estranho', odd)).toBeUndefined();
+    const missing = (): Promise<Response> => Promise.resolve(new Response('', { status: 404 }));
+    expect(await npmLatestVersion('pacote-inexistente', missing)).toBeUndefined();
   });
 
   it('só Codex por assinatura', async () => {

@@ -53,8 +53,8 @@ export interface FaklConfig {
   /** Comandos por voz (`voz.*`): desligada até a pessoa escolher um modo. */
   readonly voz?: VozConfig;
   /**
-   * Mostra na Mesa e no caf� as conversas das extens�es do Codex e do Claude Code,
-   * lendo o hist�rico local delas (ADR 0038). Desligado at� o usu�rio consentir.
+   * Mostra na Mesa e no café as conversas das extensões do Codex e do Claude Code,
+   * lendo o histórico local delas (ADR 0039). Desligado até o usuário consentir.
    */
   readonly sessoesExternas?: boolean;
 }

@@ -11,7 +11,7 @@ const CLAUDE_OPEN = 'claude-vscode.editor.open';
 const CODEX_OPEN = 'chatgpt.openSidebar';
 
 /**
- * Conversas das extensões do Codex e do Claude Code na Mesa e no café (ADR 0038).
+ * Conversas das extensões do Codex e do Claude Code na Mesa e no café (ADR 0039).
  * Só observa: o Core lê os metadados do disco, e a única ação é abrir a conversa
  * na extensão de origem. Nada é enviado a elas, porque não existe API para isso.
  */

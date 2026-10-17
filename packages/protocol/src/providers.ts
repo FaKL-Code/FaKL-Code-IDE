@@ -81,6 +81,25 @@ export function providerFamily(provedor: string | undefined): ProviderFamily {
   }
 }
 
+/** Um pacote npm do provedor (adaptador ACP ou CLI) comparado com a última versão publicada. */
+export interface ProviderUpdate {
+  /** Pacote no npm, como `@agentclientprotocol/codex-acp`. */
+  readonly pacote: string;
+  /** Comando do pacote no PATH, como `codex-acp`. */
+  readonly comando: string;
+  readonly instalada: string;
+  readonly ultima: string;
+  /** A última publicada é mais nova que a instalada. */
+  readonly desatualizada: boolean;
+  /** Comando que atualiza o pacote; quem roda é o usuário, depois de confirmar. */
+  readonly atualizar: string;
+}
+
+/** `providers.detect`: com `atualizacoes`, consulta o npm pela última versão de cada pacote. */
+export interface ProvidersDetectParams {
+  readonly atualizacoes?: boolean;
+}
+
 /** Um provedor como `providers.detect` o encontrou. */
 export interface ProviderStatus {
   /** `anthropic`, `openai`, `google`, `ollama`, `lmstudio` ou o id de um agente ACP cadastrado. */
@@ -111,6 +130,8 @@ export interface ProviderStatus {
   readonly modelos?: readonly string[];
   /** Perfis que já usam este provedor. */
   readonly perfis: readonly string[];
+  /** Versões instaladas contra a última do npm; só com `atualizacoes` e quando o npm respondeu. */
+  readonly atualizacoes?: readonly ProviderUpdate[];
   /** O que falta, numa frase, quando não está pronto; ou um aviso útil. */
   readonly aviso?: string;
 }

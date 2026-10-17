@@ -121,7 +121,7 @@ function processExists(pid: number): boolean {
 
 /**
  * Conversas das extensões oficiais do Codex (`openai.chatgpt`) e do Claude Code
- * (`anthropic.claude-code`), só para olhar (ADR 0038). As duas guardam o
+ * (`anthropic.claude-code`), só para olhar (ADR 0039). As duas guardam o
  * histórico em JSONL num formato interno, sem documentação; por isso o leitor
  * só confia no que consegue ler, ignora o resto sem reclamar e nunca grava
  * nada nesses arquivos. Só metadados saem daqui: título, pasta, horário e

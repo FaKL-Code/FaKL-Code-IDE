@@ -1,4 +1,4 @@
-# 0038. Conversas das extensões do Codex e do Claude Code, só para olhar
+# 0039. Conversas das extensões do Codex e do Claude Code, só para olhar
 
 - Status: aceita
 - Data: 2026-10-17
