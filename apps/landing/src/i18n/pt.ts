@@ -220,7 +220,7 @@ export const pt = {
     descricao: 'Baixe a FaKL-Code IDE para Windows e macOS.',
     kicker: 'Download',
     h1: 'Baixar FaKL-Code',
-    lead: 'Versão 0.1.0, sem assinatura digital por enquanto. O download vem direto da release no GitHub.',
+    lead: 'Versão 0.1.1, sem assinatura digital por enquanto. O download vem direto da release no GitHub.',
     baixar: 'Baixar',
     embreve: 'Em breve',
     seuSistema: 'seu sistema',
