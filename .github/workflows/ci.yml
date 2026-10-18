@@ -47,8 +47,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test:coverage
       - name: Shellcheck dos scripts de build
-        # O pacote npm baixa o binário do shellcheck do sistema do runner.
-        run: pnpm dlx shellcheck@4.1.0 -x build/*.sh
+        # O pacote npm baixa o binário do shellcheck do sistema do runner; sem token a API do
+        # GitHub devolve "rate limit exceeded" com frequência, e a nova tentativa cobre o resto.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for tentativa in 1 2 3; do
+            if pnpm dlx shellcheck@4.1.0 -x build/*.sh; then exit 0; fi
+            echo "shellcheck falhou na tentativa ${tentativa}" >&2
+            sleep 20
+          done
+          exit 1
 
   # Os mesmos testes em Linux e macOS (RNF-12). Não é obrigatório para mesclar: serve para
   # mostrar o que quebra fora do Windows antes de alguém reclamar.
