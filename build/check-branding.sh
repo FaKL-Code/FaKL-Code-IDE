@@ -45,6 +45,8 @@ jq -e '(.updateUrl | startswith("https://raw.githubusercontent.com/FaKL-Code/"))
 grep -q 'DISABLE_UPDATE:-no' "${ROOT}/build/env.sh" \
   || fail "build/env.sh deve deixar a atualização automática ligada (DISABLE_UPDATE:-no)"
 
+grep -q 'rm -rf node_modules/@parcel/watcher-linux-\*-musl' "${DEST}/prepare_vscode.sh"   || fail "prepare_vscode.sh sem a remoção dos binários musl do @parcel/watcher (.deb do Linux)"
+
 if grep -nE '"(short_)?name" "VSCodium"|\|VSCodium\||https://vscodium\.com' "${DEST}/prepare_vscode.sh"; then
   fail "prepare_vscode.sh ainda escreve o nome ou o site do VSCodium"
 fi
