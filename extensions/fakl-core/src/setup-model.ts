@@ -130,7 +130,7 @@ function steps(): StepDefinition[] {
       grupo: 'essencial',
       titulo: l10n.t('AI providers'),
       resumo: l10n.t(
-        'Use what you have: a Claude, Codex or Gemini subscription through their CLIs, an API key, local models (Ollama, LM Studio) or any ACP agent. With none, the IDE works as an editor.',
+        'Use what you have: a Claude or Codex subscription through their CLIs, an API key (the only way for Gemini), local models (Ollama, LM Studio) or any ACP agent. With none, the IDE works as an editor.',
       ),
       core: true,
     },

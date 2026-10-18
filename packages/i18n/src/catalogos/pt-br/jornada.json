@@ -6,7 +6,6 @@
   "Theme": "Tema",
   "{0} has the same look as the Desk and the chat. Any VS Code theme works.": "O {0} tem o mesmo visual da Mesa e do chat. Qualquer tema do VS Code funciona.",
   "AI providers": "Provedores de IA",
-  "Use what you have: a Claude, Codex or Gemini subscription through their CLIs, an API key, local models (Ollama, LM Studio) or any ACP agent. With none, the IDE works as an editor.": "Use o que você tem: assinatura do Claude, do Codex ou do Gemini pelo CLI, chave de API, modelos locais (Ollama, LM Studio) ou qualquer agente ACP. Sem nenhum, a IDE funciona como editor.",
   "Agent permissions": "Permissões dos agentes",
   "How much agents can do without asking, and a daily spending cap for each provider.": "O quanto os agentes podem fazer sem perguntar, e um teto de gasto por dia para cada provedor.",
   "Pull requests, reviews, Actions and notifications for your whole account, plus pushes and PRs made by agents.": "PRs, revisões, Actions e notificações da conta inteira, e push e PR feitos pelos agentes.",
@@ -140,5 +139,6 @@
   "Tour of FaKL-Code": "Tour da FaKL-Code",
   "A short walk through the Desk, the chat, the café, the vault, GitHub and phone control, with a first task you can run in a sample folder. Skip it any time; \"FaKL: Tour\" brings it back.": "Um passeio curto pela Mesa, pelo chat, pelo café, pelo vault, pelo GitHub e pelo controle pelo celular, com uma primeira tarefa para rodar numa pasta de exemplo. Pule quando quiser; \"FaKL: Tour\" traz de volta.",
   "Run the Doctor": "Rodar o Doctor",
-  "Start the tour": "Começar o tour"
+  "Start the tour": "Começar o tour",
+  "Use what you have: a Claude or Codex subscription through their CLIs, an API key (the only way for Gemini), local models (Ollama, LM Studio) or any ACP agent. With none, the IDE works as an editor.": "Use o que você tem: uma assinatura do Claude ou do Codex pelos CLIs deles, uma chave de API (a única forma no Gemini), modelos locais (Ollama, LM Studio) ou qualquer agente ACP. Sem nada, a IDE funciona como um editor."
 }

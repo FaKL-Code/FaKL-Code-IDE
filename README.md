@@ -53,11 +53,13 @@ nem conta na nuvem: a IDE usa os logins das CLIs que você já tem.
 | ----------------------- | ----------------- | ---------------------------------------- |
 | **Claude Code**         | Anthropic         | Login do Claude Code ou chave de API     |
 | **Codex**               | OpenAI            | `codex login` ou chave de API            |
-| **Gemini CLI**          | Google            | Login do Gemini CLI ou chave de API      |
+| **Gemini CLI**          | Google            | Chave de API do Google AI Studio         |
 | **Ollama e LM Studio**  | No seu computador | Servidor local com um modelo de conversa |
 | **Qualquer agente ACP** | Você escolhe      | Login do próprio agente, ou uma chave    |
 
-Todos são opcionais e combinam entre si. Detalhes em [Provedores de IA](docs/provedores.md).
+Todos são opcionais e combinam entre si. No Gemini, o login com conta Google pessoal
+não funciona mais (o Google deixou de aceitá-lo fora dos produtos dele), então use uma
+chave de API. Detalhes em [Provedores de IA](docs/provedores.md).
 
 ## `>_` Na IDE
 
