@@ -123,6 +123,10 @@ jobs:
           if (( ${#linux_deb[@]} >= 1 )); then
             cp -- "${linux_deb[0]}" FaKL-Code-Linux-x64.deb
           fi
+          linux_rpm=(*.rpm)
+          if (( ${#linux_rpm[@]} >= 1 )); then
+            cp -- "${linux_rpm[0]}" FaKL-Code-Linux-x64.rpm
+          fi
 
       - name: Checksums
         working-directory: dist

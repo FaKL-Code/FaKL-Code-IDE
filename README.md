@@ -147,10 +147,11 @@ mesma API. Cada agente roda num worktree só dele, e o trabalho chega à `main` 
 Baixe o instalador na página de [Releases](../../releases) e confira o hash em
 `SHA256SUMS.txt`.
 
-| Sistema | Instalador    | Requisito                    |
-| ------- | ------------- | ---------------------------- |
-| Windows | x64           | Windows 10 ou 11, 64 bits    |
-| macOS   | Apple Silicon | Mac com chip M1 ou mais novo |
+| Sistema | Instalador         | Requisito                              |
+| ------- | ------------------ | -------------------------------------- |
+| Windows | x64                | Windows 10 ou 11, 64 bits              |
+| macOS   | Apple Silicon      | Mac com chip M1 ou mais novo           |
+| Linux   | x64 (experimental) | Ubuntu 22.04 ou mais novo (glibc 2.35) |
 
 - **Windows:** execute o `.exe`. O instalador não é assinado (o pedido ao SignPath
   Foundation foi recusado, veja [docs/assinatura.md](docs/assinatura.md)), então o
@@ -161,6 +162,10 @@ Baixe o instalador na página de [Releases](../../releases) e confira o hash em
   libere-o de um destes jeitos:
   - clique com o botão direito no app, **Abrir** e confirme; ou
   - rode `xattr -dr com.apple.quarantine "/Applications/FaKL-Code IDE.app"` no Terminal.
+
+- **Linux (experimental):** instale o `.deb` (`sudo apt install ./FaKL-Code-Linux-x64.deb`), o `.rpm` ou
+  descompacte o `.tar.gz` e rode o binário `fakl-code`. O CI abriu o build sob Xvfb, mas ninguém o
+  instalou numa distribuição de verdade ainda.
 
 Também dá para instalar por gerenciador de pacote (veja [docs/distribuicao.md](docs/distribuicao.md)
 para o estado de cada um):

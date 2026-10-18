@@ -18,6 +18,7 @@ export const pt = {
     tituloPadrao: 'agentes de IA trabalhando juntos',
     windows: { formato: 'Instalador x64', requisito: 'Windows 10 ou 11, 64 bits' },
     macos: { formato: 'Apple Silicon', requisito: 'Mac com chip M1 ou mais novo' },
+    linux: { formato: 'x64 (.tar.gz e .deb)', requisito: 'Ubuntu 22.04 ou mais novo (glibc 2.35)' },
   },
   nav: {
     pular: 'Pular para o conteúdo',
@@ -232,6 +233,8 @@ export const pt = {
       'O instalador não é assinado, então o SmartScreen mostra "O Windows protegeu o computador": clique em Mais informações e em Executar assim mesmo.',
     avisoMacos:
       'Descompacte, mova o app para Aplicativos e abra com o botão direito, Abrir. O macOS pede essa confirmação uma vez.',
+    avisoLinux:
+      'Experimental. Instale o .deb (sudo apt install ./arquivo.deb) ou descompacte o .tar.gz e rode o binário fakl-code. O build usa a glibc do Ubuntu 22.04: em distribuições mais antigas não abre.',
   },
   docs: {
     tituloIndice: 'Documentação da FaKL-Code IDE',

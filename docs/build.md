@@ -61,10 +61,12 @@ acusasse. Rodado contra a v0.1.3, o script falha; contra a v0.1.5, passa.
 
 ## Linux (experimental)
 
-O `build.yml` aceita `plataformas: linux`, que compila no `ubuntu-22.04` (x64) com os scripts do
-VSCodium e gera `.tar.gz`, `.deb` e `.rpm`. O `snap` fica de fora: com `CI_BUILD=no` o
-`prepare_assets.sh` do VSCodium também o constrói, e o `build.sh` o neutraliza. A opção `todas`
-continua sendo só Windows e macOS até o Linux ter passado numa release. O build usa a glibc do
+O `build.yml` compila no `ubuntu-22.04` (x64) com os scripts do VSCodium e gera `.tar.gz`, `.deb`
+e `.rpm`; entra em `todas` e também pode sair sozinho com `plataformas: linux`. O `snap` fica de
+fora: com `CI_BUILD=no` o `prepare_assets.sh` do VSCodium também o constrói, e o `build.sh` o
+neutraliza. O `prepare.sh` tira os binários musl do `@parcel/watcher`, que o `dpkg-shlibdeps` do
+`.deb` não resolve. Validado no CI (compilação, `.deb` e fumaça sob Xvfb), mas nunca instalado numa
+distribuição de verdade nem testado fora do Ubuntu. O build usa a glibc do
 Ubuntu 22.04, então o resultado não roda em distribuições mais antigas que isso (o VSCodium
 compila em contêineres com glibc 2.28 para ter mais alcance). No Linux o serviço de atualização
 só avisa da versão nova e abre o download; o `fumaca-linux` abre o resultado sob Xvfb.
