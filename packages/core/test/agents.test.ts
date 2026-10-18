@@ -466,6 +466,17 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
     expect(existsSync(join(repo, 'novo.txt'))).toBe(true);
     const after = await client.request<AgentDiffResult>('agents.diff', { sessionId });
     expect(after.files[0]?.resolution).toBe('aplicado');
+    // O diff aceito vira evento, e o placar (que só escuta o barramento) o conta para o perfil.
+    expect(events.find((e) => e.topic === 'agent.review')?.data).toEqual({
+      aceitos: 1,
+      rejeitados: 0,
+    });
+    expect(core.scorecard.get('total').perfis[0]).toMatchObject({
+      perfilId: 'falso',
+      sessoes: 1,
+      arquivosAceitos: 1,
+      taxaAprovacao: 1,
+    });
 
     await client.request('agents.stop', { sessionId });
     await core.agents.stopAll();

@@ -4,6 +4,7 @@ export * from './cafe.js';
 export * from './claude-accounts.js';
 export * from './config.js';
 export * from './costs.js';
+export * from './scorecard.js';
 export * from './exec.js';
 export * from './external-sessions.js';
 export * from './integrations/email.js';

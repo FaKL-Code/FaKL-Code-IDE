@@ -33,6 +33,7 @@ import {
   type RunLimitEventData,
   type RunLimits,
   type RunStatus,
+  type ScorecardSummary,
   type Task,
   type TaskDefinition,
   type TaskStatus,
@@ -81,6 +82,8 @@ export interface OrchestratorOptions {
   readonly bus: EventBus;
   readonly agents: AgentRuntime;
   readonly costs: CostTracker;
+  /** Placar por perfil, para o `list_profiles` do maestro (ADR 0043); sem ele, a lista não traz o placar. */
+  readonly scorecard?: { summaryFor(profileId: string): ScorecardSummary };
   readonly profiles: () => readonly AgentProfile[];
   /** Limites, entrega e build pós-merge padrão da configuração global. */
   readonly defaults?: () => {
@@ -1192,6 +1195,9 @@ export class Orchestrator implements Disposable {
         podeSerMaestro: profile.podeSerMaestro ?? false,
         bloqueado: this.options.costs.blockedReason(profile.provedor) ?? null,
         instalado: availability.get(profile.id)?.status !== 'não-instalado',
+        ...(this.options.scorecard
+          ? { placar: this.options.scorecard.summaryFor(profile.id) }
+          : {}),
         ...(availability.get(profile.id)?.status === 'não-instalado' &&
         availability.get(profile.id)?.install
           ? { comoInstalar: availability.get(profile.id)?.install }

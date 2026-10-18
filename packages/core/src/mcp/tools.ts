@@ -16,7 +16,7 @@ export const MAESTRO_TOOLS: readonly McpTool[] = [
     name: 'list_profiles',
     method: 'maestro.listProfiles',
     description:
-      'Lists the agent profiles: provider, model, strengths, relative cost, whether they can be maestro, pinned roles and whether the provider is blocked by the daily cap.',
+      'Lists the agent profiles: provider, model, strengths, relative cost, whether they can be maestro, pinned roles and whether the provider is blocked by the daily cap. Each profile also carries `placar`: approval rate of the diffs, average duration and average cost over the last 30 days, or "poucos dados" with fewer than 5 finished tasks. Treat these numbers as a signal, not a rule.',
     inputSchema: { type: 'object', properties: {} },
   },
   {

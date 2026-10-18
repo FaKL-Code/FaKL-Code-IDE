@@ -16,6 +16,7 @@ export const EVENT_TOPICS = [
   'agent.options',
   'agent.prompt',
   'agent.recovery',
+  'agent.review',
   'run.agents',
   'run.round',
   'run.limit',
