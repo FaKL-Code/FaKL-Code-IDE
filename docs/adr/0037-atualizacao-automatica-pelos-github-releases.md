@@ -57,8 +57,9 @@ Três pontos não vêm prontos:
 - Cada IDE aberta consulta o GitHub (um GET em `raw.githubusercontent.com`) de
   tempos em tempos; a FaKL-Code não tem servidor nesse caminho. Quem quiser
   desliga com `update.mode: none`.
-- O Windows continua sem assinatura até o SignPath aprovar o projeto; a
-  atualização baixa o mesmo instalador sem assinatura da página de downloads.
+- O Windows segue sem assinatura (o SignPath Foundation recusou o projeto); a
+  atualização baixa o mesmo instalador da página de downloads e confere o
+  SHA-256 do manifesto antes de instalar.
 
 ## Alternativas consideradas
 

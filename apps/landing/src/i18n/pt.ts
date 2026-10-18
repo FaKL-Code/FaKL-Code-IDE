@@ -220,7 +220,7 @@ export const pt = {
     descricao: 'Baixe a FaKL-Code IDE para Windows e macOS.',
     kicker: 'Download',
     h1: 'Baixar FaKL-Code',
-    lead: 'Versão 0.1.4, sem assinatura digital por enquanto. O download vem direto da release no GitHub.',
+    lead: 'Versão 0.1.4, sem assinatura digital. O download vem direto da release no GitHub, com o hash em SHA256SUMS.txt.',
     baixar: 'Baixar',
     embreve: 'Em breve',
     seuSistema: 'seu sistema',
@@ -229,7 +229,7 @@ export const pt = {
     verCodigo: 'Ver no GitHub',
     semAssinatura: 'Na primeira abertura',
     avisoWindows:
-      'O SmartScreen mostra "O Windows protegeu o computador": clique em Mais informações e em Executar assim mesmo.',
+      'O instalador não é assinado, então o SmartScreen mostra "O Windows protegeu o computador": clique em Mais informações e em Executar assim mesmo.',
     avisoMacos:
       'Descompacte, mova o app para Aplicativos e abra com o botão direito, Abrir. O macOS pede essa confirmação uma vez.',
   },

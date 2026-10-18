@@ -39,7 +39,7 @@ só ajusta o que mudou. A compilação em si (o `gulp`) não tem cache e continu
 sendo a maior parte do tempo.
 
 Saídas atuais: `.zip` do app no macOS (assinado ad hoc) e instaladores `.exe`
-(por usuário e para o sistema) e `.zip` no Windows. O `.dmg` e a notarização
+(por usuário e para o sistema, sem assinatura) e `.zip` no Windows. O `.dmg` e a notarização
 dependem de uma conta no Apple Developer Program (SDD 15.2).
 
 ## Releases

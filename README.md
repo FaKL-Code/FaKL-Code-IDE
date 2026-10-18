@@ -150,9 +150,10 @@ Baixe o instalador na página de [Releases](../../releases) e confira o hash em
 | Windows | x64           | Windows 10 ou 11, 64 bits    |
 | macOS   | Apple Silicon | Mac com chip M1 ou mais novo |
 
-- **Windows:** execute o `.exe`. Se o instalador não estiver assinado, o SmartScreen
-  mostra "O Windows protegeu o computador": clique em **Mais informações** e em
-  **Executar assim mesmo**.
+- **Windows:** execute o `.exe`. O instalador não é assinado (o pedido ao SignPath
+  Foundation foi recusado, veja [docs/assinatura.md](docs/assinatura.md)), então o
+  SmartScreen mostra "O Windows protegeu o computador": clique em **Mais informações**
+  e em **Executar assim mesmo**. Confira o hash com o `SHA256SUMS.txt` da release.
 - **macOS (Apple Silicon):** o app não é notarizado pela Apple, então o macOS bloqueia
   a primeira abertura. Descompacte o `.zip`, mova o app para Applications e, uma vez,
   libere-o de um destes jeitos:
