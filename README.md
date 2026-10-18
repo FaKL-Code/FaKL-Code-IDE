@@ -208,7 +208,9 @@ O build completo da IDE recompila o VS Code e fica em [`docs/build.md`](docs/bui
 
 - [SDD](docs/sdd.md): requisitos, arquitetura e contratos.
 - [ADRs](docs/adr/): as decisões de arquitetura, uma por arquivo.
+- [Roadmap](ROADMAP.md): o que falta e para onde a IDE vai.
 - [Provedores de IA](docs/provedores.md): assinatura, chave de API, modelo local ou agente ACP.
+- [Termos dos provedores](docs/termos-dos-provedores.md): o que Anthropic, OpenAI e Google dizem sobre clientes de terceiros.
 - [GitHub da conta inteira](docs/github.md): painéis, ferramentas dos agentes, SSO e tokens.
 - [Email na IDE](docs/email.md): conexão IMAP e ferramentas de leitura para agentes.
 - [Marca](docs/marca/README.md): logo, paleta e tipografia.
@@ -219,7 +221,8 @@ Contribuições de pessoas e de agentes são bem-vindas. Leia o
 [guia de contribuição](CONTRIBUTING.md): branch curto a partir da `main`,
 [Conventional Commits](https://www.conventionalcommits.org/pt-br/), PR com o modelo
 preenchido e o [CLA](CLA.md) assinado uma vez. Vulnerabilidades vão pelo
-[processo de segurança](SECURITY.md), nunca em issue aberta.
+[processo de segurança](SECURITY.md), nunca em issue aberta. Participar do projeto
+significa seguir o [código de conduta](CODE_OF_CONDUCT.md).
 
 ## `>_` Licença
 
