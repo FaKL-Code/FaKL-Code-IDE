@@ -59,6 +59,22 @@ Todo comportamento novo vem com teste. Unidade e contrato com Vitest, ao lado do
 pacote em `test/`. Testes que dependem de provedores reais de IA não rodam no CI
 padrão (SDD 15.3).
 
+## Desempenho
+
+As medições do Core (SDD, RNF-03 e RNF-04) ficam em `packages/core/test-perf/`, num
+projeto Vitest separado que o `pnpm test` não roda, porque depende de tempo e leva
+cerca de 30 s. Rode `pnpm build` e depois `pnpm test:perf`:
+
+- `ocioso.perf.ts`: sobe o `core.mjs` empacotado como processo próprio (com HOME
+  temporário) e mede RSS e CPU de um Core sem agentes, por 15 s;
+- `carga.perf.ts`: 10 agentes simulados em paralelo pelo Core, conferindo que todos
+  os eventos chegam, a latência de entrega, o atraso do laço de eventos e o
+  crescimento de memória.
+
+Os números saem no log (`[perf] {...}`). Os limites têm folga sobre os do SDD para não
+falhar em runner compartilhado. O workflow `desempenho.yml` repete tudo toda semana no
+Linux e no Windows e publica os números no resumo do job.
+
 ## Segredos
 
 Nunca commite tokens, chaves ou `.env`. Veja [`SECURITY.md`](SECURITY.md).
