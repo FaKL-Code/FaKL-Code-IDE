@@ -12,6 +12,9 @@ máquina, em qualquer combinação, e funciona sem IA nenhuma
 | Ollama / LM Studio  | servidor local ligado, com um modelo de conversa | adaptador local da IDE                          |
 | Qualquer agente ACP | o login do próprio agente, ou uma chave          | o comando cadastrado (OpenCode, Qwen Code, ...) |
 
+Antes de depender de um login de assinatura, leia os [termos dos provedores](termos-dos-provedores.md):
+a regra da Anthropic para ferramentas de terceiros pede chave de API em alguns casos.
+
 ### Codex com chave de API
 
 A chave fica no cofre do sistema, como as outras. Mas o `codex-acp` precisa dela num
