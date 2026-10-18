@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { l10n } from '@fakl/i18n';
 
 import { git, run } from '../exec.js';
+import { ensureVaultGitignore, isEditorState } from './gitignore.js';
 
 export interface SyncResult {
   readonly ok: boolean;
@@ -77,6 +78,14 @@ export class VaultSync {
       }
       let changed = false;
       if (await this.hasLocalChanges()) {
+        await ensureVaultGitignore(cwd);
+        // O que já estava no git e agora é ignorado sai do índice; o arquivo fica no disco.
+        const listed = await git(
+          ['-c', 'core.quotepath=off', 'ls-files', '-ci', '--exclude-standard'],
+          cwd,
+        );
+        const tracked = listed.split('\n').filter(isEditorState);
+        for (const file of tracked) await git(['rm', '-q', '--cached', '--', file], cwd);
         await git(['add', '-A'], cwd);
         const stamp = this.clock().toISOString().slice(0, 16).replace('T', ' ');
         await git([...AUTHOR, 'commit', '-q', '-m', `vault: ${this.machine} ${stamp}`], cwd);

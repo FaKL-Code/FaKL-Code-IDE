@@ -1,3 +1,4 @@
+import { closeSync, openSync, readSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
@@ -8,6 +9,7 @@ import type { Run, Task } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
 import type { AgentEventRouter } from './agents.js';
+import type { EmbedNote } from './vault-embed.js';
 
 interface GraphNode {
   path: string;
@@ -20,6 +22,8 @@ interface Backlink {
 }
 
 const SEARCH_DELAY_MS = 150;
+/** Quanto de uma nota a prévia lê para incorporá-la; o resto seria cortado de qualquer jeito. */
+const EMBED_READ_BYTES = 64 * 1024;
 
 function toPosix(path: string): string {
   return path.split(sep).join('/');
@@ -223,13 +227,48 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
   resolveLink(target: string, env: unknown): string | undefined {
     const root = this.root;
     if (!root) return undefined;
-    const key = target.replace(/\\/g, '/').toLowerCase();
-    const path = this.names.get(key) ?? this.names.get(key.replace(/\.md$/, ''));
+    const path = this.notePath(target);
     if (!path) return undefined;
     const absolute = join(root, path);
     const current = (env as { currentDocument?: vscode.Uri } | undefined)?.currentDocument;
     const from = current?.scheme === 'file' ? dirname(current.fsPath) : root;
     return encodeURI(toPosix(relative(from, absolute)));
+  }
+
+  /** Caminho no vault da nota que um wikilink aponta, ou `undefined`. */
+  private notePath(target: string): string | undefined {
+    const key = target.replace(/\\/g, '/').toLowerCase();
+    return this.names.get(key) ?? this.names.get(key.replace(/\.md$/, ''));
+  }
+
+  /**
+   * Texto de uma nota para o embed `![[nota]]` da prévia. Síncrono porque o
+   * markdown-it é; lê no máximo `EMBED_READ_BYTES`, já que a prévia corta antes.
+   */
+  readNote(target: string): EmbedNote | undefined {
+    const root = this.root;
+    const path = this.notePath(target);
+    if (!root || !path) return undefined;
+    let fd: number | undefined;
+    try {
+      fd = openSync(join(root, path), 'r');
+      const buffer = Buffer.alloc(EMBED_READ_BYTES);
+      const read = readSync(fd, buffer, 0, EMBED_READ_BYTES, 0);
+      return { key: path, text: buffer.toString('utf8', 0, read) };
+    } catch {
+      return undefined;
+    } finally {
+      if (fd !== undefined) closeSync(fd);
+    }
+  }
+
+  /** Caminho no vault do documento aberto na prévia, para detectar a nota que se embute. */
+  currentNoteKey(env: unknown): string | undefined {
+    const root = this.root;
+    const current = (env as { currentDocument?: vscode.Uri } | undefined)?.currentDocument;
+    if (!root || current?.scheme !== 'file') return undefined;
+    const rel = relative(root, current.fsPath);
+    return !rel || rel.startsWith('..') || isAbsolute(rel) ? undefined : toPosix(rel);
   }
 
   // ---------------------------------------------------------------- backlinks

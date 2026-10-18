@@ -87,7 +87,7 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 | RF-205 | Cada tarefa deve ter critério de pronto composto de comandos, checklist e/ou revisão por agente                                                   | M2    | O loop só termina com sucesso quando todas as verificações passam   |
 | RF-206 | Limites de rodadas, tempo, tokens e custo devem ser configuráveis globalmente, por playbook e por tarefa                                          | M2    | O valor mais específico prevalece                                   |
 | RF-207 | Cada limite deve ter política configurável: pausar e perguntar, entregar PR rascunho, escalar para outro perfil com orçamento extra, ou descartar | M2    | Cada política é acionada ao estourar o limite correspondente        |
-| RF-208 | Playbooks devem ser definidos como notas no vault e executáveis por nome                                                                          | M2    | Editar o playbook no vault muda o próximo uso                       |
+| RF-208 | Playbooks devem ser definidos como notas no vault, com limites e critério de pronto, e executáveis por nome                                       | M2    | Editar o playbook no vault muda o próximo uso                       |
 | RF-209 | O resultado aprovado deve virar merge local ou PR no GitHub, conforme configuração                                                                | M2    | PR criado com descrição gerada e selo do agente                     |
 | RF-210 | Tarefas podem nascer de issue do GitHub, nota do vault, controle remoto ou CLI                                                                    | M2    | As quatro origens criam tarefas equivalentes                        |
 
@@ -107,9 +107,9 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 | ID     | Requisito                                                                                   | Marco | Critério de aceite                                       |
 | ------ | ------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- |
 | RF-401 | A IDE deve abrir um vault global em formato Obsidian (wikilinks, frontmatter, embeds, tags) | M4    | Um vault criado no Obsidian abre sem perda               |
-| RF-402 | O vault deve sincronizar entre máquinas por repositório git privado                         | M4    | Nota criada numa máquina aparece na outra em até 5 min   |
+| RF-402 | O vault deve sincronizar entre máquinas por repositório git privado, sem o estado do editor | M4    | Nota criada numa máquina aparece na outra em até 5 min   |
 | RF-403 | O painel do vault deve ter busca, backlinks, tags, grafo, notas diárias e templates         | M4    | Cada função opera sobre o vault de teste                 |
-| RF-404 | O editor Markdown deve ter preview ao vivo, Mermaid e callouts                              | M4    | Renderização igual ao Obsidian nos casos de teste        |
+| RF-404 | O editor Markdown deve ter preview ao vivo, Mermaid, callouts e embed de notas              | M4    | Renderização igual ao Obsidian nos casos de teste        |
 | RF-405 | Agentes devem buscar, ler e escrever no vault via MCP                                       | M4    | Um agente cita uma nota existente numa resposta          |
 | RF-406 | Cada sessão de agente deve gerar uma nota com pedido, decisões, custo e resultado           | M4    | Nota aparece em Agentes/Sessões ao fim da execução       |
 | RF-407 | A busca semântica pode ser ativada com embeddings locais ou por API                         | M4    | Busca por significado retorna nota sem a palavra literal |
@@ -541,6 +541,10 @@ papeisFixados:
 limites:
   rodadas: { valor: 6, acao: perguntar }
   custoUsd: { valor: 15, acao: rascunho }
+criterio:
+  comandos: [pnpm lint, pnpm test]
+  checklist: [A tela nova funciona no modo escuro]
+  revisao: { perfil: claude-revisor, exigeAprovacao: true }
 entrega: pr
 ---
 
@@ -550,11 +554,21 @@ entrega: pr
 4. Abra o PR com o resumo das decisões.
 ```
 
+O `criterio` do playbook tem os mesmos campos do critério de pronto (9.4) e vale para toda tarefa criada a partir dele, inclusive as que nascem de uma nota (`playbook:` no frontmatter da nota). Quando a nota de origem também traz `criterio`, os dois se combinam, campo a campo, sem afrouxar o playbook:
+
+- `comandos` e `checklist`: união, com os itens do playbook primeiro e sem repetir. A nota acrescenta verificações, nunca tira as do playbook.
+- `revisao.perfil`: o da nota vence, se houver; senão vale o do playbook.
+- `revisao.exigeAprovacao`: vale `true` se o playbook ou a nota pedir.
+
+Diferente dos limites (9.3), em que o primeiro valor definido vence, aqui a escolha é a mais conservadora: um critério mais específico soma exigências em vez de substituir as do playbook. Um playbook sem `criterio` não muda nada na tarefa.
+
 ## 10. Vault
 
 ### 10.1 Formato e estrutura
 
 Markdown puro no formato do Obsidian: wikilinks `[[nota]]` e `[[nota#título]]`, embeds `![[arquivo]]`, frontmatter YAML, tags `#tag`, callouts `> [!info]`. A pasta `.obsidian/` nunca é alterada pela IDE.
+
+Na prévia, `![[imagem.png]]` mostra a imagem e `![[nota]]`, numa linha própria, incorpora o conteúdo da nota sem o frontmatter; `![[nota#Título]]` incorpora só a seção daquele título, até o próximo de nível igual ou menor. A prévia segue no máximo 2 níveis de embed dentro de embed, corta cada nota em 20 mil caracteres (100 mil no total da prévia) e detecta ciclo, inclusive a nota que se embute. Nota ou seção que não existe, ciclo, limite estourado, bloco `#^id` e embed no meio de um texto viram link, como antes.
 
 ```text
 Vault/
@@ -578,6 +592,7 @@ O vault é um repositório git privado no seu GitHub. O Core sincroniza assim:
 3. A cada 5 minutos sem mudanças locais: `fetch` e `pull` se houver novidade.
 4. Conflito numa nota: o Core faz merge por linha. Se não for possível, mantém a versão remota, salva a local como `<nota> (conflito <máquina>).md` e notifica.
 5. Anexos maiores que 20 MB entram no Git LFS.
+6. A configuração do Obsidian que muda a cada abertura e varia por máquina não é versionada: antes do commit, o Core garante no `.gitignore` do vault as linhas `.obsidian/workspace*.json`, `.obsidian/cache` e `.trash/`, num bloco comentado. Só acrescenta o que falta, sem reescrever o arquivo do usuário, e deixa de mexer nele quando o comentário do bloco está lá, para quem apagar uma linha de propósito. Arquivos desse tipo que um vault antigo já versionava saem do índice do git, mas continuam no disco. Seguem versionados `.obsidian/app.json`, `appearance.json`, `core-plugins.json`, `community-plugins.json`, `hotkeys.json` e a pasta `plugins/`, as preferências que você quer iguais nas duas máquinas.
 
 No Mac, o Obsidian abre a mesma pasta. Como o Obsidian não sincroniza com a IDE fechada, o pull acontece na próxima abertura da IDE; o plugin comunitário Obsidian Git pode cobrir esse intervalo, se você quiser.
 

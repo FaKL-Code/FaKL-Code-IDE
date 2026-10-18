@@ -29,6 +29,8 @@ export * from './store.js';
 export * from './ulid.js';
 export * from './windows.js';
 export * from './tokens.js';
+export * from './vault/criterio.js';
+export * from './vault/gitignore.js';
 export * from './vault/index.js';
 export * from './vault/parse.js';
 export * from './vault/sync.js';

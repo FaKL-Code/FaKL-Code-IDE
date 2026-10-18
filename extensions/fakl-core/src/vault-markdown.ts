@@ -1,10 +1,25 @@
 import { l10n } from '@fakl/i18n';
 import type MarkdownIt from 'markdown-it';
+import type StateBlock from 'markdown-it/lib/rules_block/state_block.mjs';
 import type StateCore from 'markdown-it/lib/rules_core/state_core.mjs';
 import type StateInline from 'markdown-it/lib/rules_inline/state_inline.mjs';
 
+import { EMBED_MAX_TOTAL, resolveEmbed, type EmbedNote } from './vault-embed.js';
+
 /** Acha o arquivo de um wikilink; devolve o href para a prévia, ou nada se a nota não existe. */
 export type WikilinkResolver = (target: string, env: unknown) => string | undefined;
+
+/** Lê uma nota para incorporá-la (`![[nota]]`); a chave da nota aberta serve ao ciclo. */
+export interface EmbedSource {
+  readonly read: (target: string, env: unknown) => EmbedNote | undefined;
+  readonly currentKey?: (env: unknown) => string | undefined;
+}
+
+/** Estado do embed numa renderização: notas em andamento e o que resta do orçamento. */
+interface EmbedState {
+  readonly stack: readonly string[];
+  readonly budget: { left: number };
+}
 
 const IMAGE = /\.(png|jpe?g|gif|svg|webp|avif|bmp)$/i;
 const CALLOUT = /^\[!([\w-]+)\]([+-]?)[ \t]*(.*)$/;
@@ -66,6 +81,58 @@ function wikilink(resolve: WikilinkResolver) {
   };
 }
 
+/** Só o embed `![[nota]]` ou `![[nota#Título]]` na linha, sem imagem nem anexo. */
+const EMBED_LINE = /^!\[\[([^\]\n|]+?)(?:\|[^\]\n]*)?\]\][ \t]*$/;
+
+/**
+ * Embed de nota numa linha própria: a prévia incorpora o conteúdo (sem o
+ * frontmatter; só a seção, com `#Título`). Quando não dá (nota ausente, ciclo,
+ * fundo demais, seção ou bloco `#^id`), a regra recusa e o wikilink de sempre
+ * vira link. Embed no meio de um texto continua link.
+ */
+function noteEmbed(md: MarkdownIt, embed: EmbedSource) {
+  return (state: StateBlock, startLine: number, _endLine: number, silent: boolean): boolean => {
+    const from = (state.bMarks[startLine] ?? 0) + (state.tShift[startLine] ?? 0);
+    if ((state.sCount[startLine] ?? 0) - state.blkIndent >= 4) return false;
+    const line = state.src.slice(from, state.eMarks[startLine]);
+    const match = EMBED_LINE.exec(line);
+    if (!match) return false;
+    const ref = (match[1] ?? '').trim();
+    const hash = ref.indexOf('#');
+    const target = (hash >= 0 ? ref.slice(0, hash) : ref).trim();
+    const heading = hash >= 0 ? ref.slice(hash + 1).trim() : '';
+    // Imagem, PDF e outros anexos têm extensão que não é .md; bloco `^id` não é suportado.
+    if (!target || (/\.[A-Za-z0-9]{1,5}$/.test(target) && !/\.md$/i.test(target))) return false;
+    if (heading.startsWith('^')) return false;
+
+    const env = (state.env ?? {}) as { faklEmbed?: EmbedState };
+    const current = env.faklEmbed ?? { stack: [], budget: { left: EMBED_MAX_TOTAL } };
+    const rootKey = embed.currentKey?.(state.env);
+    const result = resolveEmbed(
+      target.replace(/\.md$/i, ''),
+      heading || undefined,
+      (name) => embed.read(name, state.env),
+      current.stack,
+      current.budget,
+      rootKey !== undefined ? { rootKey } : {},
+    );
+    if (result.kind !== 'ok') return false;
+    if (silent) return true;
+
+    const inner = md.render(result.markdown, {
+      ...env,
+      faklEmbed: { stack: [...current.stack, result.key], budget: current.budget },
+    });
+    const open = state.push('html_block', '', 0);
+    open.map = [startLine, startLine + 1];
+    open.content = `<div class="fakl-embed" data-embed="${md.utils.escapeHtml(result.key)}">
+${inner}</div>
+`;
+    state.line = startLine + 1;
+    return true;
+  };
+}
+
 /** `> [!tipo] Título` vira um callout do Obsidian. */
 function callouts(state: StateCore): void {
   const { tokens } = state;
@@ -111,9 +178,14 @@ function callouts(state: StateCore): void {
   }
 }
 
-/** Plugin da prévia de Markdown: wikilinks, embeds de imagem e callouts (RF-404). */
-export function vaultMarkdown(md: MarkdownIt, resolve: WikilinkResolver): MarkdownIt {
+/** Plugin da prévia de Markdown: wikilinks, embeds de imagem e de nota, callouts (RF-404). */
+export function vaultMarkdown(
+  md: MarkdownIt,
+  resolve: WikilinkResolver,
+  embed?: EmbedSource,
+): MarkdownIt {
   md.inline.ruler.before('link', 'fakl_wikilink', wikilink(resolve));
+  if (embed) md.block.ruler.before('paragraph', 'fakl_embed', noteEmbed(md, embed));
   md.core.ruler.after('block', 'fakl_callout', callouts);
   return md;
 }

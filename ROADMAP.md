@@ -12,7 +12,10 @@ promessa de data: o projeto tem uma pessoa mantendo, e contribuições aceleram 
 Maestro e subagentes, um worktree por agente, Mesa e cyber café, vault em Markdown com busca
 semântica, GitHub da conta inteira, SSH, Hostinger, Lovable, e-mail, controle pelo celular com
 relay próprio, voz, jornada de configuração, Doctor, tour, auto-update no Windows, português e
-inglês. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 e 0043).
+inglês.
+Playbooks com critério de pronto (o da nota de origem se soma ao do playbook), vault que não
+versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[nota]]` e
+`![[nota#Título]]` na prévia. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 e 0043).
 
 ## Agora
 
