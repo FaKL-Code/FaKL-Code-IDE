@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Compila a FaKL-Code IDE e gera os instaladores em .build/vscodium/assets.
 #
-# Requer as variáveis OS_NAME (osx | windows) e VSCODE_ARCH (x64 | arm64), e
+# Requer as variáveis OS_NAME (osx | windows | linux) e VSCODE_ARCH (x64 | arm64), e
 # as ferramentas que o VSCodium pede (Node da .nvmrc dele, Python 3, jq, git;
 # no Windows, Inno Setup e 7-Zip, que já vêm nos runners do GitHub).
 
@@ -10,7 +10,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="${FAKL_BUILD_DIR:-${ROOT}/.build}"
 
-: "${OS_NAME:?defina OS_NAME (osx ou windows)}"
+: "${OS_NAME:?defina OS_NAME (osx, windows ou linux)}"
 : "${VSCODE_ARCH:?defina VSCODE_ARCH (x64 ou arm64)}"
 
 # shellcheck source=build/env.sh
@@ -53,6 +53,21 @@ if [[ "${OS_NAME}" == "osx" && -z "${CERTIFICATE_OSX_P12_DATA:-}" ]]; then
   fi
   codesign --force --deep --sign - "${apps[0]}"
   codesign --verify --deep --strict "${apps[0]}"
+fi
+
+if [[ "${OS_NAME}" == "linux" ]]; then
+  # Com CI_BUILD=no o prepare_assets.sh do VSCodium também constrói o snap, que exige o
+  # snapcraft e não é um formato que publicamos (tar.gz, deb e rpm bastam).
+  echo "==> Sem snap"
+  sed -i.bak \
+    -e 's#\. \./stores/snapcraft/build\.sh#true#' \
+    -e 's#mv stores/snapcraft/build/\*\.snap assets/#true#' \
+    build/linux/prepare_assets.sh
+  rm -f build/linux/prepare_assets.sh.bak
+  grep -q 'snapcraft' build/linux/prepare_assets.sh && {
+    echo "o prepare_assets.sh do VSCodium ainda chama o snapcraft" >&2
+    exit 1
+  }
 fi
 
 echo "==> Pacote de idioma pt-BR no app"

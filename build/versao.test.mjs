@@ -115,6 +115,16 @@ describe('manifestos de atualização', () => {
     );
   });
 
+  it('gera o manifesto do Linux a partir do tar.gz e o inclui no aviso', () => {
+    const linux = arquivo(`FaKL-Code-linux-x64-${release}.tar.gz`);
+    const saida = montar([linux, arquivo('FaKL-Code-Linux-x64.tar.gz'), arquivo('fakl-code.deb')]);
+    expect(Object.keys(saida).sort()).toEqual(['latest.json', 'stable/linux/x64/latest.json']);
+    expect(saida['stable/linux/x64/latest.json'].url).toContain(
+      `/download/v0.1.1/FaKL-Code-linux-x64-${release}.tar.gz`,
+    );
+    expect(saida['latest.json'].platforms['linux-x64'].url).toContain('.tar.gz');
+  });
+
   it('não usa as cópias de nome fixo', () => {
     const saida = JSON.stringify(montar());
     expect(saida).not.toContain('FaKL-Code-Windows-x64.exe');

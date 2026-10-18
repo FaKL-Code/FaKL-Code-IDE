@@ -42,6 +42,21 @@ Saídas atuais: `.zip` do app no macOS (assinado ad hoc) e instaladores `.exe`
 (por usuário e para o sistema, sem assinatura) e `.zip` no Windows. O `.dmg` e a notarização
 dependem de uma conta no Apple Developer Program (SDD 15.2).
 
+## Linux (experimental)
+
+O `build.yml` aceita `plataformas: linux`, que compila no `ubuntu-22.04` (x64) com os scripts do
+VSCodium e gera `.tar.gz`, `.deb` e `.rpm`. O `snap` fica de fora: com `CI_BUILD=no` o
+`prepare_assets.sh` do VSCodium também o constrói, e o `build.sh` o neutraliza. A opção `todas`
+continua sendo só Windows e macOS até o Linux ter passado numa release. O build usa a glibc do
+Ubuntu 22.04, então o resultado não roda em distribuições mais antigas que isso (o VSCodium
+compila em contêineres com glibc 2.28 para ter mais alcance). No Linux o serviço de atualização
+só avisa da versão nova e abre o download; o `fumaca-linux` abre o resultado sob Xvfb.
+
+## Testes fora do Windows
+
+O `ci.yml` roda os testes também no Linux e no macOS (`testes-outros-sistemas`), sem ser requisito
+para mesclar, para mostrar o que quebra fora do Windows.
+
 ## Releases
 
 O `release.yml` só roda quando alguém pede: **Run workflow** na aba Actions, na
