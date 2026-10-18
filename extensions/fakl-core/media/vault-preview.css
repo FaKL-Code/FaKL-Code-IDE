@@ -75,3 +75,19 @@
   font-family: var(--vscode-editor-font-family);
   white-space: pre-wrap;
 }
+
+/* Embed de nota (`![[nota]]`): o conteúdo incorporado, com uma barra lateral discreta. */
+.fakl-embed {
+  border-left: 3px solid var(--vscode-textBlockQuote-border, #8884);
+  margin: 1em 0;
+  padding: 0 1em;
+  background: var(--vscode-textBlockQuote-background, transparent);
+}
+
+.fakl-embed > :first-child {
+  margin-top: 0.5em;
+}
+
+.fakl-embed > :last-child {
+  margin-bottom: 0.5em;
+}

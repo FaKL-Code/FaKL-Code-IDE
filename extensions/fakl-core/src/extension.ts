@@ -336,7 +336,11 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     output.warn(l10n.t('could not install the fakl CLI: {0}', String(error)));
   });
   return {
-    extendMarkdownIt: (md) => vaultMarkdown(md, (target, env) => vault.resolveLink(target, env)),
+    extendMarkdownIt: (md) =>
+      vaultMarkdown(md, (target, env) => vault.resolveLink(target, env), {
+        read: (target) => vault.readNote(target),
+        currentKey: (env) => vault.currentNoteKey(env),
+      }),
   };
 }
 
