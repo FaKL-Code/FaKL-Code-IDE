@@ -42,6 +42,23 @@ Saídas atuais: `.zip` do app no macOS (assinado ad hoc) e instaladores `.exe`
 (por usuário e para o sistema, sem assinatura) e `.zip` no Windows. O `.dmg` e a notarização
 dependem de uma conta no Apple Developer Program (SDD 15.2).
 
+## Fumaça da IDE compilada
+
+Depois do build do Windows, o job `fumaca` do `build.yml` abre o resultado de verdade com
+`build/smoke-ide.mjs`: janela, FaKL Core, extensão sem erro de ativação, servidor MCP `fakl`
+(a mesma sonda do Doctor) e a CLI `fakl`. Compara o tempo de abertura com o do VSCodium da
+mesma versão (RNF-02) e escreve os tempos no resumo do job; só reprova se a FaKL demorar mais
+que o dobro mais 5 s. O teste usa pasta de dados, HOME e socket do Core próprios, então não
+toca na sua IDE. Para rodar à mão num build já extraído:
+
+```bash
+pnpm --filter "@fakl/core..." build
+node build/smoke-ide.mjs --exe C:/caminho/FaKL-Code.exe
+```
+
+Ele existe porque o servidor MCP e a CLI ficaram quebrados de v0.1.0 a v0.1.3 sem que nada
+acusasse. Rodado contra a v0.1.3, o script falha; contra a v0.1.5, passa.
+
 ## Releases
 
 O `release.yml` só roda quando alguém pede: **Run workflow** na aba Actions, na
