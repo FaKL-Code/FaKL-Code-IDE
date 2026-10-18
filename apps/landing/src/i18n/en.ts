@@ -212,7 +212,7 @@ export const en: Textos = {
     descricao: 'Download FaKL-Code IDE for Windows and macOS.',
     kicker: 'Download',
     h1: 'Download FaKL-Code',
-    lead: 'Version 0.1.4, not digitally signed. The download comes straight from the GitHub release, with the hash in SHA256SUMS.txt.',
+    lead: 'Version 0.1.5, not digitally signed. The download comes straight from the GitHub release, with the hash in SHA256SUMS.txt.',
     baixar: 'Download',
     embreve: 'Coming soon',
     seuSistema: 'your system',
