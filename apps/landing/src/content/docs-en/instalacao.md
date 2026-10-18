@@ -18,7 +18,7 @@ Download from the [Download](/en/download/) page or from the [GitHub Releases](h
 
 ## After installing
 
-1. **Install the CLIs for the agents you want to use** and sign in with your account in each one: Claude Code, Codex, and Gemini CLI. The IDE uses their logins; the Core does not read credentials.
+1. **Install the CLIs for the agents you want to use** and sign in with your account in Claude Code and Codex. The IDE uses their logins; the Core does not read credentials. Gemini CLI only works with an API key from Google AI Studio (personal Google account sign-in is no longer accepted).
 2. **Local models (optional):** install Ollama or LM Studio. The IDE's local adapter talks to them and gives the model the tools to read, search, edit, and run commands inside the worktree.
 3. **Put the CLI on the PATH:** run the **Add the fakl CLI to the system PATH** command from the command palette to use `fakl` in any terminal.
 4. **Sign in to GitHub** with the **Sign in to GitHub** command and, if you use it, **Connect to Hostinger**.

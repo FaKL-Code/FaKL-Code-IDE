@@ -148,7 +148,6 @@
   "Rounds": "Rodadas",
   "run `claude auth login` in a terminal, or store an API key": "rode `claude auth login` num terminal, ou guarde uma chave de API",
   "run `codex login` in a terminal, or store an API key": "rode `codex login` num terminal, ou guarde uma chave de API",
-  "run `gemini` in a terminal and choose the login method, or store an API key": "rode `gemini` num terminal e escolha a forma de login, ou guarde uma chave de API",
   "Runs a shell command in the worktree and returns the output (tests, build, git).": "Roda um comando de shell no worktree e devolve a saída (testes, build, git).",
   "Search {0}": "Buscar {0}",
   "Searches the contents of the worktree files for a regular expression.": "Busca uma expressão regular no conteúdo dos arquivos do worktree.",
@@ -205,5 +204,6 @@
   "Write {0}": "Gravar {0}",
   "You are a programming agent working in a project folder (the worktree).": "Você é um agente de programação trabalhando numa pasta de projeto (o worktree).",
   "yours": "seu",
-  "true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history": "true mostra, só para leitura, as conversas das extensões do Codex e do Claude Code, lendo o histórico local delas"
+  "true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history": "true mostra, só para leitura, as conversas das extensões do Codex e do Claude Code, lendo o histórico local delas",
+  "store an API key from Google AI Studio (a personal Google account no longer works)": "guarde uma chave de API do Google AI Studio (a conta Google pessoal não funciona mais)"
 }

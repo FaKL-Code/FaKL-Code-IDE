@@ -8,9 +8,23 @@ máquina, em qualquer combinação, e funciona sem IA nenhuma
 | ------------------- | ------------------------------------------------ | ----------------------------------------------- |
 | Claude (Anthropic)  | login do Claude Code ou `ANTHROPIC_API_KEY`      | `claude-agent-acp`                              |
 | Codex (OpenAI)      | `codex login` ou `OPENAI_API_KEY`                | `codex-acp`                                     |
-| Gemini (Google)     | login do Gemini CLI ou `GEMINI_API_KEY`          | `gemini --acp`                                  |
+| Gemini (Google)     | chave de API (`GEMINI_API_KEY`) ou Vertex        | `gemini --acp`                                  |
 | Ollama / LM Studio  | servidor local ligado, com um modelo de conversa | adaptador local da IDE                          |
 | Qualquer agente ACP | o login do próprio agente, ou uma chave          | o comando cadastrado (OpenCode, Qwen Code, ...) |
+
+### Gemini: só com chave de API
+
+Desde junho de 2026 o Google não aceita mais o login com conta Google pessoal no
+Gemini CLI para uso fora dos produtos dele: o `gemini` responde "This client is no longer
+supported for Gemini Code Assist for individuals". O plano Google AI Pro não muda isso, e
+também não cobre a API. O que funciona:
+
+1. Crie uma chave no [Google AI Studio](https://aistudio.google.com/apikey). Confira lá se a
+   conta tem cota gratuita ou se precisa ligar o faturamento.
+2. Rode **FaKL: Definir chave de API**, escolha Gemini e cole a chave.
+
+Contas Workspace com Standard ou Enterprise e as credenciais do Vertex AI continuam
+valendo. O **FaKL: Doctor** avisa quando o Gemini está num login que o Google não aceita.
 
 ## Na IDE
 

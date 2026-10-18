@@ -35,7 +35,9 @@ export const providerCommands = (): Readonly<Record<CliProvider, AcpCommand>> =>
     command: 'gemini',
     args: ['--acp'],
     install: 'npm install -g @google/gemini-cli',
-    login: l10n.t('run `gemini` in a terminal and choose the login method, or store an API key'),
+    login: l10n.t(
+      'store an API key from Google AI Studio (a personal Google account no longer works)',
+    ),
     keyAuth: { env: PROVIDER_KEY_ENV.google, methods: ['gemini-api-key'] },
   },
 });
