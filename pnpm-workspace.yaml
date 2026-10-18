@@ -7,3 +7,8 @@ packages:
 # Só estas dependências podem rodar scripts de instalação.
 onlyBuiltDependencies:
   - lefthook
+
+# KaTeX vem do Mermaid (^0.16) e tem aviso de segurança corrigido na 0.18.2: o override sobe a
+# versão sem esperar o Mermaid. A API que o Mermaid usa (renderToString) não mudou.
+overrides:
+  katex: ^0.18.2
