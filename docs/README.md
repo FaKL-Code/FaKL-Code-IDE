@@ -6,6 +6,7 @@
   para manter projetos isolados na mesma GUI, cada um com sua Mesa, Café,
   maestro e agentes.
 - [Build da IDE](build.md): como a IDE é compilada com a marca FaKL-Code.
+- [Distribuição](distribuicao.md): winget, Scoop, Homebrew e Linux, e como cada canal é mantido.
 - [Roadmap](../ROADMAP.md): lacunas e evolução da IDE.
 - [Termos dos provedores](termos-dos-provedores.md): regras de Anthropic, OpenAI e Google para clientes
   de terceiros e o que a IDE faz a respeito.
