@@ -108,6 +108,7 @@ describe('cofre', () => {
       'github.token': true,
       'hostinger.token': false,
       'voz.token': false,
+      'remote.identidade': false,
     });
   });
 });

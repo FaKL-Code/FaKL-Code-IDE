@@ -239,22 +239,25 @@ FaKL-Code-IDE/
   patches/             patches no core, um arquivo por área (5.3)
   branding/            ícones, logos, temas, tela de boas-vindas, product.json
   extensions/          extensões embutidas
-    fakl-agents/       chat, mesa de controle, diffs, fila de tarefas (começaram em fakl-core)
-    fakl-vault/        painel e editor do vault
-    fakl-github/       PRs, issues, Actions
-    fakl-remote/       SSH, Hostinger, Lovable
-    fakl-cafe/         cyber café
-    fakl-remote-ctl/   pareamento e status do controle remoto
+    fakl-core/         agentes, Mesa, chat, vault, GitHub, SSH, Hostinger, café, remoto, Doctor e tour
+    fakl-settings/     importar e sincronizar as configurações
   packages/
-    core/              FaKL Core
+    core/              FaKL Core (agentes, orquestração, vault, integrações, servidor MCP em core/src/mcp)
     protocol/          tipos e contratos JSON-RPC compartilhados
-    adapters/          adaptadores de provedores (acp, pty, claude-sdk, ollama)
-    mcp-server/        ferramentas MCP do Core
+    agents/            adaptadores de provedores (acp, ollama e LM Studio)
+    integrations/      GitHub, SSH, Hostinger, e-mail
+    conversa/          transcrição, markdown e formatação das conversas
+    cafe/              sala do cyber café
+    remote/            canal cifrado do controle remoto
+    relay/             relay para o VPS
+    settings-sync/     importação e sincronização de configurações
+    voz/               comandos por voz
+    i18n/              textos e catálogos pt-BR
     cli/               CLI fakl
-    ui-kit/            componentes React das webviews
   apps/
     remote-pwa/        cliente do controle remoto
-    relay/             relay para o VPS
+    overlay/           modo minimizado
+    landing/           site da IDE
   docs/                este SDD em Markdown, ADRs, playbooks de desenvolvimento
   .github/workflows/   build, release, sync com upstream
 ```
@@ -659,7 +662,7 @@ Alternativa sem relay (não implementada): se as duas pontas estiverem numa rede
 
 ### 12.2 Pareamento
 
-1. Você clica em "Parear aparelho" na IDE. O Core gera um par de chaves efêmero e um código de uso único válido por 2 minutos.
+1. Você clica em "Parear aparelho" na IDE. O Core gera um par de chaves efêmero e um código de uso único válido por 10 minutos.
 2. A IDE mostra um QR code com: endereço do relay, id da máquina, chave pública do Core e código.
 3. O celular lê o QR, abre o PWA, gera seu par de chaves de longo prazo e faz o handshake pelo relay, provando posse do código.
 4. A IDE mostra o nome do aparelho e pede confirmação. Ao confirmar, a chave pública do aparelho é salva em RemoteDevice com os escopos escolhidos.
@@ -741,7 +744,7 @@ O Core envia só os dados (texto e cores); o café desenha a miniatura num canva
 | Agente induzido por conteúdo malicioso (prompt injection) | Uma issue ou página pede ao agente para apagar um servidor | Permissões aplicadas pelo Core, não pelo agente; ações sensíveis sempre passam por política e auditoria; conteúdo externo marcado como não confiável no prompt |
 | Vazamento de credencial                                   | Agente imprime variável de ambiente num log ou PR          | Agentes nunca recebem segredos; varredura de segredos em logs, notas e diffs antes de gravar ou fazer push                                                     |
 | Comando destrutivo em produção                            | `rm -rf` ou `DROP TABLE` num VPS                           | Política `confirmar` por padrão, snapshot antes de escrita na Hostinger, lista de padrões destrutivos que sempre pedem confirmação                             |
-| Acesso remoto indevido                                    | Alguém captura o QR code                                   | Código de uso único de 2 minutos, confirmação na IDE, revogação imediata, escopos mínimos                                                                      |
+| Acesso remoto indevido                                    | Alguém captura o QR code                                   | Código de uso único de 10 minutos, confirmação na IDE, revogação imediata, escopos mínimos                                                                     |
 | Relay comprometido                                        | Invasor controla o VPS do relay                            | Criptografia de ponta a ponta; o relay não tem chaves nem vê conteúdo                                                                                          |
 | Processo local malicioso                                  | Outro programa tenta falar com o Core                      | Sem porta TCP aberta; socket com permissão só do usuário; token de sessão; servidor MCP só em 127.0.0.1 com token por agente                                   |
 | Gasto descontrolado                                       | Loop infinito consumindo API                               | Limites por execução e teto diário por provedor                                                                                                                |

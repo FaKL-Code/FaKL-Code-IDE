@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import type { CoreClient } from '@fakl/core';
 import { currentLocale, l10n } from '@fakl/i18n';
 import type {
@@ -13,6 +15,9 @@ import QRCode from 'qrcode';
 import * as vscode from 'vscode';
 
 import type { AgentEventRouter } from './agents.js';
+
+/** Chave da identidade do controle remoto no SecretStorage da IDE (ADR 0044). */
+const STORED_IDENTITY_KEY = 'fakl.remote.identidade';
 
 function scopeOptions(): { scope: RemoteScopeName; label: string; detail: string }[] {
   return [
@@ -66,7 +71,10 @@ export class RemoteUi implements vscode.Disposable {
   private status: RemoteStatus | undefined;
   private panel: vscode.WebviewPanel | undefined;
 
-  constructor(router: AgentEventRouter) {
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    router: AgentEventRouter,
+  ) {
     this.item = vscode.window.createStatusBarItem(
       'fakl.remote',
       vscode.StatusBarAlignment.Left,
@@ -76,6 +84,9 @@ export class RemoteUi implements vscode.Disposable {
     this.item.command = 'fakl.remote.menu';
     this.disposables.push(
       this.item,
+      context.secrets.onDidChange((event) => {
+        if (event.key === STORED_IDENTITY_KEY) void this.pushIdentityKey();
+      }),
       router.listen((event) => {
         if (event.topic === 'remote.status') {
           this.status = event.data as RemoteStatus;
@@ -97,6 +108,7 @@ export class RemoteUi implements vscode.Disposable {
 
   connected(client: CoreClient): void {
     this.client = client;
+    void this.pushIdentityKey();
     void this.reload();
   }
 
@@ -109,6 +121,24 @@ export class RemoteUi implements vscode.Disposable {
   dispose(): void {
     this.panel?.dispose();
     for (const disposable of this.disposables) disposable.dispose();
+  }
+
+  /**
+   * Entrega ao Core a chave que cifra a identidade do controle remoto (ADR
+   * 0044). Ela é gerada aqui na primeira vez e fica só no SecretStorage da IDE,
+   * cifrado pelo cofre do sistema; o Core a recebe em memória a cada conexão.
+   */
+  private async pushIdentityKey(): Promise<void> {
+    const client = this.client;
+    if (!client) return;
+    let key = await this.context.secrets.get(STORED_IDENTITY_KEY);
+    if (!key) {
+      key = randomBytes(32).toString('base64url');
+      await this.context.secrets.store(STORED_IDENTITY_KEY, key);
+    }
+    await client.request('secrets.set', { nome: 'remote.identidade', valor: key }).catch(() => {
+      // Core antigo ou fechado: o gateway segue como antes, com aviso no log.
+    });
   }
 
   private async reload(): Promise<void> {
