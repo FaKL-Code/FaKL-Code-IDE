@@ -1,6 +1,6 @@
 # Como contribuir
 
-Vale para pessoas e para agentes. A especificação está em [`docs/sdd.md`](docs/sdd.md)
+Vale para pessoas e para agentes, e todas seguem o [código de conduta](CODE_OF_CONDUCT.md). A especificação está em [`docs/sdd.md`](docs/sdd.md)
 e as decisões de arquitetura em [`docs/adr/`](docs/adr/).
 
 ## Ambiente
