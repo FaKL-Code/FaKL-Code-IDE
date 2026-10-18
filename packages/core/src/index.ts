@@ -19,6 +19,8 @@ export * from './orchestrator/orchestrator.js';
 export * from './orchestrator/prompts.js';
 export * from './paths.js';
 export * from './rpc/client.js';
+export * from './security/resource-scan.js';
+export * from './security/resource-risks.js';
 export * from './rpc/framing.js';
 export * from './rpc/router.js';
 export * from './rpc/server.js';

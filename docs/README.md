@@ -5,6 +5,8 @@
 - [Múltiplos projetos](especificacao-multiplos-projetos.md): proposta futura
   para manter projetos isolados na mesma GUI, cada um com sua Mesa, Café,
   maestro e agentes.
+- [Segurança de recursos](seguranca-de-recursos.md): o que a varredura estática
+  de skills, agentes e MCPs faz e não faz antes de instalar.
 - [Build da IDE](build.md): como a IDE é compilada com a marca FaKL-Code.
 - [Marca](marca/): logo, paleta e peças da identidade Terminal.
 - [Site](../apps/landing/README.md): landing page, documentação pública e download.
@@ -46,3 +48,4 @@
 | [0039](adr/0039-conversas-das-extensoes-do-codex-e-do-claude-code.md)     | Conversas das extensões do Codex e do Claude Code     |
 | [0040](adr/0040-doctor-e-tour-guiado.md)                                  | Doctor e tour guiado                                  |
 | [0041](adr/0041-chave-de-api-do-codex-em-pasta-propria.md)                | Chave de API do Codex em pasta própria                |
+| [0042](adr/0042-varredura-estatica-de-recursos.md)                        | Varredura estática de skills, agentes e MCPs          |

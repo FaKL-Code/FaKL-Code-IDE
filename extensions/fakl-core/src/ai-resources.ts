@@ -7,9 +7,17 @@ import type {
   ResourceInfo,
   ResourceKind,
   ResourceLibrary,
+  ResourceSource,
 } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
+import {
+  needsConfirmation,
+  riskConfirmation,
+  riskSummary,
+  riskTooltip,
+  worstRisk,
+} from './resource-risk-model.js';
 import { groupOffered, namesBySource } from './resource-sources-model.js';
 import type { ResourceSourcesView } from './resource-sources.js';
 
@@ -246,13 +254,30 @@ export class AiResourcesView implements vscode.Disposable {
       const items = groups.flatMap((group): CatalogPick[] => [
         { label: group.nome, kind: vscode.QuickPickItemKind.Separator },
         ...group.items.map((entry): CatalogPick => {
-          const description = [entry.padrao === false ? '' : l10n.t('recommended'), detail(entry)]
+          const description = [
+            entry.padrao === false ? '' : l10n.t('recommended'),
+            detail(entry),
+            entry.riscos.length > 0 ? riskSummary(entry.riscos) : '',
+          ]
             .filter(Boolean)
             .join(' · ');
           return {
             label: entry.name,
             detail: entry.description,
             ...(description ? { description } : {}),
+            // Aviso da varredura estática: ícone e, no tooltip, o resumo dos achados.
+            ...(entry.riscos.length > 0
+              ? {
+                  buttons: [
+                    {
+                      iconPath: new vscode.ThemeIcon(
+                        worstRisk(entry.riscos) === 'baixa' ? 'info' : 'warning',
+                      ),
+                      tooltip: riskTooltip(entry.riscos),
+                    },
+                  ],
+                }
+              : {}),
             entry,
           };
         }),
@@ -266,6 +291,7 @@ export class AiResourcesView implements vscode.Disposable {
       });
       const chosen = (picked ?? []).flatMap(({ entry }) => (entry ? [entry] : []));
       if (!chosen.length) return;
+      if (!(await this.confirmRisks(chosen, kind, sources))) return;
       for (const [fonte, names] of namesBySource(chosen)) {
         await client.request<ResourceInfo[]>('resources.install', { kind, names, fonte });
       }
@@ -273,6 +299,28 @@ export class AiResourcesView implements vscode.Disposable {
     } catch (error) {
       this.showError(texts.failed(errorText(error)));
     }
+  }
+
+  /** Achados de severidade alta ou média: confirmação modal com achados e origem. */
+  private async confirmRisks(
+    chosen: readonly CatalogResourceInfo[],
+    kind: ResourceKind,
+    sources: readonly ResourceSource[],
+  ): Promise<boolean> {
+    const confirmation = riskConfirmation(
+      chosen
+        .filter((entry) => needsConfirmation(entry.riscos))
+        .map((entry) => ({ kind, name: entry.name, fonte: entry.fonte, riscos: entry.riscos })),
+      sources,
+    );
+    if (!confirmation) return true;
+    const installAnyway = l10n.t('Install anyway');
+    const choice = await vscode.window.showWarningMessage(
+      confirmation.message,
+      { modal: true, detail: confirmation.detail },
+      installAnyway,
+    );
+    return choice === installAnyway;
   }
 
   private async create(kind: ResourceKind): Promise<void> {
