@@ -159,6 +159,21 @@ function providerItems(
         { tipo: 'link', rotulo: l10n.t('Get a key'), url: GEMINI_KEY_PAGE },
       ],
     });
+  } else if (status.instalado && !status.pronto && status.id === 'google') {
+    // O login com conta Google pessoal falha para terceiros: a chave vem na frente.
+    items.push({
+      id: 'google.login',
+      severidade: gap,
+      titulo: l10n.t('{0}: not signed in', name),
+      detalhe: l10n.t(
+        'Use an API key from Google AI Studio (or Vertex). A personal Google account no longer works here; only a Workspace Standard or Enterprise account may still sign in.',
+      ),
+      acoes: [
+        keyAction(status),
+        { tipo: 'link', rotulo: l10n.t('Get a key'), url: GEMINI_KEY_PAGE },
+        ...(status.login ? [terminalAction(status, l10n.t('Sign in'), status.login)] : []),
+      ],
+    });
   } else if (status.instalado && !status.pronto) {
     items.push({
       id: `${status.id}.login`,

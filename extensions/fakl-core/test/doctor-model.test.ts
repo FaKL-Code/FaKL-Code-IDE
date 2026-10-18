@@ -227,6 +227,22 @@ describe('diagnose: Gemini', () => {
     expect(items.some((candidate) => candidate.id === 'google.ok')).toBe(false);
   });
 
+  it('Gemini instalado e sem login recomenda a chave de API antes do login pelo navegador', () => {
+    const semLogin = provider({
+      id: 'google',
+      nome: 'Gemini CLI',
+      instalado: true,
+      cliInstalado: true,
+      chaveEnv: 'GEMINI_API_KEY',
+      login: 'gemini',
+    });
+    const item = byId(diagnose(snap({ provedores: [semLogin] })), 'google.login');
+    expect(item.detalhe).toContain('API key');
+    expect(item.acoes[0]).toMatchObject({ comando: 'fakl.providers.setKey', args: ['google'] });
+    expect(item.acoes[1]).toMatchObject({ tipo: 'link' });
+    expect(item.acoes[2]).toMatchObject({ rotulo: 'Sign in' });
+  });
+
   it('com chave de API no cofre o login pessoal deixa de importar', () => {
     const withKey = provider({ ...gemini, chave: true, modo: 'chave' });
     expect(geminiPersonalLogin(withKey)).toBe(false);
