@@ -27,4 +27,4 @@ Baixe na página [Baixar](/download/) ou nas [Releases do GitHub](https://github
 
 ## Atualizações
 
-No Windows, a IDE procura versão nova sozinha, baixa o instalador e pede para reiniciar. A v0.1.0 não tem essa função: instale a v0.1.1 ou mais nova uma vez à mão, e daí em diante o app se atualiza. No macOS a IDE avisa que há versão nova e abre a página de download; instale como na primeira vez. Para desligar a verificação, use a configuração `update.mode` com o valor `none`.
+No Windows, a IDE procura versão nova sozinha, baixa o instalador e pede para reiniciar. A v0.1.0 não tem essa função: instale a v0.1.4 ou mais nova uma vez à mão, e daí em diante o app se atualiza. No macOS a IDE avisa que há versão nova e abre a página de download; instale como na primeira vez. Para desligar a verificação, use a configuração `update.mode` com o valor `none`.

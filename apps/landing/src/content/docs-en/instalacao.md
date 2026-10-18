@@ -27,4 +27,4 @@ Download from the [Download](/en/download/) page or from the [GitHub Releases](h
 
 ## Updates
 
-On Windows, the IDE checks for a new version by itself, downloads the installer, and asks you to restart. v0.1.0 does not have this: install v0.1.1 or newer by hand once, and from then on the app updates itself. On macOS the IDE tells you a new version is out and opens the download page; install it the way you did the first time. To turn the check off, set `update.mode` to `none`.
+On Windows, the IDE checks for a new version by itself, downloads the installer, and asks you to restart. v0.1.0 does not have this: install v0.1.4 or newer by hand once, and from then on the app updates itself. On macOS the IDE tells you a new version is out and opens the download page; install it the way you did the first time. To turn the check off, set `update.mode` to `none`.
