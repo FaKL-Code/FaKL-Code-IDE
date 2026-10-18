@@ -236,5 +236,8 @@
   "{0} refused the transcription (HTTP {1})": "{0} recusou a transcrição (HTTP {1})",
   "{0} replied without the transcription text": "{0} respondeu sem o texto da transcrição",
   "modo must be {0} or null": "modo deve ser {0} ou null",
-  "Default Claude": "Claude padrão"
+  "Default Claude": "Claude padrão",
+  "could not read the agent scorecard: {0}": "não foi possível ler o placar dos agentes: {0}",
+  "could not save the agent scorecard: {0}": "não foi possível gravar o placar dos agentes: {0}",
+  "periodo must be 7d, 30d or total": "periodo deve ser 7d, 30d ou total"
 }

@@ -223,5 +223,6 @@
   "discarded by the user": "descartada pelo usuário",
   "The daily cap for {0} was reached and the agents of that provider paused. What should be done with \"{1}\"?": "O teto diário de {0} foi atingido e os agentes desse provedor pausaram. O que fazer com \"{1}\"?",
   "Leave it paused (resume after adjusting the cap)": "Deixar pausada (retomar depois de ajustar o teto)",
-  "daily cap for {0}": "teto diário de {0}"
+  "daily cap for {0}": "teto diário de {0}",
+  "- list_profiles also brings the scorecard (placar) of each profile: diff approval rate, average duration and average cost over the last 30 days, or \"poucos dados\" when there are fewer than 5 finished tasks. These numbers are a signal, not a rule: they say nothing about code quality and they mix very different tasks. Use them to break ties between similar profiles, never to override a verified failure or the strengths of a profile.": "- list_profiles também traz o placar de cada perfil: taxa de aprovação do diff, duração média e custo médio dos últimos 30 dias, ou \"poucos dados\" quando há menos de 5 tarefas terminadas. Esses números são um sinal, não uma regra: não dizem nada sobre a qualidade do código e misturam tarefas muito diferentes. Use-os para desempatar perfis parecidos, nunca para contrariar uma falha verificada ou os pontos fortes de um perfil."
 }

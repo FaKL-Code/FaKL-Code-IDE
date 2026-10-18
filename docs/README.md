@@ -5,6 +5,8 @@
 - [Múltiplos projetos](especificacao-multiplos-projetos.md): proposta futura
   para manter projetos isolados na mesma GUI, cada um com sua Mesa, Café,
   maestro e agentes.
+- [Placar dos agentes](placar-de-agentes.md): o que é medido por perfil (aprovação, duração,
+  custo, limites), o que não é e como zerar.
 - [Build da IDE](build.md): como a IDE é compilada com a marca FaKL-Code.
 - [Distribuição](distribuicao.md): winget, Scoop, Homebrew e Linux, e como cada canal é mantido.
 - [Roadmap](../ROADMAP.md): lacunas e evolução da IDE.
@@ -50,4 +52,5 @@
 | [0039](adr/0039-conversas-das-extensoes-do-codex-e-do-claude-code.md)     | Conversas das extensões do Codex e do Claude Code     |
 | [0040](adr/0040-doctor-e-tour-guiado.md)                                  | Doctor e tour guiado                                  |
 | [0041](adr/0041-chave-de-api-do-codex-em-pasta-propria.md)                | Chave de API do Codex em pasta própria                |
+| [0043](adr/0043-placar-de-agentes.md)                                     | Placar de agentes por perfil                          |
 | [0044](adr/0044-identidade-do-controle-remoto-cifrada-em-repouso.md)      | Identidade do controle remoto cifrada em repouso      |
