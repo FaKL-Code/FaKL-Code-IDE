@@ -36,6 +36,9 @@ async function cafeAssets() {
   await writeFile('dist/cafe/assets.json', JSON.stringify(files));
 }
 
+const ESM_REQUIRE_BANNER =
+  "import { createRequire as __faklCreateRequire } from 'node:module'; const require = __faklCreateRequire(import.meta.url);";
+
 const common = {
   bundle: true,
   platform: 'node',
@@ -133,27 +136,28 @@ await Promise.all([
     format: 'cjs',
     external: ['vscode'],
   }),
+  // Dependências CommonJS (cross-spawn, @vscode/l10n) usam require() de módulos do
+  // Node, que não existe em ESM sem o banner. Vale para os três executáveis ESM: sem
+  // ele o servidor MCP e a CLI morrem ao iniciar com "Dynamic require of "fs"".
   build({
     ...common,
     entryPoints: ['../../packages/cli/src/main.ts'],
     outfile: 'dist/fakl.mjs',
     format: 'esm',
+    banner: { js: ESM_REQUIRE_BANNER },
   }),
   build({
     ...common,
     entryPoints: ['../../packages/core/src/mcp/main.ts'],
     outfile: 'dist/mcp.mjs',
     format: 'esm',
+    banner: { js: ESM_REQUIRE_BANNER },
   }),
   build({
     ...common,
     entryPoints: ['../../packages/core/src/main.ts'],
     outfile: 'dist/core.mjs',
     format: 'esm',
-    // Dependências CommonJS (cross-spawn) usam require() de módulos do Node,
-    // que não existe em ESM sem isto.
-    banner: {
-      js: "import { createRequire as __faklCreateRequire } from 'node:module'; const require = __faklCreateRequire(import.meta.url);",
-    },
+    banner: { js: ESM_REQUIRE_BANNER },
   }),
 ]);
