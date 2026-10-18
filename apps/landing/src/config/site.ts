@@ -8,7 +8,7 @@
 export type DownloadStatus = 'em-breve' | 'disponivel';
 
 export interface Download {
-  readonly id: 'windows' | 'macos';
+  readonly id: 'windows' | 'macos' | 'linux';
   readonly plataforma: string;
   readonly status: DownloadStatus;
   /** Link direto do instalador quando `status` for `disponivel`. */
@@ -39,6 +39,12 @@ export const site = {
       plataforma: 'macOS',
       status: 'disponivel',
       url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.5/FaKL-Code-macOS-arm64.zip',
+    },
+    {
+      id: 'linux',
+      plataforma: 'Linux',
+      status: 'em-breve',
+      url: null,
     },
   ] satisfies readonly Download[] as readonly Download[],
 } as const;

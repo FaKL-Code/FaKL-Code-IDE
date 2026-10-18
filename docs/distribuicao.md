@@ -11,7 +11,8 @@ apontam para os arquivos de lá. O Windows não é assinado e o macOS é só ad 
 | winget                                           | Windows     | `winget install FaKLCode.FaKLCode`                                                                 | Manifesto validado com `winget validate`; PR enviado ao winget-pkgs |
 | Scoop (bucket próprio)                           | Windows     | `scoop bucket add fakl-code https://github.com/FaKL-Code/scoop-bucket` e `scoop install fakl-code` | Manifesto gerado; instalação não testada                            |
 | Homebrew (tap próprio)                           | macOS arm64 | `brew install --cask fakl-code/tap/fakl-code`                                                      | Cask gerado; instalação não testada (não há Mac aqui)               |
-| Homebrew oficial, Chocolatey, Flathub, Snap, AUR | vários      | Não existem                                                                                        | Dependem de notarização (Homebrew) ou de build para Linux           |
+| Linux                                            | x64         | `.tar.gz`, `.deb` e `.rpm` da release                                                              | Experimental, validado só no CI                                     |
+| Homebrew oficial, Chocolatey, Flathub, Snap, AUR | vários      | Não existem                                                                                        | Dependem de notarização (Homebrew) ou de manifestos próprios        |
 
 ## Por que não no Homebrew oficial
 
@@ -39,8 +40,11 @@ pulado. O winget segue por PR ao `microsoft/winget-pkgs`, que o token acima não
 primeiro pacote aceito, a ação [winget-releaser](https://github.com/vedantmgoyal9/winget-releaser)
 (com um token que possa abrir PR no winget-pkgs) pode abrir os PRs seguintes.
 
-## Linux
+## Linux (experimental)
 
-Ainda não há build para Linux. O VSCodium publica `.deb`, `.rpm`, AppImage e Snap, e o Flathub exige
+A release traz `.tar.gz`, `.deb` e `.rpm` para x64, compilados no Ubuntu 22.04 (glibc 2.35: não abrem
+em distribuições mais antigas). O CI valida a compilação, o `.deb` e a abertura sob Xvfb; ninguém
+instalou o pacote numa distribuição de verdade ainda. No Linux a IDE só avisa de versão nova e abre
+o download. Não há AppImage, Snap, Flatpak nem AUR: o VSCodium publica todos, mas o Flathub exige
 build a partir do código sem rede e **proíbe manifestos gerados ou assistidos por IA**, então o
 Flatpak teria de ser escrito à mão. Veja o [roadmap](../ROADMAP.md).

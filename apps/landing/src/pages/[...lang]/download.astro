@@ -49,6 +49,7 @@ const D = T.download;
       <h2>{D.semAssinatura}</h2>
       <p><b>Windows.</b> {D.avisoWindows}</p>
       <p><b>macOS.</b> {D.avisoMacos}</p>
+      <p><b>Linux.</b> {D.avisoLinux}</p>
     </div>
 
     <div class="codigo">
@@ -64,7 +65,8 @@ const D = T.download;
 <script>
   const mac = /Mac|iPhone|iPad/.test(navigator.platform) || /Mac OS/.test(navigator.userAgent);
   const win = /Win/.test(navigator.platform);
-  const meu = mac ? 'macos' : win ? 'windows' : '';
+  const linux = /Linux/.test(navigator.platform) && !/Android/.test(navigator.userAgent);
+  const meu = mac ? 'macos' : win ? 'windows' : linux ? 'linux' : '';
   if (meu) document.querySelector(`[data-plataforma="${meu}"]`)?.setAttribute('data-seu', '');
 
 </script>
@@ -99,7 +101,7 @@ const D = T.download;
   }
   .plataformas {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 16px;
     margin: 56px 0 0;
     padding: 0;

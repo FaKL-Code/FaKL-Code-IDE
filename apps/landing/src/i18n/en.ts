@@ -15,6 +15,7 @@ export const en: Textos = {
     tituloPadrao: 'AI agents working together',
     windows: { formato: 'x64 installer', requisito: 'Windows 10 or 11, 64-bit' },
     macos: { formato: 'Apple Silicon', requisito: 'Mac with an M1 chip or newer' },
+    linux: { formato: 'x64 (.tar.gz and .deb)', requisito: 'Ubuntu 22.04 or newer (glibc 2.35)' },
   },
   nav: {
     pular: 'Skip to content',
@@ -224,6 +225,8 @@ export const en: Textos = {
       'The installer is not signed, so SmartScreen shows "Windows protected your PC": click More info, then Run anyway.',
     avisoMacos:
       'Unzip it, move the app to Applications and open it with right-click, Open. macOS asks for this confirmation once.',
+    avisoLinux:
+      'Experimental. Install the .deb (sudo apt install ./file.deb) or unpack the .tar.gz and run the fakl-code binary. The build uses the glibc of Ubuntu 22.04: it does not start on older distributions.',
   },
   docs: {
     tituloIndice: 'FaKL-Code IDE documentation',

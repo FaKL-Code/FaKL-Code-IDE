@@ -56,12 +56,11 @@ jobs:
             [ordered]@{ name = 'macOS arm64'; runner = @('macos-14'); os_name = 'osx'; arch = 'arm64' },
             [ordered]@{ name = 'Windows x64'; runner = $windows; os_name = 'windows'; arch = 'x64' }
           )
-          # O Linux só entra quando pedido (ainda experimental): `todas` segue Windows e macOS.
           $include = switch ($env:PLATAFORMAS) {
             'windows' { @($all | Where-Object { $_.os_name -eq 'windows' }) }
             'macos' { @($all | Where-Object { $_.os_name -eq 'osx' }) }
             'linux' { @($linux) }
-            default { $all }
+            default { @($all) + @($linux) }
           }
           $json = ConvertTo-Json -InputObject @{ include = @($include) } -Depth 5 -Compress
           Add-Content -Path $env:GITHUB_OUTPUT -Value "matrix=$json"
@@ -271,11 +270,11 @@ jobs:
           fi
           node build/smoke-ide.mjs --exe fakl-app/FaKL-Code.exe "${baseline[@]}"
 
-  # Mesma fumaça, no Linux (sob Xvfb). Só roda quando o Linux foi compilado.
+  # Mesma fumaça, no Linux (sob Xvfb), quando o Linux foi compilado (`linux` ou `todas`).
   fumaca-linux:
     name: Fumaça da IDE (Linux)
     needs: ide
-    if: ${{ !cancelled() && needs.ide.result == 'success' && inputs.plataformas == 'linux' }}
+    if: ${{ !cancelled() && needs.ide.result == 'success' && (inputs.plataformas == 'linux' || inputs.plataformas == 'todas') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:

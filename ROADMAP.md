@@ -24,8 +24,8 @@ versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[no
 - **Termos dos provedores.** [docs/termos-dos-provedores.md](docs/termos-dos-provedores.md)
   registra o que cada provedor diz sobre clientes de terceiros e o que a IDE faz. Em aberto: a regra
   da Anthropic para adaptadores sobre o Agent SDK com login de assinatura **[B/F]**.
-- **Distribuição.** winget, Scoop e tap do Homebrew; Linux e CI em
-  macOS e Linux.
+- **Distribuição.** winget (PR enviado), Scoop e tap do Homebrew; build experimental para Linux
+  (`.tar.gz`, `.deb` e `.rpm`) e testes também em macOS e Linux.
 - **Privacidade.** Inventário do que a IDE consulta na rede e um interruptor único.
 
 ## Depois
