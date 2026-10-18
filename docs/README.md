@@ -46,3 +46,4 @@
 | [0039](adr/0039-conversas-das-extensoes-do-codex-e-do-claude-code.md)     | Conversas das extensões do Codex e do Claude Code     |
 | [0040](adr/0040-doctor-e-tour-guiado.md)                                  | Doctor e tour guiado                                  |
 | [0041](adr/0041-chave-de-api-do-codex-em-pasta-propria.md)                | Chave de API do Codex em pasta própria                |
+| [0044](adr/0044-identidade-do-controle-remoto-cifrada-em-repouso.md)      | Identidade do controle remoto cifrada em repouso      |

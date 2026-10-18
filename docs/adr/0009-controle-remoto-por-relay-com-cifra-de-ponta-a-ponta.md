@@ -26,7 +26,8 @@ celular precisa falar o mesmo protocolo que o Core, sem instalar nada.
   nome e a impressão do aparelho e só grava a chave dele se você confirmar.
 - **Chaves:** a chave privada do aparelho é gerada não extraível e fica no
   IndexedDB. A identidade do Core fica em `~/.fakl/remote/identity.json`, só
-  do usuário, como uma chave SSH; os aparelhos em `devices.json`.
+  do usuário, como uma chave SSH (cifrada em repouso desde o ADR 0044); os
+  aparelhos em `devices.json`.
 - **Escopos:** `ver`, `decidir`, `comandar` e `editor` viram listas de métodos
   da API do Core; o canal do aparelho entra no mesmo `RpcServer` com essa
   lista, como os tokens dos agentes.

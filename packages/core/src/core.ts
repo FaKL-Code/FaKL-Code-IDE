@@ -40,7 +40,7 @@ import { objectParams, Router, RpcError, stringArrayParam, stringParam } from '.
 import { RemoteGateway } from './remote/gateway.js';
 import { RpcServer } from './rpc/server.js';
 import { registerUi } from './ui.js';
-import { SecretVault } from './secrets.js';
+import { REMOTE_IDENTITY_SECRET, SecretVault } from './secrets.js';
 import { Approvals } from './security/approvals.js';
 import { CafeService } from './cafe.js';
 import { ExternalSessionsService } from './external-sessions.js';
@@ -667,10 +667,14 @@ export function createCore(options: CoreOptions): Core {
         dir: join(config.dir, 'remote'),
         config: () => config.config.remoto,
         saveConfig: (change) => config.setRemote(change),
+        identityKey: () => secrets.get(REMOTE_IDENTITY_SECRET),
         ...(options.log ? { log: options.log } : {}),
       })
     : undefined;
   remote?.register(router);
+  secrets.onChange((name) => {
+    if (name === REMOTE_IDENTITY_SECRET) remote?.keyChanged();
+  });
 
   return {
     bus,
@@ -720,7 +724,9 @@ export function createCore(options: CoreOptions): Core {
       await agents.load();
       await reopenVault();
       await server.listen(options.socketPath);
-      await remote?.start().catch((error: unknown) => {
+      // Sem await: o gateway espera a chave da identidade que a IDE entrega
+      // (ADR 0044) e isso não pode atrasar a abertura do Core.
+      void remote?.start().catch((error: unknown) => {
         options.log?.(l10n.t('could not enable remote access: {0}', String(error)));
       });
       if (options.resumeInterrupted) {
