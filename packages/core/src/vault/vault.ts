@@ -17,6 +17,7 @@ import {
   type CallContext,
   type Router,
 } from '../rpc/router.js';
+import { mergeCriterio } from './criterio.js';
 import { fold, VaultIndex, type IndexedNote } from './index.js';
 import { linkTarget } from './parse.js';
 import { SemanticIndex, type EmbedFetch, type SemanticStatus } from './semantic.js';
@@ -58,6 +59,8 @@ export interface PlaybookInfo {
   readonly entrega?: string;
   readonly papeisFixados?: Readonly<Record<string, string>>;
   readonly limites?: unknown;
+  /** Critério de pronto do playbook (SDD 9.4), repassado à tarefa. */
+  readonly criterio?: unknown;
   readonly instrucoes: string;
 }
 
@@ -436,6 +439,7 @@ export class VaultService implements Disposable {
             ? { papeisFixados: papeis as Record<string, string> }
             : {}),
           ...(fm.limites !== undefined ? { limites: fm.limites } : {}),
+          ...(fm.criterio !== undefined && fm.criterio !== null ? { criterio: fm.criterio } : {}),
           instrucoes: note.body.trim(),
         };
       });
@@ -469,6 +473,7 @@ export class VaultService implements Disposable {
       ...(playbook.entrega ? { entrega: playbook.entrega } : {}),
       ...(playbook.papeisFixados ? { papeisFixados: playbook.papeisFixados } : {}),
       ...(playbook.limites !== undefined ? { limites: playbook.limites } : {}),
+      ...(playbook.criterio !== undefined ? { criterio: playbook.criterio } : {}),
     };
   }
 
@@ -485,14 +490,16 @@ export class VaultService implements Disposable {
       descricao: `${note.body.trim()}\n\n${l10n.t('Source note: {0}', `[[${note.path.replace(/\.md$/, '')}]]`)}`,
       origem: 'nota',
     };
-    const fromPlaybook =
+    const fromPlaybook: Record<string, unknown> =
       typeof fm.playbook === 'string'
         ? this.taskFromPlaybook(this.playbook(fm.playbook), base)
         : base;
+    // O critério da nota se soma ao do playbook em vez de apagá-lo (SDD 9.5).
+    const criterio = mergeCriterio(fromPlaybook.criterio, fm.criterio);
     return {
       ...fromPlaybook,
       referencia: note.path,
-      ...(fm.criterio !== undefined ? { criterio: fm.criterio } : {}),
+      ...(criterio !== undefined ? { criterio } : {}),
       ...(typeof fm.entrega === 'string' ? { entrega: fm.entrega } : {}),
       ...(typeof fm.maestro === 'string' ? { maestroProfileId: fm.maestro } : {}),
       ...(fm.limites !== undefined ? { limites: fm.limites } : {}),
