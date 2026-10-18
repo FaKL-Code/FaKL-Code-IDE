@@ -16,6 +16,7 @@ import type {
   AgentStartResult,
   AgentStateEventData,
   AgentToolEventData,
+  AgentTerminalLinesParams,
   AgentTranscriptResult,
   ClaudeAccountSlot,
   FaklEvent,
@@ -32,6 +33,7 @@ import {
   STATE_ICONS,
   stateLabel,
 } from './board.js';
+import { AgentLiveTerminals } from './agent-terminal.js';
 import { firstLocalFolder, remoteRoots } from './ssh-workspace.js';
 import { permissionLine } from './webview/chat-model.js';
 import { Transcript, type ChatItem } from '@fakl/conversa';
@@ -46,6 +48,17 @@ async function defaultWorkFolder(): Promise<string> {
 
 export class AgentEventRouter {
   private readonly listeners = new Set<(event: FaklEvent) => void>();
+  private readonly terminalListeners = new Set<(params: AgentTerminalLinesParams) => void>();
+
+  /** Linhas novas de um terminal anexado (`agents.terminal.lines`). */
+  dispatchTerminal(params: AgentTerminalLinesParams): void {
+    for (const listener of this.terminalListeners) listener(params);
+  }
+
+  listenTerminal(listener: (params: AgentTerminalLinesParams) => void): vscode.Disposable {
+    this.terminalListeners.add(listener);
+    return new vscode.Disposable(() => this.terminalListeners.delete(listener));
+  }
 
   dispatch(event: FaklEvent): void {
     for (const listener of this.listeners) listener(event);
@@ -186,6 +199,7 @@ export interface TranscriptPatch {
 export class AgentControl implements vscode.Disposable {
   private readonly board = new AgentBoard();
   private readonly logs = new SessionLogs(this.board);
+  private readonly liveTerminals = new AgentLiveTerminals();
   private readonly tree = new AgentTreeProvider(this.board);
   private readonly transcripts = new Map<string, Transcript>();
   private readonly view: vscode.TreeView<AgentSessionInfo>;
@@ -227,6 +241,7 @@ export class AgentControl implements vscode.Disposable {
     this.disposables.push(
       this.view,
       this.logs,
+      this.liveTerminals,
       this.sessionsChanged,
       this.patched,
       this.filesChanged,
@@ -237,6 +252,9 @@ export class AgentControl implements vscode.Disposable {
       router.listen((event) => {
         this.onEvent(event);
       }),
+      router.listenTerminal((params) => {
+        this.liveTerminals.onLines(params);
+      }),
     );
     this.registerCommands();
     this.updateTitle();
@@ -245,11 +263,13 @@ export class AgentControl implements vscode.Disposable {
   /** Chamado a cada conexão com o Core, inclusive depois de ele reiniciar. */
   connected(client: CoreClient): void {
     this.client = client;
+    this.liveTerminals.connected(client);
     void this.reload();
   }
 
   disconnected(): void {
     this.client = undefined;
+    this.liveTerminals.disconnected();
   }
 
   dispose(): void {
@@ -758,6 +778,14 @@ export class AgentControl implements vscode.Disposable {
             iconPath: new vscode.ThemeIcon('hubot'),
           });
         terminal.show();
+      }),
+      // Terminal de leitura: o que o agente faz, ao vivo, sem teclado (ADR 0046).
+      vscode.commands.registerCommand('fakl.agents.liveTerminal', async (arg?: unknown) => {
+        const session = await this.pickSession(arg, () => true);
+        if (!session) return;
+        // Garante a conexão antes de abrir: o terminal anexa assim que aparece.
+        if (!(await this.requireClient())) return;
+        this.liveTerminals.show(session);
       }),
       vscode.commands.registerCommand('fakl.agents.clearFinished', () => {
         const before = new Set(this.board.list().map((s) => s.sessionId));

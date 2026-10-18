@@ -306,22 +306,22 @@ Só estas áreas recebem patches; todo o resto é extensão ou Core (RNF-10, RNF
 
 JSON-RPC 2.0. Os nomes seguem `domínio.ação`. Os mesmos métodos atendem extensões, CLI e controle remoto; o que muda é o escopo do token.
 
-| Domínio     | Métodos                                                                                                                                              |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`  | `list`, `get`, `upsert`, `delete`                                                                                                                    |
-| `tasks`     | `create`, `list`, `get`, `cancel`, `fromIssue`, `fromNote`                                                                                           |
-| `runs`      | `start`, `pause`, `resume`, `stop`, `get`, `tree`, `decide`                                                                                          |
-| `agents`    | `detect`, `start`, `list`, `send`, `pause`, `resume`, `stop`, `permission`, `terminal.attach`, `diff`, `fileContent`, `applyFiles`, `rejectFiles`    |
-| `playbooks` | `list`, `get`, `run`                                                                                                                                 |
-| `vault`     | `status`, `search`, `read`, `write`, `backlinks`, `graph`, `tags`, `sync`, `appendDaily`, `daily`                                                    |
-| `github`    | `prs.list`, `prs.review`, `prs.merge`, `issues.list`, `actions.list`, `actions.logs`, `account.*` (repos, orgs, prs, issues, actions, notifications) |
-| `ssh`       | `hosts.list`, `hosts.upsert`, `exec`, `policy.get`, `policy.set`                                                                                     |
-| `hostinger` | `vps.list`, `vps.restart`, `vps.snapshot`, `dns.list`, `dns.upsert`, `domains.list`, `firewall.*`                                                    |
-| `resources` | `list`, `catalog`, `install`, `create`, `remove`, `get`                                                                                              |
-| `sources`   | `list`, `add`, `remove`, `update`                                                                                                                    |
-| `remote`    | `status`, `enable`, `disable`, `pair.begin`, `devices.list`, `devices.revoke`                                                                        |
-| `costs`     | `summary`, `byTask`, `limits.get`, `limits.set`                                                                                                      |
-| `events`    | `subscribe`, `unsubscribe`, `replay`                                                                                                                 |
+| Domínio     | Métodos                                                                                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`  | `list`, `get`, `upsert`, `delete`                                                                                                                                    |
+| `tasks`     | `create`, `list`, `get`, `cancel`, `fromIssue`, `fromNote`                                                                                                           |
+| `runs`      | `start`, `pause`, `resume`, `stop`, `get`, `tree`, `decide`                                                                                                          |
+| `agents`    | `detect`, `start`, `list`, `send`, `pause`, `resume`, `stop`, `permission`, `terminal.attach`, `terminal.detach`, `diff`, `fileContent`, `applyFiles`, `rejectFiles` |
+| `playbooks` | `list`, `get`, `run`                                                                                                                                                 |
+| `vault`     | `status`, `search`, `read`, `write`, `backlinks`, `graph`, `tags`, `sync`, `appendDaily`, `daily`                                                                    |
+| `github`    | `prs.list`, `prs.review`, `prs.merge`, `issues.list`, `actions.list`, `actions.logs`, `account.*` (repos, orgs, prs, issues, actions, notifications)                 |
+| `ssh`       | `hosts.list`, `hosts.upsert`, `exec`, `policy.get`, `policy.set`                                                                                                     |
+| `hostinger` | `vps.list`, `vps.restart`, `vps.snapshot`, `dns.list`, `dns.upsert`, `domains.list`, `firewall.*`                                                                    |
+| `resources` | `list`, `catalog`, `install`, `create`, `remove`, `get`                                                                                                              |
+| `sources`   | `list`, `add`, `remove`, `update`                                                                                                                                    |
+| `remote`    | `status`, `enable`, `disable`, `pair.begin`, `devices.list`, `devices.revoke`                                                                                        |
+| `costs`     | `summary`, `byTask`, `limits.get`, `limits.set`                                                                                                                      |
+| `events`    | `subscribe`, `unsubscribe`, `replay`                                                                                                                                 |
 
 ### 6.4 Eventos
 
@@ -464,7 +464,7 @@ A detecção (`detect`) roda ao abrir a IDE e informa na mesa de controle quais 
 - O maestro integra resultados com merge dos branches dos subagentes no branch da tarefa; conflitos viram subtarefa de resolução.
 - Worktrees de sessões finalizadas são removidos ao fim da execução; os branches ficam até o merge ou descarte.
 - Variáveis de ambiente passam por lista de permissão; nenhuma variável com segredo é herdada do shell do usuário.
-- Cada sessão tem seu PTY; o buffer headless guarda as últimas 10.000 linhas para logs, anexos e miniaturas.
+- Cada sessão tem um terminal **de leitura** (ADR 0046): o Core monta, dos eventos da sessão (saída do agente, ferramentas, pedidos de permissão e decisões, estados, erros), linhas de terminal com cores ANSI simples num buffer circular de 10.000 linhas, com segredos removidos. `agents.terminal.attach` entrega o histórico e passa a notificar as linhas novas (`agents.terminal.lines`) até `agents.terminal.detach`; a IDE mostra isso num `Pseudoterminal` por agente, sem entrada de teclado. Não há PTY: os agentes falam ACP, que não é um terminal. O PTY interativo, com a saída bruta dos comandos e miniaturas por `@xterm/headless`, continua pendente e depende de um adaptador para CLIs sem ACP (RF-103).
 
 ## 9. Orquestração
 

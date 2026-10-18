@@ -32,7 +32,7 @@ versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[no
 
 - Notarização no macOS (exige a conta paga da Apple; libera o auto-update no Mac e o cask oficial
   do Homebrew **[F]**) e assinatura no Windows (o SignPath Foundation recusou o pedido).
-- Terminal ao vivo por agente (hoje a Mesa mostra eventos, não um terminal) e adaptador para CLIs sem ACP.
+- Terminal ao vivo por agente: terminal de leitura entregue (ADR 0046); PTY interativo continua pendente, junto com o adaptador para CLIs sem ACP.
 - Medição de desempenho (RNF-02 a RNF-04) rodando de forma agendada.
 - macOS Intel e canal insider.
 - Teste de acessibilidade com leitor de tela real (NVDA, VoiceOver, TalkBack) no grafo do vault, no café

@@ -559,5 +559,7 @@
   "No recent conversations in the Codex or Claude Code extensions.": "Nenhuma conversa recente nas extensões do Codex ou do Claude Code.",
   "Conversations from the Codex and Claude Code extensions, read-only.": "Conversas das extensões do Codex e do Claude Code, só leitura.",
   "external": "externa",
-  "Open this conversation in its own extension; the Desk cannot send messages to it": "Abre esta conversa na própria extensão; a Mesa não envia mensagens para ela"
+  "Open this conversation in its own extension; the Desk cannot send messages to it": "Abre esta conversa na própria extensão; a Mesa não envia mensagens para ela",
+  "Live terminal (read-only)": "Terminal ao vivo (somente leitura)",
+  "Terminal": "Terminal"
 }

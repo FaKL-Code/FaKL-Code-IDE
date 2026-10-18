@@ -25,7 +25,9 @@ export const CoreMethods = {
     'resume',
     'setAutoResume',
     'stop',
+    // Terminal de leitura de cada agente (ADR 0046): histórico e linhas novas.
     'terminal.attach',
+    'terminal.detach',
     'diff',
     'fileContent',
     'applyFiles',
@@ -164,6 +166,8 @@ export type CoreDomain = keyof typeof CoreMethods;
 export const CoreNotifications = {
   /** Um evento de um tópico assinado com `events.subscribe`. */
   event: 'events.event',
+  /** Linhas novas do terminal de um agente anexado com `agents.terminal.attach`. */
+  terminalLines: 'agents.terminal.lines',
 } as const;
 
 /** Nome completo de um método, por exemplo `runs.start` ou `agents.terminal.attach`. */

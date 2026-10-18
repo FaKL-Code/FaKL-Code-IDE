@@ -59,6 +59,7 @@
 | [0041](adr/0041-chave-de-api-do-codex-em-pasta-propria.md)                     | Chave de API do Codex em pasta própria                     |
 | [0044](adr/0044-identidade-do-controle-remoto-cifrada-em-repouso.md)           | Identidade do controle remoto cifrada em repouso           |
 | [0045](adr/0045-inventario-de-rede-e-interruptor-das-consultas-automaticas.md) | Inventário de rede e interruptor das consultas automáticas |
+| [0046](adr/0046-terminal-ao-vivo-somente-leitura-por-agente.md)                | Terminal ao vivo, somente leitura, por agente              |
 | ADR                                                                            | Decisão                                                    |
 | -------------------------------------------------------------------------      | -----------------------------------------------------      |
 | [0001](adr/0001-fork-do-vscodium.md)                                           | Fork do VSCodium em vez de extensão                        |

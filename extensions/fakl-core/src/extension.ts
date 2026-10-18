@@ -2,7 +2,11 @@ import { homedir } from 'node:os';
 
 import { CoreClient, coreInfoPath, readCoreInfo, type CoreInfo } from '@fakl/core';
 import { l10n, useLocale } from '@fakl/i18n';
-import { CoreNotifications, type EventNotificationParams } from '@fakl/protocol';
+import {
+  CoreNotifications,
+  type AgentTerminalLinesParams,
+  type EventNotificationParams,
+} from '@fakl/protocol';
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 
@@ -226,6 +230,8 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     client.onNotification((method, params) => {
       if (method === CoreNotifications.event) {
         agentEvents.dispatch((params as EventNotificationParams).event);
+      } else if (method === CoreNotifications.terminalLines) {
+        agentEvents.dispatchTerminal(params as AgentTerminalLinesParams);
       }
     });
     await client.request('events.subscribe', {

@@ -14,6 +14,8 @@ import {
   type AgentSessionInfo,
   type AgentStartResult,
   type AgentStateEventData,
+  type AgentTerminalAttachResult,
+  type AgentTerminalLinesParams,
   type AgentTranscriptResult,
   type EventNotificationParams,
   type FaklEvent,
@@ -42,12 +44,13 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
   let core: Core;
   let client: CoreClient;
   let cwd: string;
+  let token: string;
   const events: FaklEvent[] = [];
 
   beforeEach(async () => {
     socket = await testSocket();
     cwd = await mkdtemp(join(tmpdir(), 'fakl-core-agent-'));
-    const token = createSessionToken();
+    token = createSessionToken();
     core = createCore({
       socketPath: socket.path,
       token,
@@ -108,6 +111,48 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
 
     const [info] = await client.request<AgentSessionInfo[]>('agents.list');
     expect(info).toMatchObject({ sessionId, profileId: 'falso', state: 'ocioso', cwd });
+  });
+
+  it('mostra o agente no terminal de leitura: histórico, linhas novas e detach', async () => {
+    const { sessionId } = await client.request<AgentStartResult>('agents.start', {
+      profileId: 'falso',
+      cwd,
+    });
+    const leitor = await CoreClient.connect(socket.path, token, 'test');
+    try {
+      const novas: AgentTerminalLinesParams[] = [];
+      leitor.onNotification((method, params) => {
+        if (method === 'agents.terminal.lines') novas.push(params as AgentTerminalLinesParams);
+      });
+      const inicial = await leitor.request<AgentTerminalAttachResult>('agents.terminal.attach', {
+        sessionId,
+      });
+      expect(inicial.sessionId).toBe(sessionId);
+      const ate = inicial.lines.at(-1)?.seq ?? 0;
+      await client.request('agents.send', { sessionId, message: 'olá' });
+      await waitFor(() => novas.some((n) => n.lines.some((l) => l.text.includes('ocioso'))), 5_000);
+      const texto = novas.flatMap((n) => n.lines.map((l) => l.text)).join('\n');
+      expect(texto).toContain('olá');
+      expect(novas.flatMap((n) => n.lines).every((l) => l.seq > ate)).toBe(true);
+      await leitor.request('agents.terminal.detach', { sessionId });
+      const antes = novas.length;
+      await client.request('agents.send', { sessionId, message: 'de novo' });
+      await waitFor(
+        () =>
+          events.filter((e) => e.topic === 'agent.state' && e.subject === sessionId).length >= 4,
+        5_000,
+      );
+      expect(novas).toHaveLength(antes);
+      const historico = await leitor.request<AgentTerminalAttachResult>('agents.terminal.attach', {
+        sessionId,
+      });
+      expect(historico.lines.map((l) => l.text).join('\n')).toContain('de novo');
+    } finally {
+      leitor.close();
+    }
+    await expect(
+      client.request('agents.terminal.attach', { sessionId: 'nao-existe' }),
+    ).rejects.toMatchObject({ code: FaklErrorCode.NotFound });
   });
 
   it('guarda a conversa, com o que foi pedido, para quem abre a sessão depois', async () => {

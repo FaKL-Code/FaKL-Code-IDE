@@ -239,5 +239,14 @@
   "Default Claude": "Claude padrão",
   "could not read the agent scorecard: {0}": "não foi possível ler o placar dos agentes: {0}",
   "could not save the agent scorecard: {0}": "não foi possível gravar o placar dos agentes: {0}",
-  "periodo must be 7d, 30d or total": "periodo deve ser 7d, 30d ou total"
+  "periodo must be 7d, 30d or total": "periodo deve ser 7d, 30d ou total",
+  "> (+{0} more lines)": "> (+{0} linhas a mais)",
+  "Tool: {0}{1}": "Ferramenta: {0}{1}",
+  "Permission requested: {0}": "Permissão pedida: {0}",
+  "  (+{0} more lines)": "  (+{0} linhas a mais)",
+  "Permission allowed: {0}": "Permissão concedida: {0}",
+  "Permission denied: {0}": "Permissão negada: {0}",
+  "State: {0} -> {1} ({2})": "Estado: {0} -> {1} ({2})",
+  "State: {0} -> {1}": "Estado: {0} -> {1}",
+  "Changed file: {0}": "Arquivo alterado: {0}"
 }

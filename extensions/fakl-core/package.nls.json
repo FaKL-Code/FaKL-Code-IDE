@@ -99,6 +99,7 @@
   "command.decisions.show": "Pending decisions",
   "command.tasks.refresh": "Refresh tasks",
   "command.agents.terminal": "Open terminal in the agent's folder",
+  "command.agents.liveTerminal": "Open live terminal of the agent (read-only)",
   "command.vault.menu": "Vault",
   "command.vault.configure": "Set up the vault",
   "command.vault.search": "Search the vault",
