@@ -87,6 +87,8 @@ export interface ProviderUpdate {
   readonly pacote: string;
   /** Comando do pacote no PATH, como `codex-acp`. */
   readonly comando: string;
+  /** O pacote é o adaptador ACP ou o CLI oficial (iguais no Gemini, que traz o ACP no próprio CLI). */
+  readonly papel?: 'adaptador' | 'cli';
   readonly instalada: string;
   readonly ultima: string;
   /** A última publicada é mais nova que a instalada. */
@@ -112,6 +114,10 @@ export interface ProviderStatus {
   readonly caminho?: string;
   /** Saída de `--version` do CLI, quando ele responde. */
   readonly versao?: string;
+  /** O CLI oficial (o do login) foi achado no PATH; nos provedores sem CLI à parte vale o mesmo que `instalado`. */
+  readonly cliInstalado?: boolean;
+  /** Como o login do Gemini está configurado (`oauth-personal`, `gemini-api-key`, `vertex-ai`...); só no Google. */
+  readonly loginTipo?: string;
   /** Login feito no CLI; ausente quando não dá para saber (agentes ACP cadastrados). */
   readonly logado?: boolean;
   /** Há chave de API deste provedor no cofre da IDE. */
@@ -162,4 +168,27 @@ export interface ProviderAcpAddParams {
   /** Variável que recebe a chave de API guardada no cofre para este provedor. */
   readonly chaveEnv?: string;
   readonly modelo?: string;
+}
+
+/** `providers.environment`: o que o diagnóstico precisa saber da máquina além do que `providers.detect` diz. */
+export interface ProvidersEnvironment {
+  /** Versão do Node que o Core enxerga no PATH; ausente quando não há. */
+  readonly node?: string;
+  readonly npm?: string;
+  /** Provedores com a variável da chave de API no ambiente, mas sem chave no cofre da IDE. */
+  readonly chavesNoAmbiente: readonly string[];
+  /** Teste do servidor MCP `fakl` que o Core injeta nos agentes; ausente quando o Core não o oferece. */
+  readonly mcp?: McpProbe;
+}
+
+/** Resultado de lançar o servidor MCP `fakl` com um token fictício e pedir `initialize` e `tools/list`. */
+export interface McpProbe {
+  readonly ok: boolean;
+  /** Ferramentas que ele listou, quando respondeu. */
+  readonly ferramentas?: number;
+  readonly motivo?: 'nao-encontrado' | 'saiu' | 'sem-resposta';
+  /** Código de saída, quando o processo terminou. */
+  readonly codigo?: number;
+  /** Últimas linhas do stderr. */
+  readonly stderr?: string;
 }

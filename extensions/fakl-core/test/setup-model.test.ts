@@ -163,11 +163,13 @@ describe('jornada de configuração', () => {
       'importar',
       'tema',
       'ia',
+      'doctor',
       'permissoes',
       'voz',
+      'tour',
     ]);
     // Só a IA está feita entre as escolhidas.
-    expect(setupProgress(steps)).toEqual({ feitas: 1, total: 6 });
+    expect(setupProgress(steps)).toEqual({ feitas: 1, total: 8 });
   });
 
   it('provedores: instalar quem falta, login de quem está instalado, chave para os CLIs', () => {

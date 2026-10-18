@@ -134,5 +134,11 @@
   "A few steps are left, but nothing stops you from starting. They stay on the checklist in the Welcome page.": "Faltam algumas etapas, mas nada impede de começar a usar. Elas ficam no checklist da página de boas-vindas.",
   "Finish": "Concluir",
   "Loading…": "Carregando…",
-  "Waiting for the FaKL Core. The steps that depend on it unlock by themselves once it answers.": "Esperando o FaKL Core. As etapas que dependem dele liberam sozinhas quando ele responder."
+  "Waiting for the FaKL Core. The steps that depend on it unlock by themselves once it answers.": "Esperando o FaKL Core. As etapas que dependem dele liberam sozinhas quando ele responder.",
+  "Check this computer": "Conferir este computador",
+  "The Doctor looks for what agents need (Node.js, the Claude, Codex and Gemini programs, sign-ins) and says how to fix each thing. Docker is not needed.": "O Doctor procura o que os agentes precisam (Node.js, os programas do Claude, do Codex e do Gemini, logins) e diz como resolver cada coisa. Docker não é necessário.",
+  "Tour of FaKL-Code": "Tour da FaKL-Code",
+  "A short walk through the Desk, the chat, the café, the vault, GitHub and phone control, with a first task you can run in a sample folder. Skip it any time; \"FaKL: Tour\" brings it back.": "Um passeio curto pela Mesa, pelo chat, pelo café, pelo vault, pelo GitHub e pelo controle pelo celular, com uma primeira tarefa para rodar numa pasta de exemplo. Pule quando quiser; \"FaKL: Tour\" traz de volta.",
+  "Run the Doctor": "Rodar o Doctor",
+  "Start the tour": "Começar o tour"
 }

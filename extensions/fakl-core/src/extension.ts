@@ -29,8 +29,10 @@ import { MesaUi } from './mesa.js';
 import { ClaudeAccountsUi } from './claude-accounts.js';
 import { ProfilesView } from './profiles.js';
 import { RemoteUi } from './remote.js';
+import { DoctorUi } from './doctor.js';
 import { SetupUi } from './setup.js';
 import { SshUi } from './ssh.js';
+import { TourUi } from './tour.js';
 import { TasksView } from './tasks.js';
 import { focusMesa, offerTheme } from './theme.js';
 import { VaultUi } from './vault.js';
@@ -114,6 +116,11 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   const lovable = new LovableUi(github);
   const claudeAccounts = new ClaudeAccountsUi(context, agentEvents);
   const setup = new SetupUi(context);
+  const doctor = new DoctorUi();
+  const tour = new TourUi(context, agents);
+  agents.onStartFailure = (profileId, error) => {
+    void doctor.offerAfterFailure(profileId, error);
+  };
   const updateNotice = new UpdateNoticeUi(context);
   const officialExtensions = new OfficialExtensionsNotice(context);
   agents.pickClaudeAccount = (profileId) => claudeAccounts.pickForNewAgent(profileId);
@@ -145,6 +152,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     overlay,
     voz,
     setup,
+    doctor,
   ];
   context.subscriptions.push(
     windows,
@@ -177,6 +185,8 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     vault,
     remote,
     setup,
+    doctor,
+    tour,
     updateNotice,
     officialExtensions,
     profiles.onDidChangeProfiles(() => {

@@ -34,6 +34,26 @@
         "category": "FaKL"
       },
       {
+        "command": "fakl.doctor.open",
+        "title": "%command.doctor.open%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.tour.open",
+        "title": "%command.tour.open%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.tour.firstTask",
+        "title": "%command.tour.firstTask%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.tour.resetTips",
+        "title": "%command.tour.resetTips%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.overlay.minimize",
         "title": "%command.overlay.minimize%",
         "category": "FaKL"
@@ -2406,6 +2426,109 @@
             },
             "completionEvents": [
               "onCommand:fakl.setup.open"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fakl.tour",
+        "title": "%walkthrough.tour.title%",
+        "description": "%walkthrough.tour.description%",
+        "steps": [
+          {
+            "id": "doctor",
+            "title": "%walkthrough.tour.doctor.title%",
+            "description": "%walkthrough.tour.doctor.description%",
+            "media": {
+              "image": "media/agents.svg",
+              "altText": "%walkthrough.tour.doctor.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.doctor.open"
+            ]
+          },
+          {
+            "id": "mesa",
+            "title": "%walkthrough.tour.mesa.title%",
+            "description": "%walkthrough.tour.mesa.description%",
+            "media": {
+              "image": "media/agents.svg",
+              "altText": "%walkthrough.tour.mesa.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.mesa.open"
+            ]
+          },
+          {
+            "id": "chat",
+            "title": "%walkthrough.tour.chat.title%",
+            "description": "%walkthrough.tour.chat.description%",
+            "media": {
+              "image": "media/claude.svg",
+              "altText": "%walkthrough.tour.chat.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.chat.open"
+            ]
+          },
+          {
+            "id": "cafe",
+            "title": "%walkthrough.tour.cafe.title%",
+            "description": "%walkthrough.tour.cafe.description%",
+            "media": {
+              "image": "media/coffee.svg",
+              "altText": "%walkthrough.tour.cafe.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.cafe.open"
+            ]
+          },
+          {
+            "id": "vault",
+            "title": "%walkthrough.tour.vault.title%",
+            "description": "%walkthrough.tour.vault.description%",
+            "media": {
+              "image": "media/vault.svg",
+              "altText": "%walkthrough.tour.vault.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.vault.graph"
+            ]
+          },
+          {
+            "id": "github",
+            "title": "%walkthrough.tour.github.title%",
+            "description": "%walkthrough.tour.github.description%",
+            "media": {
+              "image": "media/github.svg",
+              "altText": "%walkthrough.tour.github.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.github.openFull"
+            ]
+          },
+          {
+            "id": "celular",
+            "title": "%walkthrough.tour.celular.title%",
+            "description": "%walkthrough.tour.celular.description%",
+            "media": {
+              "image": "media/server.svg",
+              "altText": "%walkthrough.tour.celular.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.remote.configure"
+            ]
+          },
+          {
+            "id": "primeira",
+            "title": "%walkthrough.tour.primeira.title%",
+            "description": "%walkthrough.tour.primeira.description%",
+            "media": {
+              "image": "media/agents.svg",
+              "altText": "%walkthrough.tour.primeira.altText%"
+            },
+            "completionEvents": [
+              "onCommand:fakl.tour.firstTask"
             ]
           }
         ]

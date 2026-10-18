@@ -32,6 +32,9 @@ import {
   type SetupView,
 } from './setup-protocol.js';
 
+/** Chave do globalState onde fica o {@link SetupProgress}; o tour guarda as dicas vistas no mesmo lugar. */
+export const SETUP_PROGRESS_KEY = 'fakl.setup.progresso';
+
 export const THEME_NAME = 'FaKL Noite';
 
 /** Nome de cada idioma no próprio idioma, como o VS Code mostra na troca. */
@@ -75,6 +78,10 @@ export interface SetupProgress {
   readonly feitas: readonly SetupStepId[];
   /** Integrações marcadas no início; `undefined` antes da escolha. */
   readonly interesses?: readonly SetupStepId[];
+  /** Dicas do tour (balões nas telas da FaKL) que a pessoa já dispensou. */
+  readonly dicasVistas?: readonly string[];
+  /** A pessoa pediu para não ver mais nenhuma dica. */
+  readonly dicasDesligadas?: boolean;
 }
 
 export const EMPTY_PROGRESS: SetupProgress = { puladas: [], feitas: [] };
@@ -126,6 +133,15 @@ function steps(): StepDefinition[] {
         'Use what you have: a Claude, Codex or Gemini subscription through their CLIs, an API key, local models (Ollama, LM Studio) or any ACP agent. With none, the IDE works as an editor.',
       ),
       core: true,
+    },
+    {
+      id: 'doctor',
+      grupo: 'essencial',
+      titulo: l10n.t('Check this computer'),
+      resumo: l10n.t(
+        'The Doctor looks for what agents need (Node.js, the Claude, Codex and Gemini programs, sign-ins) and says how to fix each thing. Docker is not needed.',
+      ),
+      core: false,
     },
     {
       id: 'permissoes',
@@ -231,6 +247,15 @@ function steps(): StepDefinition[] {
       ),
       core: false,
     },
+    {
+      id: 'tour',
+      grupo: 'essencial',
+      titulo: l10n.t('Tour of FaKL-Code'),
+      resumo: l10n.t(
+        'A short walk through the Desk, the chat, the café, the vault, GitHub and phone control, with a first task you can run in a sample folder. Skip it any time; "FaKL: Tour" brings it back.',
+      ),
+      core: false,
+    },
   ];
 }
 
@@ -305,6 +330,10 @@ function progressOf(
             : l10n.t('{0} ready: {1}.', prontos.length, nomes),
       };
     }
+    case 'doctor':
+      return { feito: feitas.has(id) };
+    case 'tour':
+      return { feito: feitas.has(id) };
     case 'permissoes':
       if (!snapshot.permissoes) return undefined;
       return {
@@ -441,6 +470,10 @@ function actionsOf(id: SetupStepId, snapshot: SetupSnapshot): SetupAction[] {
           : []),
       ];
     }
+    case 'doctor':
+      return [{ id: 'fakl.doctor.open', rotulo: l10n.t('Run the Doctor'), principal: true }];
+    case 'tour':
+      return [{ id: 'fakl.tour.open', rotulo: l10n.t('Start the tour'), principal: true }];
     case 'permissoes':
       return [];
     case 'github':

@@ -54,6 +54,7 @@ import {
   type MenuHandle,
   type MenuItem,
 } from './chat-ui.js';
+import { initCoach } from './coach.js';
 import { fileIcon, icon, providerLogo, type IconName } from './icons.js';
 import { initials, mentionAt, toneOf, usageRing } from './mesa-model.js';
 import { criarMicrofone, criarTranscritor, ehAtalhoDeVoz } from './voz-mic.js';
@@ -1962,3 +1963,4 @@ setInterval(() => {
 autosize();
 render();
 post({ type: 'ready' });
+initCoach(vscode, 'chat');

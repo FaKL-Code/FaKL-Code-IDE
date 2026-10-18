@@ -278,6 +278,7 @@ export function createCore(options: CoreOptions): Core {
     hasKey: (provedor) => secrets.has(apiKeySecretName(provedor)),
     env: options.env ?? {},
     home: options.configHome ?? homedir(),
+    ...(options.mcp ? { mcp: options.mcp } : {}),
     ...(dataDir ? { stateFile: join(dataDir, 'providers.json') } : {}),
     ...(claudeAccounts
       ? {

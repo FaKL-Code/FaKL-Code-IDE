@@ -14,6 +14,7 @@ import type { FromMesa, MesaCommand, ToMesa } from '../mesa-protocol.js';
 import type { ChatItem } from '@fakl/conversa';
 import { escapeHtml, renderMarkdown } from '@fakl/conversa';
 import { agentStateLabel, logoKey } from './chat-model.js';
+import { initCoach } from './coach.js';
 import { providerLogo } from './icons.js';
 import {
   criarMicrofone,
@@ -2551,3 +2552,4 @@ function scheduleCard(sessionId: string): void {
 setTool('selecionar');
 applyView();
 post({ type: 'ready' });
+initCoach(vscode, 'mesa');

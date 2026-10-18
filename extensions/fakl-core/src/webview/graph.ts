@@ -1,6 +1,8 @@
 import { l10n, useLocale } from '@fakl/i18n';
 
+import type { ToTips } from '../tour-protocol.js';
 import type { GraphFromWebview, GraphToWebview, VaultGraphData } from '../vault-graph-protocol.js';
+import { initCoach } from './coach.js';
 
 /*
  * Grafo do vault (RF-403): nós são notas, arestas são wikilinks. Layout por
@@ -291,14 +293,15 @@ filterInput.addEventListener('input', () => {
   filter = filterInput.value.trim().toLowerCase();
 });
 
-window.addEventListener('message', (event: MessageEvent<GraphToWebview>) => {
+window.addEventListener('message', (event: MessageEvent<GraphToWebview | ToTips>) => {
   const message = event.data;
   if (message.type === 'graph') {
     if (message.current) current = message.current;
     load(message.graph);
-  } else {
+  } else if (message.type === 'current') {
     current = message.path;
   }
 });
 
 vscode.postMessage({ type: 'ready' });
+initCoach(vscode, 'vault');

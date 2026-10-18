@@ -9,6 +9,8 @@ import * as vscode from 'vscode';
 import type { AgentEventRouter } from './agents.js';
 import { fillTemplate } from './templates.js';
 import type { GraphFromWebview, GraphToWebview, VaultGraphData } from './vault-graph-protocol.js';
+import { attachTips } from './tour.js';
+import type { FromTips } from './tour-protocol.js';
 
 /** Tag ou nota com a tag, na árvore de tags. */
 type TagItem =
@@ -143,9 +145,12 @@ export class VaultGraphUi implements vscode.TreeDataProvider<TagItem>, vscode.Di
     );
     this.panel = panel;
     panel.webview.html = this.html(panel.webview, media);
-    panel.webview.onDidReceiveMessage((message: GraphFromWebview) => {
+    attachTips(panel, 'vault');
+    panel.webview.onDidReceiveMessage((message: GraphFromWebview | FromTips) => {
       if (message.type === 'ready') void this.postGraph();
-      else void vscode.commands.executeCommand('fakl.vault.openNote', message.path);
+      else if (message.type === 'open') {
+        void vscode.commands.executeCommand('fakl.vault.openNote', message.path);
+      }
     });
     panel.onDidDispose(() => {
       this.panel = undefined;

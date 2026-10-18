@@ -10,6 +10,7 @@ import type { ExternalSessionsFeed } from './externas.js';
 import { MESA_COMMANDS, type FromMesa, type ToMesa } from './mesa-protocol.js';
 import { moveToNewWindow } from './janelas.js';
 import type { VozUi } from './voz.js';
+import { attachTips } from './tour.js';
 import { parseLayout, portalUrl, type MesaRole } from './webview/mesa-model.js';
 
 const LAYOUT_KEY = 'fakl.mesa.layout';
@@ -139,6 +140,7 @@ export class MesaUi implements vscode.Disposable {
     panel.webview.options = { enableScripts: true, localResourceRoots: [this.media] };
     panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'agents.svg');
     panel.webview.html = this.html(panel.webview, this.media);
+    attachTips(panel, 'mesa');
     panel.webview.onDidReceiveMessage((message: FromMesa) => void this.receive(message));
     this.watching?.dispose();
     this.watching = this.externas.watch();
