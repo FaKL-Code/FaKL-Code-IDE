@@ -6,6 +6,7 @@
   para manter projetos isolados na mesma GUI, cada um com sua Mesa, Café,
   maestro e agentes.
 - [Build da IDE](build.md): como a IDE é compilada com a marca FaKL-Code.
+- [Distribuição](distribuicao.md): winget, Scoop, Homebrew e Linux, e como cada canal é mantido.
 - [Marca](marca/): logo, paleta e peças da identidade Terminal.
 - [Site](../apps/landing/README.md): landing page, documentação pública e download.
 - [Modo minimizado](ux/modo-minimizado.md): o pet e o painel dos agentes por

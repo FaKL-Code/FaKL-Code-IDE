@@ -162,6 +162,15 @@ Baixe o instalador na página de [Releases](../../releases) e confira o hash em
   - clique com o botão direito no app, **Abrir** e confirme; ou
   - rode `xattr -dr com.apple.quarantine "/Applications/FaKL-Code IDE.app"` no Terminal.
 
+Também dá para instalar por gerenciador de pacote (veja [docs/distribuicao.md](docs/distribuicao.md)
+para o estado de cada um):
+
+```bash
+winget install FaKLCode.FaKLCode          # Windows (em análise no winget-pkgs)
+scoop bucket add fakl-code https://github.com/FaKL-Code/scoop-bucket && scoop install fakl-code
+brew install --cask fakl-code/tap/fakl-code   # macOS Apple Silicon
+```
+
 Na primeira abertura, a jornada de configuração guia a escolha de provedores de IA
 (todos opcionais), GitHub, vault e as demais integrações.
 
