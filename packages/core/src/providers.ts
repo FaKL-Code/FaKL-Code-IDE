@@ -28,13 +28,14 @@ import {
   type ProviderAcpAddParams,
   type ProviderMode,
   type ProvidersDetectResult,
+  type ProvidersEnvironment,
   type ProvidersGenerateResult,
   type ProviderStatus,
   type ProviderUpdate,
 } from '@fakl/protocol';
 
 import { parseAuthStatus } from './claude-accounts.js';
-import { run } from './exec.js';
+import { run, runShell } from './exec.js';
 import { objectParams, RpcError, type Router } from './rpc/router.js';
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -105,12 +106,11 @@ function localInstall(id: LocalProvider): string {
 }
 
 const defaultRunner: CliRunner = async (file, args, env) => {
-  const result = await run(file, args, {
-    cwd: process.cwd(),
-    env,
-    timeoutMs: VERSION_TIMEOUT_MS,
-    tailChars: 4_000,
-  });
+  const options = { cwd: process.cwd(), env, timeoutMs: VERSION_TIMEOUT_MS, tailChars: 4_000 };
+  // Os CLIs do npm no Windows são `.cmd`, que um spawn sem shell não roda.
+  const result = /\.(cmd|bat)$/i.test(file)
+    ? await runShell(`"${file}" ${args.join(' ')}`, options)
+    : await run(file, args, options);
   return { code: result.code, stdout: result.stdout };
 };
 
@@ -265,6 +265,7 @@ export class ProviderService {
         : Promise.resolve([]),
     ]);
     const instalado = agentPath !== undefined;
+    const loginTipo = id === 'google' ? await this.geminiLoginType() : undefined;
     const modo: ProviderMode | undefined = !instalado
       ? undefined
       : chave
@@ -295,6 +296,8 @@ export class ProviderService {
       instalado,
       ...(agentPath ? { caminho: agentPath } : {}),
       ...(versao ? { versao } : {}),
+      cliInstalado: loginPath !== undefined,
+      ...(loginTipo ? { loginTipo } : {}),
       logado,
       chave,
       chaveEnv,
@@ -339,6 +342,7 @@ export class ProviderService {
         return {
           pacote,
           comando,
+          papel: pacote === packages.adapter ? 'adaptador' : 'cli',
           instalada,
           ultima,
           desatualizada: isNewer(ultima, instalada),
@@ -390,6 +394,33 @@ export class ProviderService {
         return typeof selected === 'string' && GEMINI_CLOUD_AUTH.has(selected);
       }
     }
+  }
+
+  /**
+   * Como o login do Gemini está configurado, só pelo tipo escolhido em
+   * `settings.json`; o conteúdo de `oauth_creds.json` nunca é lido. Com o
+   * arquivo de OAuth e nenhuma escolha, vale o padrão do CLI: conta pessoal.
+   */
+  private async geminiLoginType(): Promise<string | undefined> {
+    const { env, home } = this.options;
+    const dir = join(envValue(env, 'GEMINI_CLI_HOME') ?? home, '.gemini');
+    const settings = await readJson(join(dir, 'settings.json'));
+    const selected =
+      field(settings, 'security', 'auth', 'selectedType') ?? field(settings, 'selectedAuthType');
+    if (typeof selected === 'string') return selected;
+    return (await isFile(join(dir, 'oauth_creds.json'))) ? 'oauth-personal' : undefined;
+  }
+
+  /** Node, npm e chaves só no ambiente: o que o diagnóstico (FaKL: Doctor) precisa além do `detect`. */
+  async environment(): Promise<ProvidersEnvironment> {
+    const tool = async (command: string): Promise<string | undefined> =>
+      this.version(await this.which(command));
+    const [node, npm] = await Promise.all([tool('node'), tool('npm')]);
+    const chavesNoAmbiente = CLI_PROVIDERS.filter(
+      (id) =>
+        !this.options.hasKey(id) && envValue(this.options.env, PROVIDER_KEY_ENV[id]) !== undefined,
+    );
+    return { ...(node ? { node } : {}), ...(npm ? { npm } : {}), chavesNoAmbiente };
   }
 
   private async detectLocal(id: LocalProvider): Promise<ProviderStatus> {
@@ -561,6 +592,7 @@ export class ProviderService {
         provedores: await this.detect({ versions: true, updates: raw.atualizacoes === true }),
       };
     });
+    router.register('providers.environment', () => this.environment());
     router.register('providers.generateProfiles', (params) => {
       const raw = params === undefined || params === null ? {} : objectParams(params);
       const list = raw.provedores;

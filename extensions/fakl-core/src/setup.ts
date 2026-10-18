@@ -22,6 +22,7 @@ import {
   EMPTY_PROGRESS,
   isSetupStepId,
   providerCommand,
+  SETUP_PROGRESS_KEY,
   setupView,
   THEME_NAME,
   withStep,
@@ -36,7 +37,7 @@ import type {
   ToSetup,
 } from './setup-protocol.js';
 
-const PROGRESS = 'fakl.setup.progresso';
+const PROGRESS = SETUP_PROGRESS_KEY;
 const SEEN = 'fakl.setup.visto';
 const RELAY_GUIDE = 'https://github.com/FaKL-Code/FaKL-Code-IDE/blob/main/packages/relay/README.md';
 /** O que `github.status` responde (só o que a jornada usa). */
@@ -381,6 +382,11 @@ export class SetupUi implements vscode.Disposable {
         return;
       case 'fakl.cli.addToPath':
         if (await addCliToSystemPath()) await done();
+        return;
+      case 'fakl.doctor.open':
+      case 'fakl.tour.open':
+        await vscode.commands.executeCommand(action);
+        await done();
         return;
       case 'fakl.settings.import':
         // A importação é de outra extensão e não diz se terminou; contar a ida já basta.

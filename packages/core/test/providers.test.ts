@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import type { AgentAdapter, AgentProfile, StartOptions } from '@fakl/agents';
 import {
@@ -195,6 +195,7 @@ describe('ProviderService', () => {
       {
         pacote: '@agentclientprotocol/codex-acp',
         comando: 'codex-acp',
+        papel: 'adaptador',
         instalada: '1.2.3',
         ultima: '2.0.0',
         desatualizada: true,
@@ -203,6 +204,7 @@ describe('ProviderService', () => {
       {
         pacote: '@openai/codex',
         comando: 'codex',
+        papel: 'cli',
         instalada: '1.2.3',
         ultima: '1.2.3',
         desatualizada: false,
@@ -310,6 +312,52 @@ describe('ProviderService', () => {
     expect(claude.pronto).toBe(false);
     expect(claude.aviso).toContain('ANTHROPIC_API_KEY no ambiente');
     expect(claude.aviso).not.toContain('do-shell');
+  });
+
+  it('o diagnóstico: o CLI oficial é visto à parte do adaptador', async () => {
+    await m.install('claude-agent-acp');
+    const claude = byId(await service().detect(), 'anthropic');
+    expect(claude.instalado).toBe(true);
+    expect(claude.cliInstalado).toBe(false);
+    await m.install('claude');
+    expect(byId(await service().detect(), 'anthropic').cliInstalado).toBe(true);
+    // No Gemini o adaptador é o próprio CLI.
+    await m.install('gemini');
+    expect(byId(await service().detect(), 'google').cliInstalado).toBe(true);
+  });
+
+  it('o diagnóstico: o tipo de login do Gemini vem do settings, sem ler o OAuth', async () => {
+    await m.install('gemini');
+    expect(byId(await service().detect(), 'google').loginTipo).toBeUndefined();
+    // Só o arquivo de OAuth (conteúdo qualquer): vale o padrão do CLI, conta pessoal.
+    await m.file('.gemini/oauth_creds.json', 'nao-e-lido');
+    expect(byId(await service().detect(), 'google').loginTipo).toBe('oauth-personal');
+    await m.file(
+      '.gemini/settings.json',
+      JSON.stringify({ security: { auth: { selectedType: 'vertex-ai' } } }),
+    );
+    expect(byId(await service().detect(), 'google').loginTipo).toBe('vertex-ai');
+    await m.file('.gemini/settings.json', JSON.stringify({ selectedAuthType: 'gemini-api-key' }));
+    expect(byId(await service().detect(), 'google').loginTipo).toBe('gemini-api-key');
+    // Só o Gemini tem esse campo.
+    expect(byId(await service().detect(), 'anthropic').loginTipo).toBeUndefined();
+  });
+
+  it('o diagnóstico: Node, npm e chaves só no ambiente', async () => {
+    const none = await service().environment();
+    expect(none).toEqual({ chavesNoAmbiente: [] });
+
+    await m.install('node', 'npm');
+    const runCli: CliRunner = (file) =>
+      Promise.resolve({
+        code: 0,
+        stdout: basename(file).startsWith('node') ? 'v22.13.0' : '10.9.2',
+      });
+    const env = { GEMINI_API_KEY: 'do-shell', OPENAI_API_KEY: 'outra' };
+    keys.add('openai');
+    const found = await service({}, env, { runCli }).environment();
+    expect(found).toEqual({ node: '22.13.0', npm: '10.9.2', chavesNoAmbiente: ['google'] });
+    expect(JSON.stringify(found)).not.toContain('do-shell');
   });
 
   it('dois provedores: Claude por chave e Gemini por assinatura', async () => {

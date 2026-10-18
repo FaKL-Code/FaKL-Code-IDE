@@ -269,6 +269,9 @@ export class AgentControl implements vscode.Disposable {
     return this.transcriptFor(sessionId).items;
   }
 
+  /** Chamado quando o Core não consegue iniciar um agente; o erro continua indo ao chamador. */
+  onStartFailure: ((profileId: string, error: unknown) => void) | undefined;
+
   /** Perfis e se estão instalados; `quiet` não avisa quando o Core não responde. */
   async detect(quiet = false): Promise<AgentProfileAvailability[]> {
     const client = quiet ? await this.getClient() : await this.requireClient();
@@ -296,14 +299,19 @@ export class AgentControl implements vscode.Disposable {
     const client = await this.requireClient();
     if (!client) throw new Error(l10n.t('FaKL Core is not responding.'));
     const contaClaude = await this.pickClaudeAccount(profileId);
-    const started = await client.request<AgentStartResult>('agents.start', {
-      profileId,
-      cwd,
-      ...(contaClaude ? { contaClaude } : {}),
-      ...(permissions ? { permissions } : {}),
-      worktree,
-      ...(remotas.length > 0 ? { remotas } : {}),
-    });
+    const started = await client
+      .request<AgentStartResult>('agents.start', {
+        profileId,
+        cwd,
+        ...(contaClaude ? { contaClaude } : {}),
+        ...(permissions ? { permissions } : {}),
+        worktree,
+        ...(remotas.length > 0 ? { remotas } : {}),
+      })
+      .catch((error: unknown) => {
+        this.onStartFailure?.(profileId, error);
+        throw error;
+      });
     await this.reload();
     const remoto =
       remotas.length > 0

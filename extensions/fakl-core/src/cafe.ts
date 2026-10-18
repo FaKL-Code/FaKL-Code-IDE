@@ -10,6 +10,7 @@ import type { AgentControl, AgentEventRouter } from './agents.js';
 import type { ExternalSessionsFeed } from './externas.js';
 import type { FromCafe, ToCafe } from './cafe-protocol.js';
 import { moveToNewWindow } from './janelas.js';
+import { attachTips } from './tour.js';
 
 /** Eventos que o café anima; o resto chega por `cafe.state`. */
 const ANIMATED = new Set(['agent.state', 'agent.thumbnail', 'run.round', 'run.limit', 'run.done']);
@@ -111,6 +112,7 @@ export class CafeUi implements vscode.Disposable {
     panel.webview.options = { enableScripts: true, localResourceRoots: [this.media] };
     panel.iconPath = vscode.Uri.joinPath(this.extensionUri, 'media', 'coffee.svg');
     panel.webview.html = this.html(panel.webview, this.media);
+    attachTips(panel, 'cafe');
     panel.webview.onDidReceiveMessage((message: FromCafe) => void this.receive(message));
     panel.onDidChangeViewState(() => {
       if (!panel.visible) void this.closeRoom();

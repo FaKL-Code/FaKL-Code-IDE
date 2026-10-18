@@ -11,6 +11,7 @@ export const SETUP_STEP_IDS = [
   'importar',
   'tema',
   'ia',
+  'doctor',
   'permissoes',
   'github',
   'fontes',
@@ -23,6 +24,7 @@ export const SETUP_STEP_IDS = [
   'voz',
   'sync',
   'cli',
+  'tour',
 ] as const;
 export type SetupStepId = (typeof SETUP_STEP_IDS)[number];
 

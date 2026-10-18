@@ -13,7 +13,7 @@ export const CoreMethods = {
    * Provedores de IA (ADR 0035): o que está instalado, logado, com chave ou
    * rodando local; a jornada de configuração começa por aqui.
    */
-  providers: ['detect', 'generateProfiles', 'acp.add'],
+  providers: ['detect', 'environment', 'generateProfiles', 'acp.add'],
   tasks: ['create', 'list', 'get', 'cancel', 'fromIssue', 'fromNote'],
   runs: ['start', 'pause', 'resume', 'setAutoResume', 'stop', 'get', 'tree', 'decide', 'decisions'],
   agents: [

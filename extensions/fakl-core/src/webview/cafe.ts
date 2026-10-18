@@ -4,6 +4,7 @@ import { l10n, useLocale } from '@fakl/i18n';
 import type { ExternalSession } from '@fakl/protocol';
 
 import type { FromCafe, ToCafe } from '../cafe-protocol.js';
+import { initCoach } from './coach.js';
 
 /*
  * Painel do cyber café na IDE: a sala de `@fakl/cafe` e, abaixo dela, a faixa
@@ -239,3 +240,4 @@ document.getElementById('nova-tarefa')?.addEventListener('click', () => {
 
 renderStrip();
 vscode.postMessage({ type: 'ready' });
+initCoach(vscode, 'cafe');

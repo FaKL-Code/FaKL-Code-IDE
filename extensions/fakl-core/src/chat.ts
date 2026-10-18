@@ -11,6 +11,7 @@ import type { FromChat, ToChat } from './chat-protocol.js';
 import { moveToNewWindow } from './janelas.js';
 import { findFiles } from './mesa.js';
 import type { VozUi } from './voz.js';
+import { attachTips } from './tour.js';
 import { expandMentions } from './webview/mesa-model.js';
 
 /**
@@ -114,6 +115,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider, vscode.Disp
     this.view = view;
     view.webview.options = { enableScripts: true, localResourceRoots: [this.media] };
     view.webview.html = this.html(view.webview, this.media);
+    attachTips(view, 'chat');
     view.webview.onDidReceiveMessage((message: FromChat) => void this.receive(message));
     view.onDidDispose(() => {
       this.view = undefined;
@@ -157,6 +159,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider, vscode.Disp
     panel.webview.options = { enableScripts: true, localResourceRoots: [this.media] };
     panel.iconPath = vscode.Uri.joinPath(this.extensionUri, 'media', 'agents.svg');
     panel.webview.html = this.html(panel.webview, this.media);
+    attachTips(panel, 'chat');
     panel.webview.onDidReceiveMessage((message: FromChat) => void this.receive(message));
     panel.onDidDispose(() => {
       if (this.window === panel) this.window = undefined;

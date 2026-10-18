@@ -1,0 +1,19 @@
+{
+  "This is the Desk. Every card is an agent, a task or a note. Use these tools to add one, and drag cards to arrange them.": "Esta é a Mesa. Cada cartão é um agente, uma tarefa ou uma nota. Use estas ferramentas para criar um e arraste os cartões para arrumá-los.",
+  "Describe what you want done. The agent works on its own branch, so your files stay as they are until you accept the changes.": "Descreva o que você quer feito. O agente trabalha numa branch própria, então seus arquivos ficam como estão até você aceitar as mudanças.",
+  "Start an agent here. It sits down at a computer in the café and you can watch it work.": "Inicie um agente aqui. Ele se senta num computador do café e você acompanha o trabalho.",
+  "Each dot is a note and each line is a link between two notes. Type here to find one.": "Cada ponto é uma nota e cada linha é um link entre duas notas. Digite aqui para achar uma.",
+  "# Sample project": "# Projeto de exemplo",
+  "This folder was created by the FaKL-Code tour. It has no real work in it: it is a safe place for a first agent.": "Esta pasta foi criada pelo tour da FaKL-Code. Não tem trabalho de verdade aqui: é um lugar seguro para um primeiro agente.",
+  "The project is a tiny to-do list kept in a text file.": "O projeto é uma lista de tarefas pequena, guardada num arquivo de texto.",
+  "Buy coffee": "Comprar café",
+  "Write the first note": "Escrever a primeira nota",
+  "Try the Desk": "Experimentar a Mesa",
+  "Read README.md and todo.txt in this folder and tell me, in two short sentences, what this project is. Do not change any file.": "Leia o README.md e o todo.txt desta pasta e diga, em duas frases curtas, o que é este projeto. Não altere nenhum arquivo.",
+  "The tips will show again the next time you open the Desk, the chat, the café or the vault.": "As dicas voltam a aparecer na próxima vez que você abrir a Mesa, o chat, o café ou o vault.",
+  "Hide all tips": "Ocultar todas as dicas",
+  "Open the Doctor": "Abrir o Doctor",
+  "No agent is ready yet, so there is nothing to run. The Doctor shows what is missing.": "Nenhum agente está pronto ainda, então não há o que rodar. O Doctor mostra o que falta.",
+  "This creates a small sample folder and asks {0} to read it and describe it. The agent only reads, and nothing outside that folder is touched.": "Isto cria uma pastinha de exemplo e pede ao {0} que a leia e a descreva. O agente só lê, e nada fora dessa pasta é tocado.",
+  "Could not start the first task: {0}": "Não deu para iniciar a primeira tarefa: {0}"
+}

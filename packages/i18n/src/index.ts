@@ -14,6 +14,7 @@ import * as l10n from '@vscode/l10n';
 
 import cli from './catalogos/pt-br/cli.json' with { type: 'json' };
 import core from './catalogos/pt-br/core.json' with { type: 'json' };
+import doctor from './catalogos/pt-br/doctor.json' with { type: 'json' };
 import extensao from './catalogos/pt-br/extensao.json' with { type: 'json' };
 import integracoes from './catalogos/pt-br/integracoes.json' with { type: 'json' };
 import jornada from './catalogos/pt-br/jornada.json' with { type: 'json' };
@@ -22,6 +23,7 @@ import orquestrador from './catalogos/pt-br/orquestrador.json' with { type: 'jso
 import overlay from './catalogos/pt-br/overlay.json' with { type: 'json' };
 import pacotes from './catalogos/pt-br/pacotes.json' with { type: 'json' };
 import pwa from './catalogos/pt-br/pwa.json' with { type: 'json' };
+import tour from './catalogos/pt-br/tour.json' with { type: 'json' };
 import webviews from './catalogos/pt-br/webviews.json' with { type: 'json' };
 
 export { l10n };
@@ -33,6 +35,7 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const PT_BR_AREAS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   cli,
   core,
+  doctor,
   extensao,
   integracoes,
   jornada,
@@ -41,6 +44,7 @@ export const PT_BR_AREAS: Readonly<Record<string, Readonly<Record<string, string
   overlay,
   pacotes,
   pwa,
+  tour,
   webviews,
 };
 
