@@ -10,7 +10,14 @@ import {
 } from './rpc/router.js';
 
 /** Segredos que o Core usa; a IDE guarda cada um no cofre do sistema (SDD 14.2). */
-export const SECRET_NAMES = ['github.token', 'hostinger.token', 'voz.token'] as const;
+export const SECRET_NAMES = [
+  'github.token',
+  'hostinger.token',
+  'voz.token',
+  'remote.identidade',
+] as const;
+/** Chave de 32 bytes que cifra `~/.fakl/remote/identity.json` (ADR 0044). */
+export const REMOTE_IDENTITY_SECRET = 'remote.identidade';
 /**
  * Os fixos, os `mcp.<id>` dos servidores MCP instalados na IDE (`${input:id}`)
  * e as `apikey.<provedor>`, chaves de API que só o agente daquele provedor recebe.

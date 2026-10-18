@@ -1,4 +1,4 @@
-import { randomBytes, type webcrypto } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { hostname } from 'node:os';
 import { join } from 'node:path';
 
@@ -51,13 +51,14 @@ import {
 import type { AttachedConnection, RpcServer } from '../rpc/server.js';
 import { readJson, writeJsonAtomic } from '../store.js';
 import { ulid } from '../ulid.js';
+import {
+  openIdentity,
+  parseIdentityKey,
+  readIdentityFile,
+  writeSealedIdentity,
+  type StoredIdentity,
+} from './identity-store.js';
 import { testRelay } from './relay-test.js';
-
-interface Identity {
-  /** Segredo da máquina no relay; o id é o hash dele. */
-  readonly segredo: string;
-  readonly chave: webcrypto.JsonWebKey;
-}
 
 interface StoredDevice {
   readonly id: string;
@@ -101,6 +102,14 @@ export interface RemoteGatewayOptions {
   /** Grava relay e chave no config.yaml quando a IDE os informa. */
   readonly saveConfig?: (change: RemoteConfig) => Promise<void>;
   readonly log?: (message: string) => void;
+  /**
+   * Chave de 32 bytes (base64url) que a IDE guarda no cofre do sistema e
+   * entrega ao Core em memória (`remote.identidade`, ADR 0044). Com ela, a
+   * identidade é gravada cifrada. Sem esta opção, o arquivo fica em claro.
+   */
+  readonly identityKey?: () => string | undefined;
+  /** Quanto o Core espera a chave da IDE antes de seguir sem ela (padrão 10 s). */
+  readonly keyWaitMs?: number;
   /** Troca o WebSocket nos testes. */
   readonly WebSocket?: typeof WebSocket;
   /** Troca o fetch do `remote.test` nos testes. */
@@ -180,6 +189,13 @@ export class RemoteGateway implements Disposable {
   private readonly pushWaiters = new Map<string, string>();
   private readonly subscription: Disposable;
   private loaded: Promise<void> | undefined;
+  /** Chave com que o arquivo da identidade está cifrado; vazio se está em claro. */
+  private sealedWith: Buffer | undefined;
+  /** Identidade em memória, para regravar quando a chave muda. */
+  private stored: StoredIdentity | undefined;
+  private readonly keyWaiters: (() => void)[] = [];
+  private startFailed = false;
+  private resealing: Promise<void> = Promise.resolve();
 
   constructor(private readonly options: RemoteGatewayOptions) {
     this.subscription = options.bus.subscribe(Object.keys(PUSH_FOR), (event) => {
@@ -192,32 +208,157 @@ export class RemoteGateway implements Disposable {
     return join(this.options.dir, 'devices.json');
   }
 
+  private get identityFile(): string {
+    return join(this.options.dir, 'identity.json');
+  }
+
   /** Lê identidade e aparelhos; cria a identidade na primeira vez. */
   load(): Promise<void> {
-    this.loaded ??= (async () => {
-      const file = join(this.options.dir, 'identity.json');
-      let identity = await readJson<Identity>(file);
-      if (!identity) {
-        const key = await generateKeyPair(true);
-        identity = {
-          segredo: randomBytes(32).toString('base64url'),
-          chave: await exportKeyPair(key),
-        };
-        await writeJsonAtomic(file, identity);
-      }
-      this.identity = {
-        segredo: identity.segredo,
-        machine: await machineIdFromSecret(identity.segredo),
-        key: await importKeyPair(identity.chave),
-      };
-      this.devices = (await readJson<StoredDevice[]>(this.devicesFile)) ?? [];
-    })();
+    this.loaded ??= this.loadIdentity().catch((error: unknown) => {
+      // Falhou (sem a chave, chave errada): uma nova tentativa pode dar certo.
+      this.loaded = undefined;
+      throw error;
+    });
     return this.loaded;
+  }
+
+  private currentKey(): Buffer | undefined {
+    return parseIdentityKey(this.options.identityKey?.());
+  }
+
+  /** Espera a IDE entregar a chave, por no máximo `keyWaitMs`. */
+  private async waitForKey(): Promise<Buffer | undefined> {
+    const key = this.currentKey();
+    if (key || !this.options.identityKey) return key;
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, this.options.keyWaitMs ?? 10_000);
+      timer.unref();
+      this.keyWaiters.push(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
+    return this.currentKey();
+  }
+
+  private async loadIdentity(): Promise<void> {
+    const file = this.identityFile;
+    const read = await readIdentityFile(file);
+    if (read.kind === 'corrompido') {
+      throw new Error(
+        l10n.t(
+          'the remote identity file cannot be read ({0}); restore it from a backup or delete {1} and {2} to pair the devices again',
+          read.motivo,
+          file,
+          this.devicesFile,
+        ),
+      );
+    }
+    const key = await this.waitForKey();
+    let stored: StoredIdentity;
+    if (read.kind === 'cifrado') {
+      if (!key) {
+        throw new Error(
+          l10n.t('the remote identity is encrypted and the IDE has not provided the key yet'),
+        );
+      }
+      const opened = openIdentity(read.sealed, key);
+      if (!opened) {
+        throw new Error(
+          l10n.t(
+            'the remote identity cannot be opened: wrong key or altered file; delete {0} and {1} to pair the devices again',
+            file,
+            this.devicesFile,
+          ),
+        );
+      }
+      stored = opened;
+      this.sealedWith = key;
+    } else if (read.kind === 'claro') {
+      stored = read.identity;
+      await this.sealStored(stored, key);
+    } else {
+      const created: StoredIdentity = {
+        segredo: randomBytes(32).toString('base64url'),
+        chave: await exportKeyPair(await generateKeyPair(true)),
+      };
+      stored = created;
+      if (key) {
+        await writeSealedIdentity(file, created, key);
+        this.sealedWith = key;
+      } else {
+        await writeJsonAtomic(file, created);
+        this.warnPlainIdentity();
+      }
+    }
+    this.stored = stored;
+    this.identity = {
+      segredo: stored.segredo,
+      machine: await machineIdFromSecret(stored.segredo),
+      key: await importKeyPair(stored.chave),
+    };
+    this.devices = (await readJson<StoredDevice[]>(this.devicesFile)) ?? [];
+  }
+
+  private warnPlainIdentity(): void {
+    this.options.log?.(
+      l10n.t(
+        'remote identity kept in plain text: the IDE has not provided the encryption key (running without the IDE)',
+      ),
+    );
+  }
+
+  /**
+   * Migra o arquivo em claro para cifrado quando há chave. Sem chave, segue em
+   * claro com aviso; se a gravação falhar, o gateway continua como estava.
+   */
+  private async sealStored(stored: StoredIdentity, key: Buffer | undefined): Promise<void> {
+    if (!key) {
+      this.warnPlainIdentity();
+      return;
+    }
+    try {
+      await writeSealedIdentity(this.identityFile, stored, key);
+      this.sealedWith = key;
+      this.options.log?.(l10n.t('remote identity migrated to an encrypted file'));
+    } catch (error) {
+      this.options.log?.(l10n.t('could not encrypt the remote identity: {0}', String(error)));
+    }
+  }
+
+  /**
+   * A IDE entregou (ou trocou) a chave da identidade. Libera quem esperava,
+   * migra a identidade em claro e tenta de novo a abertura que falhou por falta
+   * da chave.
+   */
+  keyChanged(): void {
+    for (const waiter of this.keyWaiters.splice(0)) waiter();
+    const key = this.currentKey();
+    if (!key) return;
+    if (this.identity && this.loaded) {
+      if (this.sealedWith?.equals(key)) return;
+      const stored = this.stored;
+      this.resealing = this.resealing
+        .then(() => (stored ? this.sealStored(stored, key) : undefined))
+        .catch(() => undefined);
+    } else if (!this.loaded && this.startFailed) {
+      this.startFailed = false;
+      void this.start().catch((error: unknown) => {
+        this.options.log?.(l10n.t('could not enable remote access: {0}', String(error)));
+      });
+    }
   }
 
   /** Liga se o config.yaml pede `ligarAoAbrir`. */
   async start(): Promise<void> {
-    await this.load();
+    try {
+      await this.load();
+    } catch (error) {
+      this.startFailed = true;
+      this.setState('erro', error instanceof Error ? error.message : String(error));
+      throw error;
+    }
+    if (this.state === 'erro' && !this.enabled) this.setState('desligado');
     if (this.options.config()?.ligarAoAbrir && this.options.config()?.relay) await this.enable();
   }
 

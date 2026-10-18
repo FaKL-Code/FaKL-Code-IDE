@@ -210,5 +210,11 @@
   "{0} must be text": "{0} deve ser texto",
   "{0} port {1} from {2}": "{0} porta {1} de {2}",
   "{0} responded HTTP {1}; is the relay up behind the proxy?": "{0} respondeu HTTP {1}; o relay está no ar atrás do proxy?",
-  "{0} responded, but it does not look like a FaKL-Code relay": "{0} respondeu, mas não parece um relay do FaKL-Code"
+  "{0} responded, but it does not look like a FaKL-Code relay": "{0} respondeu, mas não parece um relay do FaKL-Code",
+  "the remote identity file cannot be read ({0}); restore it from a backup or delete {1} and {2} to pair the devices again": "o arquivo da identidade do controle remoto não pode ser lido ({0}); restaure um backup ou apague {1} e {2} para parear os aparelhos de novo",
+  "the remote identity is encrypted and the IDE has not provided the key yet": "a identidade do controle remoto está cifrada e a IDE ainda não entregou a chave",
+  "the remote identity cannot be opened: wrong key or altered file; delete {0} and {1} to pair the devices again": "a identidade do controle remoto não abre: chave errada ou arquivo alterado; apague {0} e {1} para parear os aparelhos de novo",
+  "remote identity kept in plain text: the IDE has not provided the encryption key (running without the IDE)": "identidade do controle remoto mantida em texto: a IDE não entregou a chave de cifra (execução sem a IDE)",
+  "remote identity migrated to an encrypted file": "identidade do controle remoto migrada para arquivo cifrado",
+  "could not encrypt the remote identity: {0}": "não foi possível cifrar a identidade do controle remoto: {0}"
 }
