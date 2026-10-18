@@ -12,4 +12,5 @@ deste repositório.
   não sincronizam entre máquinas (SDD 14.2).
 - Agentes nunca recebem segredos diretamente; o Core aplica as permissões
   (SDD 14.3).
-- Sem telemetria (RNF-09).
+- Sem telemetria (RNF-09). O que a IDE consulta na rede (npm, GitHub, os serviços que você
+  configurou) e como desligar está em [docs/privacidade.md](docs/privacidade.md).

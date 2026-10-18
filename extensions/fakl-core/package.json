@@ -585,6 +585,11 @@
         "category": "FaKL"
       },
       {
+        "command": "fakl.rede.verificarAdaptadores",
+        "title": "%command.rede.verificarAdaptadores%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.update.check",
         "title": "%command.update.check%",
         "category": "FaKL"
@@ -2259,6 +2264,11 @@
           "type": "boolean",
           "default": true,
           "description": "%config.mesa.abrirAoIniciar%"
+        },
+        "fakl.rede.consultasAutomaticas": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.rede.consultasAutomaticas%"
         },
         "fakl.providers.checkUpdates": {
           "type": "boolean",

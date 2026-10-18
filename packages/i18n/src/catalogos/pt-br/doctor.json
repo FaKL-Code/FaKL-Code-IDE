@@ -63,5 +63,14 @@
   "Its last output: {0}": "Últimas linhas da saída: {0}",
   "FaKL MCP server failed to start": "O servidor MCP da FaKL não iniciou",
   "Without it the Maestro tools do not show up for the agent. Reload the window; and if you reopened an IDE conversation in the official Codex or Claude extension, start the agent from the Desk instead, because that extension can start the server without the IDE environment.": "Sem ele, as ferramentas do Maestro não aparecem para o agente. Recarregue a janela; e se você reabriu uma conversa da IDE na extensão oficial do Codex ou do Claude, inicie o agente pela Mesa, porque essa extensão pode iniciar o servidor sem o ambiente da IDE.",
-  "Use an API key from Google AI Studio (or Vertex). A personal Google account no longer works here; only a Workspace Standard or Enterprise account may still sign in.": "Use uma chave de API do Google AI Studio (ou do Vertex). A conta Google pessoal não funciona mais aqui; só uma conta Workspace Standard ou Enterprise ainda pode entrar."
+  "Use an API key from Google AI Studio (or Vertex). A personal Google account no longer works here; only a Workspace Standard or Enterprise account may still sign in.": "Use uma chave de API do Google AI Studio (ou do Vertex). A conta Google pessoal não funciona mais aqui; só uma conta Workspace Standard ou Enterprise ainda pode entrar.",
+  "The editor updater is off (update.mode is none).": "O atualizador do editor está desligado (update.mode é none).",
+  "The editor updater is separate: set update.mode to none to turn it off.": "O atualizador do editor é outro: para desligá-lo, defina update.mode como none.",
+  "Open the setting": "Abrir a configuração",
+  "What the IDE queries": "O que a IDE consulta",
+  "Automatic network queries are on": "As consultas automáticas à rede estão ligadas",
+  "The IDE asks npm for the latest agent connector versions and, on macOS, GitHub for a new IDE version. Only public package and release information is requested; no code or account data is sent. The setting fakl.rede.consultasAutomaticas turns both off.": "A IDE pergunta ao npm a versão mais nova dos conectores dos agentes e, no macOS, ao GitHub se há versão nova da IDE. Só se pedem dados públicos de pacote e de release; nenhum código nem dado de conta é enviado. A configuração fakl.rede.consultasAutomaticas desliga as duas.",
+  "Automatic network queries are off": "As consultas automáticas à rede estão desligadas",
+  "The IDE does not ask npm or GitHub for versions on its own. You can still check the connectors by hand.": "A IDE não pergunta versões ao npm nem ao GitHub por conta própria. Você ainda pode conferir os conectores à mão.",
+  "Check adapter versions now": "Conferir as versões dos conectores agora"
 }
