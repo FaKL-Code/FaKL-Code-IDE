@@ -1,5 +1,6 @@
 export * from './agents.js';
 export * from './costs.js';
+export * from './scorecard.js';
 export * from './events.js';
 export * from './jsonrpc.js';
 export * from './methods.js';

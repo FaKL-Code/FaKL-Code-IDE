@@ -34,6 +34,36 @@ function add(a: CostTotals, b: CostTotals): CostTotals {
   };
 }
 
+/**
+ * O que uma atualização de uso acrescentou ao acumulado da sessão. Os agentes
+ * informam o total desde que abriram; se ele cair, o agente reabriu (troca de
+ * conta, retomada) e a conta recomeça do zero.
+ */
+export function usageDelta(
+  last: CostTotals,
+  usage: AgentUsageInfo,
+): { current: CostTotals; delta: CostTotals } {
+  const usd = usage.cost?.currency.toUpperCase() === 'USD' ? usage.cost.amount : undefined;
+  const restarted =
+    usage.inputTokens < last.tokensEntrada ||
+    usage.outputTokens < last.tokensSaida ||
+    (usd !== undefined && usd < last.custoUsd);
+  const previous = restarted ? ZERO : last;
+  const current: CostTotals = {
+    tokensEntrada: usage.inputTokens,
+    tokensSaida: usage.outputTokens,
+    custoUsd: usd ?? previous.custoUsd,
+  };
+  return {
+    current,
+    delta: {
+      tokensEntrada: Math.max(0, current.tokensEntrada - previous.tokensEntrada),
+      tokensSaida: Math.max(0, current.tokensSaida - previous.tokensSaida),
+      custoUsd: Math.max(0, Math.round((current.custoUsd - previous.custoUsd) * 1e6) / 1e6),
+    },
+  };
+}
+
 /** Qual limite do teto foi atingido, se algum. */
 export function capExceeded(
   totals: CostTotals,
@@ -201,25 +231,8 @@ export class CostTracker implements Disposable {
   private record(sessionId: string, usage: AgentUsageInfo): void {
     const info = this.options.agents.sessionProfile(sessionId);
     if (!info) return;
-    const usd = usage.cost?.currency.toUpperCase() === 'USD' ? usage.cost.amount : undefined;
-    const last = this.last.get(sessionId) ?? ZERO;
-    // Total menor que o anterior: o agente reabriu (troca de conta, retomada) e conta do zero.
-    const restarted =
-      usage.inputTokens < last.tokensEntrada ||
-      usage.outputTokens < last.tokensSaida ||
-      (usd !== undefined && usd < last.custoUsd);
-    const previous = restarted ? ZERO : last;
-    const current: CostTotals = {
-      tokensEntrada: usage.inputTokens,
-      tokensSaida: usage.outputTokens,
-      custoUsd: usd ?? previous.custoUsd,
-    };
+    const { current, delta } = usageDelta(this.last.get(sessionId) ?? ZERO, usage);
     this.last.set(sessionId, current);
-    const delta = {
-      tokensEntrada: Math.max(0, current.tokensEntrada - previous.tokensEntrada),
-      tokensSaida: Math.max(0, current.tokensSaida - previous.tokensSaida),
-      custoUsd: Math.max(0, Math.round((current.custoUsd - previous.custoUsd) * 1e6) / 1e6),
-    };
     if (delta.tokensEntrada === 0 && delta.tokensSaida === 0 && delta.custoUsd === 0) return;
     const entry: CostEntry = {
       id: ulid(),

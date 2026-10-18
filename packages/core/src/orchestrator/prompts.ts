@@ -117,6 +117,11 @@ export function profileGuide(profiles: readonly AgentProfile[]): string {
       tierList.join(' → '),
     ),
   ];
+  lines.push(
+    l10n.t(
+      '- list_profiles also brings the scorecard (placar) of each profile: diff approval rate, average duration and average cost over the last 30 days, or "poucos dados" when there are fewer than 5 finished tasks. These numbers are a signal, not a rule: they say nothing about code quality and they mix very different tasks. Use them to break ties between similar profiles, never to override a verified failure or the strengths of a profile.',
+    ),
+  );
   const shown = profiles.slice(0, GUIDE_PROFILES_MAX);
   lines.push(
     `${l10n.t('- Strengths:')}\n${shown

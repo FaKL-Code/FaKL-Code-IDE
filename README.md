@@ -211,6 +211,7 @@ O build completo da IDE recompila o VS Code e fica em [`docs/build.md`](docs/bui
 - [Roadmap](ROADMAP.md): o que falta e para onde a IDE vai.
 - [Provedores de IA](docs/provedores.md): assinatura, chave de API, modelo local ou agente ACP.
 - [Termos dos provedores](docs/termos-dos-provedores.md): o que Anthropic, OpenAI e Google dizem sobre clientes de terceiros.
+- [Placar dos agentes](docs/placar-de-agentes.md): aprovação, duração e custo por perfil, o que mede e como zerar.
 - [GitHub da conta inteira](docs/github.md): painéis, ferramentas dos agentes, SSO e tokens.
 - [Email na IDE](docs/email.md): conexão IMAP e ferramentas de leitura para agentes.
 - [Marca](docs/marca/README.md): logo, paleta e tipografia.
