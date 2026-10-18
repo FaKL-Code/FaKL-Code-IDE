@@ -211,7 +211,11 @@ export class RemoteShell {
   }
 
   async stat(path: string): Promise<RemoteStat> {
-    const out = await this.runRead(`stat -L -c '%f %s %Y' -- ${quote(path)}`);
+    // GNU stat (Linux) primeiro; BSD stat (macOS, FreeBSD) não tem -c e responde com -f.
+    const alvo = quote(path);
+    const out = await this.runRead(
+      `stat -L -c '%f %s %Y' -- ${alvo} 2>/dev/null || stat -L -f '%Xp %z %m' -- ${alvo}`,
+    );
     const [mode = '0', size = '0', mtime = '0'] = out.trim().split(/\s+/);
     const type = Number.parseInt(mode, 16) & 0xf000;
     return {
