@@ -26,9 +26,10 @@ jobs:
       plataformas: ${{ inputs.plataformas }}
       versao: ${{ inputs.tag }}
 
-  # Assina os instaladores .exe no SignPath (programa gratuito para open source).
-  # Só roda quando o repositório define a variável SIGNPATH_ORGANIZATION_ID; sem ela
-  # a release sai com o Windows sem assinatura. Veja docs/assinatura.md.
+  # Assina os instaladores .exe no SignPath. O pedido ao SignPath Foundation foi
+  # recusado, então hoje a variável SIGNPATH_ORGANIZATION_ID não existe, este job é
+  # pulado e o Windows sai sem assinatura. Fica aqui para o caso de um novo pedido ser
+  # aprovado: com a variável definida ele volta a rodar. Veja docs/assinatura.md.
   assinar-windows:
     needs: build
     if: vars.SIGNPATH_ORGANIZATION_ID != '' && inputs.plataformas != 'macos'

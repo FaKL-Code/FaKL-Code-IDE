@@ -212,7 +212,7 @@ export const en: Textos = {
     descricao: 'Download FaKL-Code IDE for Windows and macOS.',
     kicker: 'Download',
     h1: 'Download FaKL-Code',
-    lead: 'Version 0.1.4, not digitally signed yet. The download comes straight from the GitHub release.',
+    lead: 'Version 0.1.4, not digitally signed. The download comes straight from the GitHub release, with the hash in SHA256SUMS.txt.',
     baixar: 'Download',
     embreve: 'Coming soon',
     seuSistema: 'your system',
@@ -221,7 +221,7 @@ export const en: Textos = {
     verCodigo: 'View on GitHub',
     semAssinatura: 'On first launch',
     avisoWindows:
-      'SmartScreen shows "Windows protected your PC": click More info, then Run anyway.',
+      'The installer is not signed, so SmartScreen shows "Windows protected your PC": click More info, then Run anyway.',
     avisoMacos:
       'Unzip it, move the app to Applications and open it with right-click, Open. macOS asks for this confirmation once.',
   },
