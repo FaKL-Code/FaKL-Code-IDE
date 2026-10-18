@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import { l10n } from '@fakl/i18n';
+import { isScorecardPeriod } from '@fakl/protocol';
 import type {
   AgentPermissionRequest,
   AgentSessionInfo,
@@ -10,6 +11,7 @@ import type {
   CostSummary,
   Decision,
   Run,
+  ScorecardResult,
   SshExecResult,
   SshHostInfo,
   Task,
@@ -77,6 +79,11 @@ export function usage(): string {
     `${indent}(perguntar, aprovar-leitura, aprovar-tudo, autopilot)`,
     line(l10n.t('fakl custos [YYYY-MM-DD]'), l10n.t("the day's spending per provider")),
     line(
+      'fakl placar [7d|30d|total]',
+      l10n.t('scorecard per agent profile: approval, duration and cost (default 30d)'),
+    ),
+    line('fakl placar zerar --confirmar', l10n.t('erases the scorecard counters')),
+    line(
       'fakl contas',
       l10n.t('Claude accounts (up to 3), the active one and how much each spent'),
     ),
@@ -95,6 +102,60 @@ export function usage(): string {
 
 function money(value: number): string {
   return l10n.t('${0}', value.toFixed(2));
+}
+
+/** Duração curta: 45s, 12m30s, 1h05m. */
+export function shortDuration(ms: number): string {
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) return `${String(seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${String(minutes)}m${String(seconds % 60).padStart(2, '0')}s`;
+  return `${String(Math.floor(minutes / 60))}h${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+/** A tabela do placar; o cabeçalho e as colunas seguem o idioma da CLI. */
+export function scorecardTable(result: ScorecardResult): string {
+  const dash = '-';
+  const header = [
+    l10n.t('Profile'),
+    l10n.t('Tasks'),
+    l10n.t('Done/failed/canceled'),
+    l10n.t('Approval'),
+    l10n.t('Avg time'),
+    l10n.t('Median'),
+    l10n.t('Cost'),
+    l10n.t('Avg cost/task'),
+    l10n.t('Limits'),
+  ];
+  const rows = result.perfis.map((p) => [
+    p.removido ? l10n.t('{0} (removed)', p.nome) : p.nome,
+    String(p.tarefas),
+    `${String(p.tarefasConcluidas)}/${String(p.tarefasFalhas)}/${String(p.tarefasCanceladas)}`,
+    p.taxaAprovacao === undefined
+      ? dash
+      : `${String(Math.round(p.taxaAprovacao * 100))}% (${String(p.arquivosAceitos)}/${String(p.arquivosAceitos + p.arquivosRejeitados)})`,
+    p.duracaoMediaMs === undefined ? dash : shortDuration(p.duracaoMediaMs),
+    p.duracaoMedianaMs === undefined ? dash : shortDuration(p.duracaoMedianaMs),
+    money(p.custoUsd),
+    p.custoMedioTarefaUsd === undefined ? dash : money(p.custoMedioTarefaUsd),
+    String(p.limites),
+  ]);
+  const title =
+    result.periodo === 'total'
+      ? l10n.t('Agent scorecard: all recorded history')
+      : l10n.t('Agent scorecard: last {0} days', result.periodo === '7d' ? '7' : '30');
+  if (rows.length === 0) return [title, l10n.t('No activity in the period.')].join('\n');
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)));
+  const format = (cells: readonly string[]): string =>
+    cells
+      .map((cell, i) => cell.padEnd(widths[i] ?? 0))
+      .join('  ')
+      .trimEnd();
+  const note = l10n.t(
+    'Profiles with fewer than {0} tasks have too little data to compare.',
+    String(result.amostraMinima),
+  );
+  return [title, '', format(header), ...rows.map(format), '', note].join('\n');
 }
 
 function runLine(run: Run): string {
@@ -133,6 +194,7 @@ export async function runCli(
       rodadas: { type: 'string' },
       tempo: { type: 'string' },
       verificar: { type: 'boolean' },
+      confirmar: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
   });
@@ -368,6 +430,25 @@ export async function runCli(
           ),
         ].join('\n'),
       );
+      return 0;
+    }
+    case 'placar': {
+      if (rest[0] === 'zerar') {
+        if (!values.confirmar) {
+          io.out(l10n.t('This erases the whole scorecard. Run again with --confirmar to proceed.'));
+          return 1;
+        }
+        await api.request('scorecard.reset');
+        io.out(l10n.t('Scorecard reset.'));
+        return 0;
+      }
+      const period = rest[0] ?? '30d';
+      if (!isScorecardPeriod(period)) {
+        io.out(l10n.t('Usage: fakl placar [7d|30d|total] | fakl placar zerar --confirmar'));
+        return 1;
+      }
+      const result = await api.request<ScorecardResult>('scorecard.get', { periodo: period });
+      print(result, () => scorecardTable(result));
       return 0;
     }
     case 'contas': {

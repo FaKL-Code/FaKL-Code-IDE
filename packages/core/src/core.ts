@@ -31,6 +31,7 @@ import { Orchestrator } from './orchestrator/orchestrator.js';
 import { chatMaestroPrompt, type ResourceSummary } from './orchestrator/prompts.js';
 import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './providers.js';
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
+import { Scorecard } from './scorecard.js';
 import { UsageWindows } from './windows.js';
 import { McpLibrary } from './mcp-library.js';
 import { registerResourceFinder } from './resource-finder.js';
@@ -98,6 +99,8 @@ export interface Core {
   readonly agents: AgentRuntime;
   readonly config?: ConfigStore;
   readonly costs: CostTracker;
+  /** Placar dos agentes por perfil (ADR 0043). */
+  readonly scorecard: Scorecard;
   readonly orchestrator: Orchestrator;
   readonly vault: VaultService;
   readonly remote?: RemoteGateway;
@@ -463,10 +466,20 @@ export function createCore(options: CoreOptions): Core {
     ...(options.log ? { log: options.log } : {}),
   });
   tracker.register(router);
+  const scorecard = new Scorecard({
+    bus,
+    sessionProfile: (sessionId) => agents.sessionProfile(sessionId),
+    profileName: (id) => agents.profileList().find((p) => p.id === id)?.nome,
+    profileExists: (id) => agents.profileList().some((p) => p.id === id),
+    ...(dataDir ? { dataDir } : {}),
+    ...(options.log ? { log: options.log } : {}),
+  });
+  scorecard.register(router);
   const orchestrator = new Orchestrator({
     bus,
     agents,
     costs: tracker,
+    scorecard,
     profiles: () => agents.profileList(),
     defaults: () => ({
       ...(config?.config.limites ? { limites: config.config.limites } : {}),
@@ -681,6 +694,7 @@ export function createCore(options: CoreOptions): Core {
     agents,
     ...(config ? { config } : {}),
     costs: tracker,
+    scorecard,
     orchestrator,
     vault,
     ...(remote ? { remote } : {}),
@@ -703,6 +717,7 @@ export function createCore(options: CoreOptions): Core {
         config.watch();
       }
       await tracker.load();
+      await scorecard.load();
       await claudeAccounts?.init();
       await sources?.load().catch((error: unknown) => {
         options.log?.(l10n.t('could not read the resource sources: {0}', String(error)));
@@ -753,6 +768,8 @@ export function createCore(options: CoreOptions): Core {
       tokenCleanup.dispose();
       tracker.dispose();
       await tracker.flush();
+      scorecard.dispose();
+      await scorecard.flush();
       await audit.flush();
       await server.close();
     },

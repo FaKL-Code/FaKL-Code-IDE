@@ -80,6 +80,9 @@
   "command.resources.mcps.refresh": "Atualizar",
   "command.costs.show": "Gasto com agentes hoje",
   "command.costs.editCaps": "Ajustar teto diário de gasto",
+  "command.scorecard.setPeriod": "Trocar o período do placar dos agentes",
+  "command.scorecard.reset": "Zerar o placar dos agentes",
+  "command.scorecard.refresh": "Atualizar o placar dos agentes",
   "command.windows.refresh": "Atualizar sessões de 5h e limite semanal",
   "command.tasks.new": "Nova tarefa para o maestro",
   "command.maestro.run": "Pôr o maestro para trabalhar (a partir de um texto)",
@@ -208,6 +211,8 @@
   "view.chat.contextualTitle": "Agentes FaKL",
   "view.profiles": "Perfis de agente",
   "view.profiles.contextualTitle": "Perfis de agente",
+  "view.scorecard": "Placar dos agentes",
+  "view.scorecard.contextualTitle": "Placar dos agentes",
   "view.resources.sources": "Fontes de recursos",
   "view.resources.sources.contextualTitle": "Fontes de agentes, skills e servidores MCP",
   "view.resources.agents": "Agentes",
@@ -288,5 +293,7 @@
   "walkthrough.tour.celular.altText": "Um ícone de servidor, para o relay",
   "walkthrough.tour.primeira.title": "Sua primeira tarefa",
   "walkthrough.tour.primeira.description": "Cria uma pasta de exemplo e pede a um agente que a leia, para você ver a Mesa e o café reagirem. O agente só lê.\n[Começar a primeira tarefa](command:fakl.tour.firstTask)",
-  "walkthrough.tour.primeira.altText": "Um robô, para o primeiro agente"
+  "walkthrough.tour.primeira.altText": "Um robô, para o primeiro agente",
+  "command.rede.verificarAdaptadores": "Conferir as versões dos conectores",
+  "config.rede.consultasAutomaticas": "Deixar a FaKL-Code fazer as consultas automáticas à rede: a última versão dos adaptadores dos agentes no npm (Provedores e Doctor) e, no macOS, o aviso de versão nova no GitHub. Desligada, nenhuma das duas acontece; os comandos \"Conferir as versões dos conectores\" e \"Procurar atualização da FaKL-Code\" continuam valendo à mão. Não cobre o atualizador do próprio editor (use `update.mode` com `none`), as atualizações de extensões nem os serviços que você configurou (GitHub, relay, voz e outros). Veja docs/privacidade.md."
 }

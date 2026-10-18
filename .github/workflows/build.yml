@@ -208,6 +208,69 @@ jobs:
           retention-days: 2
           if-no-files-found: error
 
+  # Abre o build do Windows de verdade, isolado, e confere o que teste de unidade não vê:
+  # janela, FaKL Core, extensão sem erro, servidor MCP e CLI (build/smoke-ide.mjs). Compara
+  # a abertura com a do VSCodium da mesma versão (RNF-02) e escreve os tempos no resumo.
+  fumaca:
+    name: Fumaça da IDE (Windows)
+    needs: ide
+    if: ${{ !cancelled() && needs.ide.result == 'success' && inputs.plataformas != 'macos' && inputs.plataformas != 'linux' }}
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Git Bash no PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\bin"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          dest: ${{ runner.tool_cache }}/setup-pnpm
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # O script usa o cliente do Core compilado (packages/core/dist).
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@fakl/core..." build
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: fakl-code-windows-x64
+          path: instalador
+
+      - name: Extrair o build e o VSCodium de referência
+        shell: powershell
+        run: |
+          $zip = Get-ChildItem instalador -Filter 'FaKL-Code-win32-x64-*.zip' | Select-Object -First 1
+          if (-not $zip) { throw 'o artefato não tem o .zip do Windows' }
+          New-Item -ItemType Directory fakl-app | Out-Null
+          tar -xf $zip.FullName -C fakl-app
+          $tag = (Get-Content upstream/vscodium.json -Raw | ConvertFrom-Json).tag
+          $url = "https://github.com/VSCodium/vscodium/releases/download/$tag/VSCodium-win32-x64-$tag.zip"
+          try {
+            Invoke-WebRequest -Uri $url -OutFile vscodium.zip
+            New-Item -ItemType Directory vscodium-app | Out-Null
+            tar -xf vscodium.zip -C vscodium-app
+          } catch {
+            Write-Host "::warning::VSCodium de referência indisponível: $_"
+          }
+
+      - name: Fumaça
+        run: |
+          baseline=()
+          if [[ -f vscodium-app/VSCodium.exe ]]; then
+            baseline=(--baseline-exe vscodium-app/VSCodium.exe)
+          fi
+          node build/smoke-ide.mjs --exe fakl-app/FaKL-Code.exe "${baseline[@]}"
+
   # Mesma fumaça, no Linux (sob Xvfb). Só roda quando o Linux foi compilado.
   fumaca-linux:
     name: Fumaça da IDE (Linux)

@@ -1,6 +1,8 @@
 import { l10n } from '@fakl/i18n';
 import * as vscode from 'vscode';
 
+import { mayCheckUpdateNotice } from './rede-model.js';
+import { readNetworkSettings } from './rede.js';
 import {
   decideNotice,
   parseUpdateNotice,
@@ -46,10 +48,9 @@ export class UpdateNoticeUi implements vscode.Disposable {
     this.timer = setTimeout(() => void this.loop(), CHECK_EVERY_MS);
   }
 
+  /** A busca automática depende do interruptor geral (`fakl.rede.consultasAutomaticas`). */
   private enabled(): boolean {
-    const own = vscode.workspace.getConfiguration('fakl').get<boolean>('update.notify', true);
-    const mode = vscode.workspace.getConfiguration('update').get<string>('mode');
-    return own && mode !== 'none';
+    return mayCheckUpdateNotice(readNetworkSettings());
   }
 
   private async fetchNotice(): Promise<UpdateNotice | undefined> {

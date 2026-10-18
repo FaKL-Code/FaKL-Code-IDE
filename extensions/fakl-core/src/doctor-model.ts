@@ -18,6 +18,8 @@ import type {
   ProvidersEnvironment,
 } from '@fakl/protocol';
 
+import { PRIVACY_GUIDE } from './rede-model.js';
+
 /** Versão mínima do Node para os adaptadores: a 18 já saiu de suporte. */
 export const MIN_NODE_MAJOR = 20;
 
@@ -25,6 +27,53 @@ export const NODE_DOWNLOAD = 'https://nodejs.org/en/download';
 export const GEMINI_KEY_PAGE = 'https://aistudio.google.com/apikey';
 export const RELAY_GUIDE =
   'https://github.com/FaKL-Code/FaKL-Code-IDE/blob/main/packages/relay/README.md';
+
+/** O que a IDE consulta na rede sozinha e como desligar (ADR 0045). */
+function networkItem(rede: NonNullable<DoctorSnapshot['rede']>): DoctorItem {
+  const editorUpdates =
+    rede.modoAtualizacao === 'none'
+      ? l10n.t('The editor updater is off (update.mode is none).')
+      : l10n.t('The editor updater is separate: set update.mode to none to turn it off.');
+  const settings: DoctorAction = {
+    tipo: 'comando',
+    rotulo: l10n.t('Open the setting'),
+    comando: 'workbench.action.openSettings',
+    args: ['fakl.rede.consultasAutomaticas'],
+  };
+  const guide: DoctorAction = {
+    tipo: 'link',
+    rotulo: l10n.t('What the IDE queries'),
+    url: PRIVACY_GUIDE,
+  };
+  if (rede.consultasAutomaticas) {
+    return {
+      id: 'rede',
+      severidade: 'info',
+      titulo: l10n.t('Automatic network queries are on'),
+      detalhe: `${l10n.t(
+        'The IDE asks npm for the latest agent connector versions and, on macOS, GitHub for a new IDE version. Only public package and release information is requested; no code or account data is sent. The setting fakl.rede.consultasAutomaticas turns both off.',
+      )} ${editorUpdates}`,
+      acoes: [settings, guide],
+    };
+  }
+  return {
+    id: 'rede',
+    severidade: 'info',
+    titulo: l10n.t('Automatic network queries are off'),
+    detalhe: `${l10n.t(
+      'The IDE does not ask npm or GitHub for versions on its own. You can still check the connectors by hand.',
+    )} ${editorUpdates}`,
+    acoes: [
+      {
+        tipo: 'comando',
+        rotulo: l10n.t('Check adapter versions now'),
+        comando: 'fakl.rede.verificarAdaptadores',
+      },
+      settings,
+      guide,
+    ],
+  };
+}
 
 export type DoctorSeverity = 'ok' | 'info' | 'aviso' | 'problema';
 
@@ -60,6 +109,12 @@ export interface DoctorSnapshot {
   readonly conectado: boolean;
   readonly ambiente?: ProvidersEnvironment;
   readonly provedores?: readonly ProviderStatus[];
+  /** Configurações que decidem o que a IDE consulta sozinha na rede (ADR 0045). */
+  readonly rede?: {
+    readonly consultasAutomaticas: boolean;
+    /** Valor de `update.mode` do VS Code, quando definido. */
+    readonly modoAtualizacao?: string;
+  };
 }
 
 /** "22.13.0" de "v22.13.0"; o major, ou `undefined` se o texto não é uma versão. */
@@ -404,6 +459,7 @@ export function diagnose(snapshot: DoctorSnapshot): DoctorItem[] {
     }
   }
 
+  if (snapshot.rede) items.push(networkItem(snapshot.rede));
   items.push(docker);
   return items;
 }

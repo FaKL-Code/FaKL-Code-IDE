@@ -11,6 +11,13 @@ import {
 } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
+import {
+  needsConfirmation,
+  riskConfirmation,
+  riskSummary,
+  riskTooltip,
+  worstRisk,
+} from './resource-risk-model.js';
 import { groupOffered, namesBySource } from './resource-sources-model.js';
 import type { ResourceSourcesView } from './resource-sources.js';
 
@@ -230,11 +237,25 @@ export class McpLibraryView
               entry.fakl?.categoria,
               entry.fakl?.oficial ? l10n.t('official') : l10n.t('community'),
               entry.inputs.length ? l10n.t('needs a secret') : undefined,
+              entry.riscos.length > 0 ? riskSummary(entry.riscos) : undefined,
             ].filter(Boolean);
             return {
               label: entry.name,
               description: tags.join(' · '),
               ...(entry.fakl?.descricao ? { detail: entry.fakl.descricao } : {}),
+              // Aviso da varredura estática: ícone e, no tooltip, o resumo dos achados.
+              ...(entry.riscos.length > 0
+                ? {
+                    buttons: [
+                      {
+                        iconPath: new vscode.ThemeIcon(
+                          worstRisk(entry.riscos) === 'baixa' ? 'info' : 'warning',
+                        ),
+                        tooltip: riskTooltip(entry.riscos),
+                      },
+                    ],
+                  }
+                : {}),
               entry,
             };
           }),
@@ -248,6 +269,26 @@ export class McpLibraryView
       });
       const chosen = (picked ?? []).flatMap(({ entry }) => (entry ? [entry] : []));
       if (!chosen.length) return;
+      const confirmation = riskConfirmation(
+        chosen
+          .filter((entry) => needsConfirmation(entry.riscos))
+          .map((entry) => ({
+            kind: 'mcp' as const,
+            name: entry.name,
+            fonte: entry.fonte,
+            riscos: entry.riscos,
+          })),
+        sources,
+      );
+      if (confirmation) {
+        const installAnyway = l10n.t('Install anyway');
+        const choice = await vscode.window.showWarningMessage(
+          confirmation.message,
+          { modal: true, detail: confirmation.detail },
+          installAnyway,
+        );
+        if (choice !== installAnyway) return;
+      }
       let info: McpLibraryInfo | undefined;
       for (const [fonte, names] of namesBySource(chosen)) {
         info = await client.request<McpLibraryInfo>('mcps.install', { names, fonte });

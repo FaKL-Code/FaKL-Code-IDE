@@ -20,6 +20,7 @@ import {
   stringParam,
   type Router,
 } from './rpc/router.js';
+import { ResourceRiskScanner } from './security/resource-risks.js';
 import type { SecretVault } from './secrets.js';
 import type { SourceRoot } from './sources.js';
 import { writeJsonAtomic } from './store.js';
@@ -90,6 +91,11 @@ function inputRefs(server: RawServer): string[] {
   return [...new Set([...text.matchAll(INPUT_REF)].map((match) => match[1] ?? '').filter(Boolean))];
 }
 
+/** `servers` do arquivo como objeto; vazio quando está ausente ou malformado. */
+function serversOf(file: McpFile): Record<string, unknown> {
+  return isRecord(file.servers) ? file.servers : {};
+}
+
 /** Valida um servidor do arquivo; `undefined` quando está malformado. */
 function parseServer(
   name: string,
@@ -136,6 +142,8 @@ export class McpLibrary {
   private writing: Promise<unknown> = Promise.resolve();
   private snapshot: McpSessionServer[] = [];
   private readonly reported = new Set<string>();
+  /** Varredura estática (ADR 0042), com cache por hash do conteúdo. */
+  private readonly scanner = new ResourceRiskScanner();
 
   constructor(private readonly options: McpLibraryOptions) {}
 
@@ -211,11 +219,12 @@ export class McpLibrary {
   async catalog(): Promise<McpCatalog> {
     const installed = new Set((await this.installed()).map((entry) => entry.name));
     return {
-      servers: (await this.catalogEntries()).flatMap(({ root, entries }) =>
+      servers: (await this.catalogEntries()).flatMap(({ root, file, entries }) =>
         entries.map((entry) => ({
           ...entry,
           fonte: root.id,
           instalado: installed.has(entry.name),
+          riscos: this.scanner.scanMcp(entry.name, serversOf(file)[entry.name]),
         })),
       ),
     };
@@ -293,7 +302,18 @@ export class McpLibrary {
       }
       return changed;
     });
-    return this.list();
+    // A instalação não é barrada pelos achados: eles seguem no resultado.
+    const info = await this.list();
+    const scanned = new Map(
+      [...chosen].map(([name, { raw }]) => [name, this.scanner.scanMcp(name, raw)] as const),
+    );
+    return {
+      ...info,
+      servers: info.servers.map((server) => {
+        const riscos = scanned.get(server.name);
+        return riscos ? { ...server, riscos } : server;
+      }),
+    };
   }
 
   async remove(name: string): Promise<boolean> {

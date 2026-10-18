@@ -20,6 +20,8 @@ import {
   statusLine,
   type KeyTarget,
 } from './providers-model.js';
+import { mayQueryAdapterVersions } from './rede-model.js';
+import { readNetworkSettings } from './rede.js';
 
 /** Ids dos provedores com chave guardada; os valores ficam só no SecretStorage. */
 const KEY_LIST = 'fakl.apikeys';
@@ -103,11 +105,9 @@ export class ProvidersUi implements vscode.Disposable {
       return undefined;
     }
     try {
-      // A consulta ao npm (versão mais nova dos adaptadores) é desligável.
+      // A consulta ao npm (versão mais nova dos adaptadores) é desligável (ADR 0045).
       const params: ProvidersDetectParams = {
-        atualizacoes: vscode.workspace
-          .getConfiguration('fakl')
-          .get<boolean>('providers.checkUpdates', true),
+        atualizacoes: mayQueryAdapterVersions(readNetworkSettings()),
       };
       return [
         ...(await this.client.request<ProvidersDetectResult>('providers.detect', params))

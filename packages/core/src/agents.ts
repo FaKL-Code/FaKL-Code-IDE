@@ -55,6 +55,7 @@ import type {
   AgentPromptEventData,
   AgentRecoveryInfo,
   AgentRecoveryEventData,
+  AgentReviewEventData,
   AgentSessionInfo,
   AgentStartResult,
   AgentTranscriptEntry,
@@ -668,6 +669,12 @@ export class AgentRuntime {
     const result = await applyFiles(worktree, stringArrayParam(p, 'paths'));
     for (const path of result.applied) session.resolutions.set(path, 'aplicado');
     for (const path of result.conflicts) session.resolutions.set(path, 'conflito');
+    if (result.applied.length > 0) {
+      this.bus.publish<AgentReviewEventData>('agent.review', session.id, {
+        aceitos: result.applied.length,
+        rejeitados: 0,
+      });
+    }
     this.options.log?.(
       l10n.t(
         'session {0}: {1} file(s) applied, {2} with conflicts',
@@ -686,6 +693,10 @@ export class AgentRuntime {
     const paths = stringArrayParam(p, 'paths');
     await rejectFiles(worktree, paths);
     for (const path of paths) session.resolutions.set(path, 'rejeitado');
+    this.bus.publish<AgentReviewEventData>('agent.review', session.id, {
+      aceitos: 0,
+      rejeitados: paths.length,
+    });
     return null;
   }
 

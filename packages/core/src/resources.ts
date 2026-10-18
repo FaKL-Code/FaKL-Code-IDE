@@ -15,6 +15,7 @@ import {
 import { parse } from 'yaml';
 
 import { objectParams, RpcError, stringParam, type Router } from './rpc/router.js';
+import { ResourceRiskScanner } from './security/resource-risks.js';
 import type { SourceRoot } from './sources.js';
 import { writeJsonAtomic } from './store.js';
 
@@ -158,6 +159,8 @@ export class ResourceLibrary {
   private origins = new Map<string, string>();
   /** Itens semeados pelo catálogo embutido de versões antigas: vieram de uma fonte sem id. */
   private legacy = new Set<string>();
+  /** Varredura estática (ADR 0042), com cache por hash do conteúdo. */
+  private readonly scanner = new ResourceRiskScanner();
 
   constructor(private readonly options: ResourceLibraryOptions) {}
 
@@ -307,7 +310,12 @@ export class ResourceLibrary {
         for (const name of await this.namesIn(root.dir, kind)) {
           try {
             const { info } = await this.readFromSource(root, kind, name);
-            entries.push({ ...info, fonte: root.id, instalado: installed.has(name) });
+            const riscos = await this.scanner.scanEntry(
+              kind,
+              name,
+              ResourceLibrary.entryOf(root.dir, kind, name),
+            );
+            entries.push({ ...info, fonte: root.id, instalado: installed.has(name), riscos });
           } catch (error) {
             this.options.log?.(
               l10n.t(
@@ -370,7 +378,10 @@ export class ResourceLibrary {
         this.origins.set(key(kind, name), root.id);
         this.legacy.delete(key(kind, name));
       }
-      installed.push(await this.readInstalled(kind, name));
+      // A instalação não é barrada pelos achados: eles seguem no resultado.
+      const info = await this.readInstalled(kind, name);
+      const riscos = await this.scanner.scanEntry(kind, name, target);
+      installed.push({ ...info, riscos });
     }
     await this.saveState();
     if (installed.length > 0) this.options.onChange?.();

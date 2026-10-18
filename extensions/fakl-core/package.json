@@ -348,6 +348,24 @@
         "category": "FaKL"
       },
       {
+        "command": "fakl.scorecard.setPeriod",
+        "title": "%command.scorecard.setPeriod%",
+        "category": "FaKL",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "fakl.scorecard.reset",
+        "title": "%command.scorecard.reset%",
+        "category": "FaKL",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "fakl.scorecard.refresh",
+        "title": "%command.scorecard.refresh%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "fakl.windows.refresh",
         "title": "%command.windows.refresh%",
         "category": "FaKL",
@@ -564,6 +582,11 @@
       {
         "command": "fakl.cli.addToPath",
         "title": "%command.cli.addToPath%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.rede.verificarAdaptadores",
+        "title": "%command.rede.verificarAdaptadores%",
         "category": "FaKL"
       },
       {
@@ -1110,6 +1133,12 @@
           "contextualTitle": "%view.profiles.contextualTitle%"
         },
         {
+          "id": "fakl.scorecard",
+          "name": "%view.scorecard%",
+          "contextualTitle": "%view.scorecard.contextualTitle%",
+          "visibility": "collapsed"
+        },
+        {
           "id": "fakl.resources.sources",
           "name": "%view.resources.sources%",
           "contextualTitle": "%view.resources.sources.contextualTitle%"
@@ -1405,6 +1434,21 @@
           "command": "fakl.costs.show",
           "when": "view == fakl.agents",
           "group": "navigation@4"
+        },
+        {
+          "command": "fakl.scorecard.setPeriod",
+          "when": "view == fakl.scorecard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.scorecard.refresh",
+          "when": "view == fakl.scorecard",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fakl.scorecard.reset",
+          "when": "view == fakl.scorecard",
+          "group": "navigation@3"
         },
         {
           "command": "fakl.maestro.run",
@@ -2220,6 +2264,11 @@
           "type": "boolean",
           "default": true,
           "description": "%config.mesa.abrirAoIniciar%"
+        },
+        "fakl.rede.consultasAutomaticas": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.rede.consultasAutomaticas%"
         },
         "fakl.providers.checkUpdates": {
           "type": "boolean",
