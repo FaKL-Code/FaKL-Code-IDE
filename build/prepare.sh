@@ -55,6 +55,16 @@ grep -q 'npm ci && break' "${DEST}/prepare_vscode.sh"
 sed -i.bak 's#npm ci && break#${FAKL_NPM_CI:-npm ci} \&\& break#' "${DEST}/prepare_vscode.sh"
 rm -f "${DEST}/prepare_vscode.sh.bak"
 
+echo "==> Sem os binários musl do @parcel/watcher"
+# O `npm install` sobre node_modules em cache (FAKL_NPM_CI) pode trazer as variantes musl
+# do @parcel/watcher, e o dpkg-shlibdeps do .deb não resolve libc.musl. Sem efeito fora do
+# Linux. O awk, e não o sed, porque o `\n` do sed do macOS não é o do GNU.
+grep -q '^mv \.npmrc\.bak \.npmrc$' "${DEST}/prepare_vscode.sh"
+awk '{ print } /^mv \.npmrc\.bak \.npmrc$/ { print "rm -rf node_modules/@parcel/watcher-linux-*-musl" }' \
+  "${DEST}/prepare_vscode.sh" > "${DEST}/prepare_vscode.sh.novo"
+mv "${DEST}/prepare_vscode.sh.novo" "${DEST}/prepare_vscode.sh"
+chmod +x "${DEST}/prepare_vscode.sh"
+
 echo "==> Extensões embutidas"
 # O prepare_vscode.sh do VSCodium copia src/stable/ para dentro do vscode/, então
 # cada extensão vira vscode/extensions/<nome> e entra no build como as nativas.

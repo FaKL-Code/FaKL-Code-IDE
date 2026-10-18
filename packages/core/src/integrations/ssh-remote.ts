@@ -68,7 +68,10 @@ export function writeScript(path: string, createDirs: boolean): string {
 }
 
 export function statScript(path: string): string {
-  return `stat -L -c '%f %s %Y' -- ${remotePath(path)}`;
+  // GNU stat (Linux) primeiro; BSD stat (macOS, FreeBSD) não tem -c e responde com -f.
+  // Nos dois casos sai "modo-em-hexa tamanho mtime".
+  const target = remotePath(path);
+  return `stat -L -c '%f %s %Y' -- ${target} 2>/dev/null || stat -L -f '%Xp %z %m' -- ${target}`;
 }
 
 export function listScript(path: string): string {

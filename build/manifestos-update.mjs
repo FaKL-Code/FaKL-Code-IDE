@@ -44,6 +44,12 @@ function alvos(release) {
       plataforma: 'darwin-arm64',
       escolher: (nome) => termina('zip')(nome) && nome.includes('-darwin-arm64-'),
     },
+    {
+      // No Linux o serviço nativo só avisa da versão nova e abre o download.
+      caminho: 'stable/linux/x64/latest.json',
+      plataforma: 'linux-x64',
+      escolher: (nome) => termina('tar.gz')(nome) && nome.includes('-linux-x64-'),
+    },
   ];
 }
 
@@ -108,13 +114,15 @@ function main() {
     readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../upstream/stable.json'), 'utf8'),
   );
   // O RELEASE_VERSION está no nome de todo instalador: vem do primeiro que casar.
-  const nomes = readdirSync(pasta).filter((nome) => /-\d+\.\d+\.\d+\.(exe|zip)$/.test(nome));
+  const nomes = readdirSync(pasta).filter((nome) =>
+    /-\d+\.\d+\.\d+\.(exe|zip|tar\.gz)$/.test(nome),
+  );
   const release = nomes
-    .map((nome) => /-(\d+\.\d+\.\d+)\.(?:exe|zip)$/.exec(nome)?.[1])
+    .map((nome) => /-(\d+\.\d+\.\d+)\.(?:exe|zip|tar\.gz)$/.exec(nome)?.[1])
     .find((versao) => versao?.startsWith(stable.tag));
   if (!release) throw new Error(`nenhum instalador com o RELEASE_VERSION em ${pasta}`);
   const arquivos = nomes
-    .filter((nome) => nome.endsWith(`-${release}.exe`) || nome.endsWith(`-${release}.zip`))
+    .filter((nome) => ['exe', 'zip', 'tar.gz'].some((ext) => nome.endsWith(`-${release}.${ext}`)))
     .map((nome) => {
       const conteudo = readFileSync(join(pasta, nome));
       return { nome, sha1: resumo(conteudo, 'sha1'), sha256: resumo(conteudo, 'sha256') };

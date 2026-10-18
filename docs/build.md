@@ -59,6 +59,21 @@ node build/smoke-ide.mjs --exe C:/caminho/FaKL-Code.exe
 Ele existe porque o servidor MCP e a CLI ficaram quebrados de v0.1.0 a v0.1.3 sem que nada
 acusasse. Rodado contra a v0.1.3, o script falha; contra a v0.1.5, passa.
 
+## Linux (experimental)
+
+O `build.yml` aceita `plataformas: linux`, que compila no `ubuntu-22.04` (x64) com os scripts do
+VSCodium e gera `.tar.gz`, `.deb` e `.rpm`. O `snap` fica de fora: com `CI_BUILD=no` o
+`prepare_assets.sh` do VSCodium também o constrói, e o `build.sh` o neutraliza. A opção `todas`
+continua sendo só Windows e macOS até o Linux ter passado numa release. O build usa a glibc do
+Ubuntu 22.04, então o resultado não roda em distribuições mais antigas que isso (o VSCodium
+compila em contêineres com glibc 2.28 para ter mais alcance). No Linux o serviço de atualização
+só avisa da versão nova e abre o download; o `fumaca-linux` abre o resultado sob Xvfb.
+
+## Testes fora do Windows
+
+O `ci.yml` roda os testes também no Linux e no macOS (`testes-outros-sistemas`), sem ser requisito
+para mesclar, para mostrar o que quebra fora do Windows.
+
 ## Releases
 
 O `release.yml` só roda quando alguém pede: **Run workflow** na aba Actions, na
