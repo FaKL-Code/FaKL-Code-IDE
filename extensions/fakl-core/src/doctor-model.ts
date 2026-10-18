@@ -11,7 +11,12 @@
  */
 
 import { l10n } from '@fakl/i18n';
-import type { ProviderStatus, ProviderUpdate, ProvidersEnvironment } from '@fakl/protocol';
+import type {
+  McpProbe,
+  ProviderStatus,
+  ProviderUpdate,
+  ProvidersEnvironment,
+} from '@fakl/protocol';
 
 /** Versão mínima do Node para os adaptadores: a 18 já saiu de suporte. */
 export const MIN_NODE_MAJOR = 20;
@@ -199,6 +204,52 @@ function readyDetail(status: ProviderStatus): string {
   return [how, status.versao ? `v${status.versao}` : ''].filter(Boolean).join(', ');
 }
 
+/** O servidor MCP `fakl`, que dá aos agentes as ferramentas do Maestro: ok, ou o motivo e como corrigir. */
+function mcpItem(probe: McpProbe): DoctorItem {
+  if (probe.ok) {
+    return {
+      id: 'mcp',
+      severidade: 'ok',
+      titulo: l10n.t('FaKL MCP server: ok'),
+      detalhe: l10n.t('It answered and listed {0} tools for the agents.', probe.ferramentas ?? 0),
+      acoes: [],
+    };
+  }
+  const why =
+    probe.motivo === 'nao-encontrado'
+      ? l10n.t('The command that starts it was not found.')
+      : probe.motivo === 'sem-resposta'
+        ? l10n.t('It started but did not answer in time.')
+        : probe.codigo === undefined
+          ? l10n.t('It stopped right after starting.')
+          : l10n.t('It exited with code {0}.', probe.codigo);
+  const lines = probe.stderr
+    ? ` ${l10n.t(
+        'Its last output: {0}',
+        probe.stderr
+          .trim()
+          .split(/[\r\n]+/)
+          .slice(-3)
+          .join(' | '),
+      )}`
+    : '';
+  return {
+    id: 'mcp',
+    severidade: 'aviso',
+    titulo: l10n.t('FaKL MCP server failed to start'),
+    detalhe: `${why}${lines} ${l10n.t(
+      'Without it the Maestro tools do not show up for the agent. Reload the window; and if you reopened an IDE conversation in the official Codex or Claude extension, start the agent from the Desk instead, because that extension can start the server without the IDE environment.',
+    )}`,
+    acoes: [
+      {
+        tipo: 'comando',
+        rotulo: l10n.t('Reload window'),
+        comando: 'workbench.action.reloadWindow',
+      },
+    ],
+  };
+}
+
 /** O diagnóstico inteiro, na ordem em que a tela mostra. */
 export function diagnose(snapshot: DoctorSnapshot): DoctorItem[] {
   const docker: DoctorItem = {
@@ -285,6 +336,8 @@ export function diagnose(snapshot: DoctorSnapshot): DoctorItem[] {
       });
     }
   }
+
+  if (ambiente?.mcp) items.push(mcpItem(ambiente.mcp));
 
   const clis = (snapshot.provedores ?? []).filter((status) => status.tipo === 'cli');
   if (snapshot.provedores) {

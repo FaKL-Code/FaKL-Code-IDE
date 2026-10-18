@@ -53,5 +53,14 @@
   "FaKL Doctor": "Doctor da FaKL",
   "Check again": "Conferir de novo",
   "See diagnosis": "Ver diagnóstico",
-  "{0} did not start ({1}). The Doctor found: {2}": "{0} não iniciou ({1}). O Doctor achou: {2}"
+  "{0} did not start ({1}). The Doctor found: {2}": "{0} não iniciou ({1}). O Doctor achou: {2}",
+  "FaKL MCP server: ok": "Servidor MCP da FaKL: ok",
+  "It answered and listed {0} tools for the agents.": "Respondeu e listou {0} ferramentas para os agentes.",
+  "The command that starts it was not found.": "O comando que o inicia não foi encontrado.",
+  "It started but did not answer in time.": "Iniciou, mas não respondeu a tempo.",
+  "It stopped right after starting.": "Parou logo depois de iniciar.",
+  "It exited with code {0}.": "Saiu com o código {0}.",
+  "Its last output: {0}": "Últimas linhas da saída: {0}",
+  "FaKL MCP server failed to start": "O servidor MCP da FaKL não iniciou",
+  "Without it the Maestro tools do not show up for the agent. Reload the window; and if you reopened an IDE conversation in the official Codex or Claude extension, start the agent from the Desk instead, because that extension can start the server without the IDE environment.": "Sem ele, as ferramentas do Maestro não aparecem para o agente. Recarregue a janela; e se você reabriu uma conversa da IDE na extensão oficial do Codex ou do Claude, inicie o agente pela Mesa, porque essa extensão pode iniciar o servidor sem o ambiente da IDE."
 }

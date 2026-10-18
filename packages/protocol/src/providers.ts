@@ -177,4 +177,18 @@ export interface ProvidersEnvironment {
   readonly npm?: string;
   /** Provedores com a variável da chave de API no ambiente, mas sem chave no cofre da IDE. */
   readonly chavesNoAmbiente: readonly string[];
+  /** Teste do servidor MCP `fakl` que o Core injeta nos agentes; ausente quando o Core não o oferece. */
+  readonly mcp?: McpProbe;
+}
+
+/** Resultado de lançar o servidor MCP `fakl` com um token fictício e pedir `initialize` e `tools/list`. */
+export interface McpProbe {
+  readonly ok: boolean;
+  /** Ferramentas que ele listou, quando respondeu. */
+  readonly ferramentas?: number;
+  readonly motivo?: 'nao-encontrado' | 'saiu' | 'sem-resposta';
+  /** Código de saída, quando o processo terminou. */
+  readonly codigo?: number;
+  /** Últimas linhas do stderr. */
+  readonly stderr?: string;
 }

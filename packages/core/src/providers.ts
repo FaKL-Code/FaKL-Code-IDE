@@ -36,6 +36,7 @@ import {
 
 import { parseAuthStatus } from './claude-accounts.js';
 import { run, runShell } from './exec.js';
+import { probeMcp, type McpProbeLauncher } from './mcp/probe.js';
 import { objectParams, RpcError, type Router } from './rpc/router.js';
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -73,6 +74,10 @@ export interface ProviderServiceOptions {
   readonly fetch?: FetchLike;
   /** Última versão publicada de um pacote no npm; `undefined` quando não deu para saber. */
   readonly latestVersion?: (pacote: string) => Promise<string | undefined>;
+  /** Como o Core lança o servidor MCP `fakl`; sem isto o diagnóstico não o testa. */
+  readonly mcp?: McpProbeLauncher;
+  /** Teste do servidor MCP; muda nos testes. */
+  readonly probeMcp?: typeof probeMcp;
   readonly platform?: NodeJS.Platform;
   readonly log?: (message: string) => void;
 }
@@ -415,12 +420,24 @@ export class ProviderService {
   async environment(): Promise<ProvidersEnvironment> {
     const tool = async (command: string): Promise<string | undefined> =>
       this.version(await this.which(command));
-    const [node, npm] = await Promise.all([tool('node'), tool('npm')]);
+    const launcher = this.options.mcp;
+    const [node, npm, mcp] = await Promise.all([
+      tool('node'),
+      tool('npm'),
+      launcher
+        ? (this.options.probeMcp ?? probeMcp)(launcher, { env: this.options.env })
+        : undefined,
+    ]);
     const chavesNoAmbiente = CLI_PROVIDERS.filter(
       (id) =>
         !this.options.hasKey(id) && envValue(this.options.env, PROVIDER_KEY_ENV[id]) !== undefined,
     );
-    return { ...(node ? { node } : {}), ...(npm ? { npm } : {}), chavesNoAmbiente };
+    return {
+      ...(node ? { node } : {}),
+      ...(npm ? { npm } : {}),
+      chavesNoAmbiente,
+      ...(mcp ? { mcp } : {}),
+    };
   }
 
   private async detectLocal(id: LocalProvider): Promise<ProviderStatus> {

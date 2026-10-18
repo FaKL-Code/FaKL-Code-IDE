@@ -1,4 +1,4 @@
-import type { ProviderStatus } from '@fakl/protocol';
+import type { McpProbe, ProviderStatus } from '@fakl/protocol';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -268,6 +268,49 @@ describe('diagnose: chave só no ambiente e Docker', () => {
       expect(docker.titulo).toContain('not needed');
       expect(docker.acoes[0]).toMatchObject({ tipo: 'link' });
     }
+  });
+});
+
+describe('diagnose: servidor MCP da FaKL', () => {
+  const withMcp = (mcp: McpProbe) => diagnose(snap({ ambiente: { ...ambiente, mcp } }));
+
+  it('respondendo: ok, sem ação', () => {
+    const item = byId(withMcp({ ok: true, ferramentas: 7 }), 'mcp');
+    expect(item.severidade).toBe('ok');
+    expect(item.titulo).toBe('FaKL MCP server: ok');
+    expect(item.detalhe).toContain('7');
+    expect(item.acoes).toEqual([]);
+  });
+
+  it('saída com código e stderr: mostra o motivo, as últimas linhas e a correção', () => {
+    const item = byId(
+      withMcp({
+        ok: false,
+        motivo: 'saiu',
+        codigo: 2,
+        stderr: ['a', 'b', 'c', 'd'].join(String.fromCharCode(10)),
+      }),
+      'mcp',
+    );
+    expect(item.severidade).toBe('aviso');
+    expect(item.detalhe).toContain('code 2');
+    expect(item.detalhe).toContain('b | c | d');
+    expect(item.detalhe).not.toContain('a |');
+    expect(item.detalhe).toContain('Maestro tools do not show up');
+    expect(item.acoes[0]).toMatchObject({ comando: 'workbench.action.reloadWindow' });
+  });
+
+  it('comando não encontrado e sem resposta têm frases próprias', () => {
+    expect(byId(withMcp({ ok: false, motivo: 'nao-encontrado' }), 'mcp').detalhe).toContain(
+      'not found',
+    );
+    expect(byId(withMcp({ ok: false, motivo: 'sem-resposta' }), 'mcp').detalhe).toContain(
+      'did not answer',
+    );
+  });
+
+  it('sem o teste (Core sem servidor MCP) não aparece item', () => {
+    expect(diagnose(snap()).some((item) => item.id === 'mcp')).toBe(false);
   });
 });
 

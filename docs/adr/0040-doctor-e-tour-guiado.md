@@ -53,6 +53,13 @@ Por isso um tour de "setas apontando para a barra lateral" não cabe numa extens
   chaves estão só no ambiente) e `ProviderStatus` ganhou `cliInstalado` e
   `loginTipo`. `loginTipo` vem só do tipo escolhido em `settings.json` do Gemini; o
   conteúdo de `oauth_creds.json` nunca é lido.
+- Também testa o servidor MCP `fakl` que o Core injeta nos agentes (`providers.environment`
+  devolve o resultado): lança o mesmo comando do Core com um token fictício e um socket
+  que não existe, pede `initialize` e `tools/list` por stdio e mostra "ok" ou o motivo
+  (comando não encontrado, saída com código X e as últimas linhas do stderr, sem
+  resposta). Quando falha, explica que as ferramentas do Maestro não aparecem para o
+  agente; a causa provável de uma conversa reaberta na extensão oficial (que relança o
+  servidor sem o ambiente do Core) é hipótese, não confirmada.
 - Cada item mostra o problema e a ação: um botão (comando da IDE ou link) ou o
   comando exato. **Nada é instalado ou alterado sem confirmação**: comandos de
   instalação, login e atualização vão ao terminal digitados, sem Enter. A página
