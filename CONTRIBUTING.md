@@ -26,6 +26,8 @@ e as decisões de arquitetura em [`docs/adr/`](docs/adr/).
    [`commitlint.config.mjs`](commitlint.config.mjs) e espelham as pastas do repositório.
 3. Abra um PR preenchendo o modelo, com os IDs do SDD que ele atende. O título
    do PR segue o mesmo formato, porque vira o commit na `main` (squash merge).
+   Se a PR cria um ADR e `docs/README.md` entrar em conflito, não resolva a tabela à mão: rode
+   `node build/indice-de-adrs.mjs --escrever` e depois `npx prettier --write docs/README.md`.
 4. Assine o [CLA](CLA.md) comentando no PR a frase que o bot pedir (uma vez só).
 5. O PR entra com CI verde, CLA assinado e revisão aprovada.
 

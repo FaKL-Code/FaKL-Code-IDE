@@ -43,6 +43,8 @@ jobs:
       - run: pnpm build
       - name: Tradução pt-BR completa
         run: pnpm check:l10n
+      - name: Índice de ADRs completo
+        run: pnpm check:adrs
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:coverage

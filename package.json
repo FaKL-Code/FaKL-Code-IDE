@@ -22,7 +22,8 @@
     "test:coverage": "vitest run --coverage",
     "check:termos": "node build/termos-proibidos.mjs",
     "check:l10n": "node build/l10n.mjs",
-    "check": "pnpm check:termos && pnpm format:check && pnpm build && pnpm check:l10n && pnpm lint && pnpm typecheck && pnpm test",
+    "check:adrs": "node build/indice-de-adrs.mjs",
+    "check": "pnpm check:termos && pnpm format:check && pnpm build && pnpm check:l10n && pnpm check:adrs && pnpm lint && pnpm typecheck && pnpm test",
     "prepare": "lefthook install || true"
   },
   "devDependencies": {
