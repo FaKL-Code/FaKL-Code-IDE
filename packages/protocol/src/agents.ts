@@ -455,3 +455,28 @@ export type AgentTranscriptEntry =
 export interface AgentForgetParams {
   readonly sessionId: string;
 }
+
+/** Uma linha do terminal de leitura de um agente (ADR 0046), com cores ANSI simples. */
+export interface AgentTerminalLine {
+  /** Posição na sessão, crescente de 1 em 1; serve para não repetir linha ao reconectar. */
+  readonly seq: number;
+  /** Instante em que a linha foi fechada (ISO 8601). */
+  readonly ts: string;
+  readonly text: string;
+}
+
+/** Resposta de `agents.terminal.attach`: o histórico do buffer e o estado de agora. */
+export interface AgentTerminalAttachResult {
+  readonly sessionId: string;
+  readonly lines: readonly AgentTerminalLine[];
+  readonly state: AgentState;
+  /** Linhas que já saíram do buffer circular antes das devolvidas. */
+  readonly dropped: number;
+}
+
+/** Notificação `agents.terminal.lines`: linhas novas de uma sessão anexada. */
+export interface AgentTerminalLinesParams {
+  readonly sessionId: string;
+  readonly lines: readonly AgentTerminalLine[];
+  readonly state: AgentState;
+}

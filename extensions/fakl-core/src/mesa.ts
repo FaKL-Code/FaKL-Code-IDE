@@ -229,6 +229,11 @@ export class MesaUi implements vscode.Disposable {
             sessionId: message.sessionId,
           });
           return;
+        case 'liveTerminal':
+          await vscode.commands.executeCommand('fakl.agents.liveTerminal', {
+            sessionId: message.sessionId,
+          });
+          return;
         case 'log':
           await vscode.commands.executeCommand('fakl.agents.showLog', {
             sessionId: message.sessionId,

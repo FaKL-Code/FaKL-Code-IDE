@@ -29,7 +29,7 @@ inglês. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 
 
 - Notarização no macOS (exige a conta paga da Apple; libera o auto-update no Mac e o cask oficial
   do Homebrew **[F]**) e assinatura no Windows (o SignPath Foundation recusou o pedido).
-- Terminal ao vivo por agente (hoje a Mesa mostra eventos, não um terminal) e adaptador para CLIs sem ACP.
+- Terminal ao vivo por agente: terminal de leitura entregue (ADR 0046); PTY interativo continua pendente, junto com o adaptador para CLIs sem ACP.
 - Medição de desempenho (RNF-02 a RNF-04) rodando de forma agendada.
 - macOS Intel e canal insider.
 - Acessibilidade do grafo do vault, do café e do app do celular (hoje só funcionam com ponteiro).

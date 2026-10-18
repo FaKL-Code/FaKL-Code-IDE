@@ -100,7 +100,7 @@ export type FromMesa =
       readonly sessionId: string;
       readonly paths: readonly string[];
     }
-  | { readonly type: 'openChat' | 'terminal' | 'log'; readonly sessionId: string }
+  | { readonly type: 'openChat' | 'terminal' | 'liveTerminal' | 'log'; readonly sessionId: string }
   | { readonly type: 'command'; readonly command: MesaCommand }
   | { readonly type: 'findFiles'; readonly requestId: number; readonly query: string }
   | { readonly type: 'openExternal'; readonly url: string }

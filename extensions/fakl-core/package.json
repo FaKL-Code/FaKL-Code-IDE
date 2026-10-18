@@ -462,6 +462,12 @@
         "icon": "$(terminal)"
       },
       {
+        "command": "fakl.agents.liveTerminal",
+        "title": "%command.agents.liveTerminal%",
+        "category": "FaKL",
+        "icon": "$(eye)"
+      },
+      {
         "command": "fakl.vault.menu",
         "title": "%command.vault.menu%",
         "category": "FaKL",
@@ -1671,6 +1677,11 @@
           "command": "fakl.agents.showLog",
           "when": "view == fakl.agents",
           "group": "navigation@1"
+        },
+        {
+          "command": "fakl.agents.liveTerminal",
+          "when": "view == fakl.agents",
+          "group": "navigation@3"
         },
         {
           "command": "fakl.profiles.edit",

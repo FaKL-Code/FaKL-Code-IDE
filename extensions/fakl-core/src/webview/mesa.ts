@@ -890,7 +890,19 @@ function buildCard(sessionId: string): HTMLElement {
     },
     '⋯',
   );
-  header.append(avatar, titles, dot, liftButton, more);
+  // Terminal de leitura do agente (ADR 0046): o que ele faz, ao vivo, sem teclado.
+  const terminalButton = el('button', {
+    type: 'button',
+    class: 'icon card-terminal',
+    title: l10n.t('Live terminal (read-only)'),
+    'aria-label': l10n.t('Terminal'),
+  });
+  terminalButton.append(icon('M4 17l6-6-6-6M12 19h8', 14));
+  terminalButton.addEventListener('click', (event) => {
+    post({ type: 'liveTerminal', sessionId });
+    event.stopPropagation();
+  });
+  header.append(avatar, titles, dot, terminalButton, liftButton, more);
 
   const chips = el('div', { class: 'chips' });
   const body = el('div', { class: 'card-body', role: 'log', 'aria-live': 'polite' });
@@ -2039,6 +2051,9 @@ function openCardMenu(sessionId: string, x: number, y: number): void {
     ),
     menuItem(l10n.t('Open in the side chat'), () => {
       post({ type: 'openChat', sessionId });
+    }),
+    menuItem(l10n.t('Live terminal (read-only)'), () => {
+      post({ type: 'liveTerminal', sessionId });
     }),
     menuItem(l10n.t('Terminal in the agent’s folder'), () => {
       post({ type: 'terminal', sessionId });

@@ -72,6 +72,7 @@ import {
   SESSION_FORMAT,
   type StoredSession,
 } from './agent-store.js';
+import { AgentTerminals } from './agent-terminal.js';
 import type { EventBus } from './events/bus.js';
 import {
   objectParams,
@@ -431,12 +432,18 @@ export class AgentRuntime {
   /** Pedidos de permissão sem resposta, por sessão: do agente e do Core (Approvals). */
   private readonly asking = new Map<string, Map<string, AgentPermissionEventData>>();
   private readonly adapterFor: (profile: AgentProfile) => AgentAdapter;
+  /** Terminal de leitura de cada agente, montado dos eventos (ADR 0046). */
+  private readonly terminals: AgentTerminals;
 
   constructor(
     private readonly bus: EventBus,
     private readonly options: AgentRuntimeOptions = {},
   ) {
     this.adapterFor = options.adapterFor ?? ((profile) => adapterForProfile(profile));
+    this.terminals = new AgentTerminals(bus, {
+      ...(options.redact ? { redact: options.redact } : {}),
+      exists: (id) => this.sessions.has(id) || this.dormant.has(id),
+    });
     // Troca de conta adiada: quando a vez acaba (ou a sessão encerra), ela acontece.
     bus.subscribe(['agent.state'], (event) => {
       if (!this.pendingSwitch.has(event.subject)) return;
@@ -544,6 +551,7 @@ export class AgentRuntime {
       return this.start(p);
     });
     router.register('agents.list', () => this.list());
+    this.terminals.register(router);
     router.register('agents.send', async (params) => {
       const p = objectParams(params);
       const exibir = typeof p.exibir === 'string' && p.exibir.trim() ? p.exibir : undefined;
@@ -1851,6 +1859,7 @@ export class AgentRuntime {
     if (session) clearTimeout(session.saveTimer);
     this.sessions.delete(sessionId);
     this.dormant.delete(sessionId);
+    this.terminals.forget(sessionId);
     await this.options.store?.remove(sessionId);
     return null;
   }

@@ -1017,5 +1017,10 @@
   "…and {0} more items with findings.": "…e mais {0} itens com achados.",
   "The static scan found risks in {0}. Install anyway?": "A varredura estática achou riscos em {0}. Instalar mesmo assim?",
   "The static scan found risks in {0} of the chosen items. Install anyway?": "A varredura estática achou riscos em {0} dos itens escolhidos. Instalar mesmo assim?",
-  "The scan is a heuristic: it can be wrong in both directions. Cancel installs nothing from this selection.": "A varredura é uma heurística: pode errar nos dois sentidos. Cancelar não instala nada desta seleção."
+  "The scan is a heuristic: it can be wrong in both directions. Cancel installs nothing from this selection.": "A varredura é uma heurística: pode errar nos dois sentidos. Cancelar não instala nada desta seleção.",
+  "Could not open the terminal: {0}": "Não foi possível abrir o terminal: {0}",
+  "Connection to the Core lost; the terminal continues when it returns.": "Conexão com o Core perdida; o terminal continua quando ela voltar.",
+  "Read-only terminal: it shows what the agent does, live. Keys are ignored; use the chat to talk to the agent.": "Terminal somente leitura: mostra ao vivo o que o agente faz. As teclas são ignoradas; use o chat para falar com o agente.",
+  "Terminal: {0}": "Terminal: {0}",
+  "({0} earlier lines are no longer kept)": "({0} linhas anteriores não são mais guardadas)"
 }
