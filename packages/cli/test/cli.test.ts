@@ -238,4 +238,113 @@ describe('git-credential', () => {
     expect(code).toBe(0);
     expect(lines.at(-1)).toContain('concluída');
   });
+
+  describe('placar', () => {
+    const result = {
+      periodo: '30d',
+      desde: '2026-09-19',
+      amostraMinima: 5,
+      perfis: [
+        {
+          perfilId: 'claude',
+          nome: 'Claude',
+          sessoes: 9,
+          tarefas: 8,
+          tarefasConcluidas: 6,
+          tarefasFalhas: 1,
+          tarefasCanceladas: 1,
+          duracaoMediaMs: 750_000,
+          duracaoMedianaMs: 45_000,
+          tokensEntrada: 1000,
+          tokensSaida: 200,
+          custoUsd: 4.5,
+          custoMedioTarefaUsd: 0.56,
+          arquivosAceitos: 9,
+          arquivosRejeitados: 3,
+          taxaAprovacao: 0.75,
+          limites: 2,
+        },
+        {
+          perfilId: 'antigo',
+          nome: 'Antigo',
+          removido: true,
+          sessoes: 1,
+          tarefas: 1,
+          tarefasConcluidas: 0,
+          tarefasFalhas: 1,
+          tarefasCanceladas: 0,
+          tokensEntrada: 0,
+          tokensSaida: 0,
+          custoUsd: 0,
+          arquivosAceitos: 0,
+          arquivosRejeitados: 0,
+          limites: 0,
+        },
+      ],
+    };
+
+    it('mostra a tabela do período, 30d por padrão', async () => {
+      const shown = await cli(['placar'], { 'scorecard.get': result });
+      expect(shown.code).toBe(0);
+      expect(shown.calls).toEqual([['scorecard.get', { periodo: '30d' }]]);
+      const lines = shown.out.split('\n');
+      expect(lines[0]).toBe('Agent scorecard: last 30 days');
+      expect(lines[2]).toMatch(/^Profile\s+Tasks\s+Done\/failed\/canceled\s+Approval\s+Avg time/);
+      expect(lines[3]).toMatch(
+        /^Claude\s+8\s+6\/1\/1\s+75% \(9\/12\)\s+12m30s\s+45s\s+\$4\.50\s+\$0\.56\s+2$/,
+      );
+      expect(lines[4]).toMatch(/^Antigo \(removed\)\s+1\s+0\/1\/0\s+-\s+-\s+-\s+\$0\.00\s+-\s+0$/);
+      expect(lines.at(-1)).toBe(
+        'Profiles with fewer than 5 tasks have too little data to compare.',
+      );
+    });
+
+    it('aceita o período e imprime o JSON cru com --json', async () => {
+      const week = await cli(['placar', '7d'], { 'scorecard.get': { ...result, periodo: '7d' } });
+      expect(week.calls).toEqual([['scorecard.get', { periodo: '7d' }]]);
+      expect(week.out.split('\n')[0]).toBe('Agent scorecard: last 7 days');
+      const total = await cli(['placar', 'total'], {
+        'scorecard.get': { ...result, periodo: 'total' },
+      });
+      expect(total.out.split('\n')[0]).toBe('Agent scorecard: all recorded history');
+      const json = await cli(['placar', '--json'], { 'scorecard.get': result });
+      expect(JSON.parse(json.out)).toEqual(result);
+    });
+
+    it('avisa quando não há atividade e recusa período inválido', async () => {
+      const empty = await cli(['placar'], {
+        'scorecard.get': { periodo: '30d', amostraMinima: 5, perfis: [] },
+      });
+      expect(empty.out).toBe('Agent scorecard: last 30 days\nNo activity in the period.');
+      const invalid = await cli(['placar', '1y']);
+      expect(invalid.code).toBe(1);
+      expect(invalid.calls).toEqual([]);
+    });
+
+    it('só zera com --confirmar', async () => {
+      const refused = await cli(['placar', 'zerar']);
+      expect(refused.code).toBe(1);
+      expect(refused.calls).toEqual([]);
+      expect(refused.out).toContain('--confirmar');
+      const done = await cli(['placar', 'zerar', '--confirmar'], { 'scorecard.reset': null });
+      expect(done.code).toBe(0);
+      expect(done.calls).toEqual([['scorecard.reset', undefined]]);
+      expect(done.out).toBe('Scorecard reset.');
+    });
+
+    it('aparece na ajuda e fala português', async () => {
+      expect(usage()).toContain('fakl placar [7d|30d|total]');
+      try {
+        useLocale('pt-BR');
+        const shown = await cli(['placar'], { 'scorecard.get': result });
+        const lines = shown.out.split('\n');
+        expect(lines[0]).toBe('Placar dos agentes: últimos 30 dias');
+        expect(lines[2]).toMatch(/^Perfil\s+Tarefas\s+Concl\.\/falhas\/canc\.\s+Aprovação/);
+        expect(lines[4]).toContain('Antigo (removido)');
+        expect(lines.at(-1)).toBe('Perfis com menos de 5 tarefas têm poucos dados para comparar.');
+      } finally {
+        useLocale('en');
+      }
+    });
+  });
 });

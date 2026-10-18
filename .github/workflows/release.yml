@@ -181,3 +181,61 @@ jobs:
       packages: write
     with:
       tag: ${{ inputs.tag }}
+
+  # Publica os manifestos do Scoop e do Homebrew nos repositórios próprios (docs/distribuicao.md).
+  # Só age se o repositório definir o secret EMPACOTAMENTO_TOKEN; sem ele, só avisa. O winget
+  # segue por PR ao microsoft/winget-pkgs.
+  empacotar:
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' && !contains(inputs.tag, '-') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ inputs.tag }}
+      TOKEN: ${{ secrets.EMPACOTAMENTO_TOKEN }}
+    steps:
+      - id: ativo
+        run: |
+          if [[ -z "${TOKEN}" ]]; then
+            echo "sim=nao" >> "${GITHUB_OUTPUT}"
+            echo "::notice::EMPACOTAMENTO_TOKEN não definido: Scoop e Homebrew não foram atualizados (docs/distribuicao.md)"
+          else
+            echo "sim=sim" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ativo.outputs.sim == 'sim'
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ativo.outputs.sim == 'sim'
+        with:
+          node-version-file: .nvmrc
+
+      - name: Gerar os manifestos
+        if: steps.ativo.outputs.sim == 'sim'
+        run: node build/empacotar.mjs "${TAG}" saida
+
+      - name: Scoop e Homebrew
+        if: steps.ativo.outputs.sim == 'sim'
+        run: |
+          publicar() {
+            local repo="$1" origem="$2" destino="$3"
+            git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/FaKL-Code/${repo}.git" "${repo}"
+            mkdir -p "${repo}/$(dirname "${destino}")"
+            cp "${origem}" "${repo}/${destino}"
+            git -C "${repo}" config user.name "github-actions[bot]"
+            git -C "${repo}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C "${repo}" add -A
+            if git -C "${repo}" diff --cached --quiet; then
+              echo "${repo}: já em dia"
+            else
+              git -C "${repo}" commit -q -m "fakl-code ${TAG#v}"
+              git -C "${repo}" push -q origin HEAD
+            fi
+          }
+          publicar scoop-bucket saida/scoop/bucket/fakl-code.json bucket/fakl-code.json
+          publicar homebrew-tap saida/homebrew/Casks/fakl-code.rb Casks/fakl-code.rb

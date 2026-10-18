@@ -162,6 +162,15 @@ Baixe o instalador na página de [Releases](../../releases) e confira o hash em
   - clique com o botão direito no app, **Abrir** e confirme; ou
   - rode `xattr -dr com.apple.quarantine "/Applications/FaKL-Code IDE.app"` no Terminal.
 
+Também dá para instalar por gerenciador de pacote (veja [docs/distribuicao.md](docs/distribuicao.md)
+para o estado de cada um):
+
+```bash
+winget install FaKLCode.FaKLCode          # Windows (em análise no winget-pkgs)
+scoop bucket add fakl-code https://github.com/FaKL-Code/scoop-bucket && scoop install fakl-code
+brew install --cask fakl-code/tap/fakl-code   # macOS Apple Silicon
+```
+
 Na primeira abertura, a jornada de configuração guia a escolha de provedores de IA
 (todos opcionais), GitHub, vault e as demais integrações.
 
@@ -211,6 +220,7 @@ O build completo da IDE recompila o VS Code e fica em [`docs/build.md`](docs/bui
 - [Roadmap](ROADMAP.md): o que falta e para onde a IDE vai.
 - [Provedores de IA](docs/provedores.md): assinatura, chave de API, modelo local ou agente ACP.
 - [Termos dos provedores](docs/termos-dos-provedores.md): o que Anthropic, OpenAI e Google dizem sobre clientes de terceiros.
+- [Placar dos agentes](docs/placar-de-agentes.md): aprovação, duração e custo por perfil, o que mede e como zerar.
 - [GitHub da conta inteira](docs/github.md): painéis, ferramentas dos agentes, SSO e tokens.
 - [Email na IDE](docs/email.md): conexão IMAP e ferramentas de leitura para agentes.
 - [Marca](docs/marca/README.md): logo, paleta e tipografia.

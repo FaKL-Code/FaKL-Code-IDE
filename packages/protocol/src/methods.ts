@@ -146,6 +146,8 @@ export const CoreMethods = {
     'push.subscribe',
     'push.unsubscribe',
   ],
+  /** Placar dos agentes por perfil (ADR 0043). */
+  scorecard: ['get', 'reset'],
   costs: ['summary', 'byTask', 'limits.get', 'limits.set'],
   /** Sessão de 5 h e limite semanal dos planos (ADR 0026). */
   usage: ['windows'],
