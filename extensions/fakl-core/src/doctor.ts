@@ -14,6 +14,8 @@ import {
   type DoctorSnapshot,
 } from './doctor-model.js';
 import { renderDoctor } from './doctor-view.js';
+import { mayQueryAdapterVersions } from './rede-model.js';
+import { readNetworkSettings } from './rede.js';
 
 /** Uma consulta lenta ao npm não segura a tela. */
 const CALL_TIMEOUT_MS = 12_000;
@@ -53,10 +55,15 @@ export class DoctorUi implements vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
   private items: DoctorItem[] = [];
   private offered = false;
+  /** Aberto por "Check adapter versions": consulta o npm mesmo com o interruptor desligado. */
+  private manualVersions = false;
   private readonly disposable: vscode.Disposable;
 
   constructor() {
-    this.disposable = vscode.commands.registerCommand('fakl.doctor.open', () => this.open());
+    this.disposable = vscode.Disposable.from(
+      vscode.commands.registerCommand('fakl.doctor.open', () => this.open()),
+      vscode.commands.registerCommand('fakl.rede.verificarAdaptadores', () => this.open(true)),
+    );
   }
 
   connected(client: CoreClient): void {
@@ -73,12 +80,11 @@ export class DoctorUi implements vscode.Disposable {
   }
 
   /** Junta o retrato da máquina e aplica as regras. */
-  private async check(): Promise<DoctorItem[]> {
+  private async check(manual = false): Promise<DoctorItem[]> {
     const client = this.client;
     if (!client) return diagnose({ conectado: false });
-    const checkUpdates = vscode.workspace
-      .getConfiguration('fakl')
-      .get<boolean>('providers.checkUpdates', true);
+    const network = readNetworkSettings();
+    const checkUpdates = mayQueryAdapterVersions(network, manual);
     const [detected, ambiente] = await Promise.all([
       withTimeout(
         client.request<ProvidersDetectResult>('providers.detect', { atualizacoes: checkUpdates }),
@@ -91,11 +97,16 @@ export class DoctorUi implements vscode.Disposable {
       conectado: true,
       ...(ambiente ? { ambiente } : {}),
       ...(detected ? { provedores: detected.provedores } : {}),
+      rede: {
+        consultasAutomaticas: network.automatic,
+        ...(network.updateMode ? { modoAtualizacao: network.updateMode } : {}),
+      },
     };
     return diagnose(snapshot);
   }
 
-  private async open(): Promise<void> {
+  private async open(manualVersions = false): Promise<void> {
+    this.manualVersions = manualVersions;
     if (this.panel) this.panel.reveal(vscode.ViewColumn.Active);
     else this.create();
     await this.refresh();
@@ -128,7 +139,7 @@ export class DoctorUi implements vscode.Disposable {
       language: vscode.env.language,
       loading: true,
     });
-    this.items = await this.check();
+    this.items = await this.check(this.manualVersions);
     if (this.panel !== panel) return;
     panel.webview.html = renderDoctor(this.items, {
       nonce: randomBytes(16).toString('base64'),

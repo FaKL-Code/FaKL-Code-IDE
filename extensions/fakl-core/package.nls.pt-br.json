@@ -288,5 +288,7 @@
   "walkthrough.tour.celular.altText": "Um ícone de servidor, para o relay",
   "walkthrough.tour.primeira.title": "Sua primeira tarefa",
   "walkthrough.tour.primeira.description": "Cria uma pasta de exemplo e pede a um agente que a leia, para você ver a Mesa e o café reagirem. O agente só lê.\n[Começar a primeira tarefa](command:fakl.tour.firstTask)",
-  "walkthrough.tour.primeira.altText": "Um robô, para o primeiro agente"
+  "walkthrough.tour.primeira.altText": "Um robô, para o primeiro agente",
+  "command.rede.verificarAdaptadores": "Conferir as versões dos conectores",
+  "config.rede.consultasAutomaticas": "Deixar a FaKL-Code fazer as consultas automáticas à rede: a última versão dos adaptadores dos agentes no npm (Provedores e Doctor) e, no macOS, o aviso de versão nova no GitHub. Desligada, nenhuma das duas acontece; os comandos \"Conferir as versões dos conectores\" e \"Procurar atualização da FaKL-Code\" continuam valendo à mão. Não cobre o atualizador do próprio editor (use `update.mode` com `none`), as atualizações de extensões nem os serviços que você configurou (GitHub, relay, voz e outros). Veja docs/privacidade.md."
 }

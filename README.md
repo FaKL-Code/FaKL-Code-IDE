@@ -14,7 +14,7 @@ locais trabalham em paralelo, cada um no seu worktree.
 [![Baseada no VSCodium](https://img.shields.io/badge/base-VSCodium-374151?style=flat-square&labelColor=0d1117)](https://vscodium.com)
 [![Conventional Commits](https://img.shields.io/badge/commits-conventional-374151?style=flat-square&labelColor=0d1117)](CONTRIBUTING.md)
 
-[**Baixar**](../../releases) · [Documentação](docs/README.md) · [SDD](docs/sdd.md) · [ADRs](docs/adr/) · [Contribuir](CONTRIBUTING.md)
+[**Baixar**](../../releases) · [Documentação](docs/README.md) · [SDD](docs/sdd.md) · [ADRs](docs/adr/) · [Privacidade](docs/privacidade.md) · [Contribuir](CONTRIBUTING.md)
 
 <br />
 
