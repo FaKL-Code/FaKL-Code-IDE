@@ -32,13 +32,13 @@ export const site = {
       id: 'windows',
       plataforma: 'Windows',
       status: 'disponivel',
-      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.4/FaKL-Code-Windows-x64.exe',
+      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.5/FaKL-Code-Windows-x64.exe',
     },
     {
       id: 'macos',
       plataforma: 'macOS',
       status: 'disponivel',
-      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.4/FaKL-Code-macOS-arm64.zip',
+      url: 'https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.5/FaKL-Code-macOS-arm64.zip',
     },
   ] satisfies readonly Download[] as readonly Download[],
 } as const;
