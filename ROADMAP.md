@@ -32,7 +32,9 @@ inglês. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 
 - Terminal ao vivo por agente (hoje a Mesa mostra eventos, não um terminal) e adaptador para CLIs sem ACP.
 - Medição de desempenho (RNF-02 a RNF-04) rodando de forma agendada.
 - macOS Intel e canal insider.
-- Acessibilidade do grafo do vault, do café e do app do celular (hoje só funcionam com ponteiro).
+- Teste de acessibilidade com leitor de tela real (NVDA, VoiceOver, TalkBack) no grafo do vault, no café
+  e no app do celular: o teclado e os anúncios já existem (RNF-14, veja `docs/acessibilidade.md`), mas
+  nunca foram ouvidos num leitor de verdade.
 - Busca semântica do vault por API, Git LFS no vault, encaminhamento de porta no SSH.
 
 ## Mais adiante
@@ -53,5 +55,5 @@ inglês. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 
 ## Como ajudar
 
 Escolha um item, abra uma issue dizendo que vai pegar e envie um PR pequeno. Os mais acessíveis para
-começar: acessibilidade do café e do grafo, testes do painel de remoto, traduções (o espanhol é o
+começar: teste com leitor de tela no café e no grafo, testes do painel de remoto, traduções (o espanhol é o
 próximo idioma natural **[I]**), e a documentação dos fluxos que você usa.

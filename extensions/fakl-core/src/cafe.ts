@@ -227,7 +227,7 @@ export class CafeUi implements vscode.Disposable {
 <title>${l10n.t('Cyber café')}</title>
 </head>
 <body>
-<div id="sala" data-assets="${assets.toString()}" data-files="${escapeAttr(this.assetList(media))}"><canvas id="cena" aria-label="${escapeAttr(l10n.t('Cyber café room with the agents'))}"></canvas><p id="aviso" hidden></p><div id="acoes"><button id="novo-agente" type="button" title="${escapeAttr(l10n.t('Chat with a new agent; it sits down at a PC'))}">${l10n.t('+ Agent')}</button><button id="nova-tarefa" type="button" title="${escapeAttr(l10n.t('Task with a maestro, who calls the agents'))}">${l10n.t('+ Task')}</button></div></div>
+<div id="sala" data-assets="${assets.toString()}" data-files="${escapeAttr(this.assetList(media))}"><canvas id="cena" role="img" aria-label="${escapeAttr(l10n.t('Cyber café room with the agents'))}"></canvas><p id="aviso" hidden></p><div id="acoes"><button id="novo-agente" type="button" aria-label="${escapeAttr(l10n.t('Add agent'))}" title="${escapeAttr(l10n.t('Chat with a new agent; it sits down at a PC'))}">${l10n.t('+ Agent')}</button><button id="nova-tarefa" type="button" aria-label="${escapeAttr(l10n.t('Add task'))}" title="${escapeAttr(l10n.t('Task with a maestro, who calls the agents'))}">${l10n.t('+ Task')}</button></div><ul id="presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('Agents in the café'))}"></ul><div id="anuncio" class="so-leitor" role="status" aria-live="polite"></div></div>
 <div id="telas" role="list" aria-label="${escapeAttr(l10n.t('Agent screens'))}"></div>
 <div id="externas" role="list" aria-label="${escapeAttr(l10n.t('Conversations from other tools'))}" hidden></div>
 <script nonce="${nonce}" src="${script.toString()}"></script>

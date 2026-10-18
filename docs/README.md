@@ -14,6 +14,8 @@
 - [Roadmap](../ROADMAP.md): lacunas e evolução da IDE.
 - [Termos dos provedores](termos-dos-provedores.md): regras de Anthropic, OpenAI e Google para clientes
   de terceiros e o que a IDE faz a respeito.
+- [Acessibilidade](acessibilidade.md): o que funciona por teclado e leitor de tela no grafo do vault,
+  no café e no app do celular, os atalhos e o que ainda falta.
 - [Privacidade](privacidade.md): o que a IDE consulta na rede e como desligar.
 - [Marca](marca/): logo, paleta e peças da identidade Terminal.
 - [Site](../apps/landing/README.md): landing page, documentação pública e download.

@@ -66,6 +66,8 @@ const TOP_AISLE = 3.2;
 const LANE_X = 1.0;
 const SPEED = 2.4; // ladrilhos por segundo
 const FPS = 30;
+/** Com `prefers-reduced-motion`, o quadro anda devagar e só o que é estado se mexe. */
+const REDUCED_FPS = 4;
 
 interface Point {
   x: number;
@@ -277,6 +279,8 @@ const avatars = new Map<string, Avatar>();
 const slots: (string | undefined)[] = [];
 let score: CafeScore | undefined;
 let limits = new Set<string>();
+/** O usuário pediu menos movimento; vale para as animações decorativas (gato, sinuca, pausas por tédio). */
+let reducedMotion = false;
 let bellUntil = 0;
 let loaded = false;
 let offline = false;
@@ -518,10 +522,11 @@ function onEvent(event: FaklEvent): void {
         limits.add(event.subject);
         bellUntil = now + 1_800;
         ring();
+        changed();
       }
       return;
     case 'run.done':
-      limits.delete(event.subject);
+      if (limits.delete(event.subject)) changed();
       return;
     default:
       return;
@@ -779,7 +784,8 @@ function step(dt: number): void {
     if (
       avatar.phase === 'sentado' &&
       avatar.agent.state === 'ocioso' &&
-      now - avatar.idleSince > (options.sleepAfterMs ?? SLEEP_AFTER)
+      now - avatar.idleSince > (options.sleepAfterMs ?? SLEEP_AFTER) &&
+      !reducedMotion
     ) {
       if (freeSpot(avatar)) startBreak(avatar);
     }
@@ -822,6 +828,8 @@ function step(dt: number): void {
       avatar.path = route(avatar.pos, chairOf(avatar.slot));
     }
   }
+  // Gato, bolas de sinuca e fliperama são só enfeite: parados com menos movimento.
+  if (reducedMotion) return;
   stepCat(dt);
   stepBalls(dt);
   stepArcade(dt);
@@ -1828,7 +1836,7 @@ function loop(time: number): void {
   const dt = Math.min(100, time - last);
   last = time;
   accumulated += dt;
-  if (accumulated < 1000 / FPS) return;
+  if (accumulated < 1000 / (reducedMotion ? REDUCED_FPS : FPS)) return;
   now += accumulated;
   step(accumulated);
   accumulated = 0;
@@ -1925,6 +1933,8 @@ export interface CafeRoom {
   readonly offline: boolean;
   /** Agentes na ordem dos PCs. */
   seats(): CafeSeat[];
+  /** Ids das execuções com limite estourado agora. */
+  limited(): ReadonlySet<string>;
   /** Para o desenho; `resume` volta a desenhar. */
   pause(): void;
   resume(): void;
@@ -2018,6 +2028,13 @@ export function mountCafe(roomOptions: CafeRoomOptions): CafeRoom {
     if (document.hidden) stop();
     else start();
   });
+  if (typeof window.matchMedia === 'function') {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    reducedMotion = motion.matches;
+    motion.addEventListener('change', () => {
+      reducedMotion = motion.matches;
+    });
+  }
   start();
   return {
     applyState,
@@ -2030,6 +2047,7 @@ export function mountCafe(roomOptions: CafeRoomOptions): CafeRoom {
     get offline() {
       return offline;
     },
+    limited: () => limits,
     seats: () =>
       [...avatars.values()]
         .sort((a, b) => a.slot - b.slot)

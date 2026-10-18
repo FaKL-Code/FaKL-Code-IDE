@@ -1,7 +1,13 @@
 import { l10n, useLocale } from '@fakl/i18n';
 import { decodePairing, type PairingPayload } from '@fakl/remote';
 
-import { app, isTab, type Route, type Tab } from './app.js';
+import {
+  AnnouncementLimiter,
+  connectionAnnouncement,
+  pendingAnnouncement,
+  tabLabel,
+} from './a11y-model.js';
+import { app, isTab, type Conexao, type Route, type Tab } from './app.js';
 import { h, icon, patch, ring, type IconName } from './dom.js';
 import { closestCap } from './model.js';
 import { loadMachine, type SavedMachine } from './storage.js';
@@ -73,7 +79,7 @@ function build(route: Route): View {
 // ---------------------------------------------------------------- casca
 
 const top = h('header', { class: 'topo' });
-const main = h('main', { class: 'conteudo' });
+const main = h('main', { class: 'conteudo', tabindex: '-1' });
 const nav = h('nav', { class: 'abas', 'aria-label': l10n.t('Sections') });
 /** Entrada principal por voz: abre a folha "O que você quer?" sobre as abas. */
 const fab = h(
@@ -88,6 +94,39 @@ const fab = h(
   icon('microfone', 26),
 );
 
+/** Região `aria-live` do app: decisões novas e mudanças de conexão, no máximo a cada 3 s. */
+const live = h('div', { class: 'so-leitor', role: 'status', 'aria-live': 'polite' });
+const limiter = new AnnouncementLimiter();
+let liveTimer: number | undefined;
+let lastPending = 0;
+let lastConexao: Conexao = app.conexao;
+
+function scheduleLive(): void {
+  if (liveTimer !== undefined) return;
+  const wait = limiter.waitMs(Date.now());
+  if (wait === undefined) return;
+  liveTimer = window.setTimeout(() => {
+    liveTimer = undefined;
+    const text = limiter.take(Date.now());
+    if (text) live.textContent = text;
+    scheduleLive();
+  }, wait);
+}
+
+/** Compara a fila e a conexão com a última vez e anuncia o que mudou. */
+function announceChanges(): void {
+  if (!app.loaded) return;
+  limiter.push('fila', pendingAnnouncement(lastPending, app.pending));
+  limiter.push('conexao', connectionAnnouncement(lastConexao, app.conexao));
+  lastPending = app.pending;
+  lastConexao = app.conexao;
+  scheduleLive();
+}
+
+/** Onde estava o foco em cada profundidade da pilha, para devolvê-lo ao voltar. */
+const openers: (HTMLElement | undefined)[] = [];
+let depth = 1;
+
 let tabView: { tab: Tab; view: View; scroll: number } | undefined;
 let detail: { route: Route; view: View } | undefined;
 
@@ -96,6 +135,13 @@ function current(): View | undefined {
 }
 
 function routed(): void {
+  const before = depth;
+  depth = app.stack.length;
+  const active = document.activeElement;
+  const fromNav = nav.contains(active);
+  if (depth > before && active instanceof HTMLElement && active !== document.body) {
+    openers[before] = active;
+  }
   const route = app.route;
   const tab = app.tab;
   const covering = !isTab(route);
@@ -121,6 +167,25 @@ function routed(): void {
     main.scrollTop = detail ? 0 : (tabView?.scroll ?? 0);
   }
   paint();
+  moveFocus(before, fromNav);
+}
+
+/**
+ * Foco do teclado e do leitor de tela ao trocar de tela: ao abrir um detalhe
+ * (uma conversa, por exemplo), vai para o título dele; ao voltar, volta ao
+ * botão que o abriu, ou à aba atual se esse botão já não existe.
+ */
+function moveFocus(before: number, fromNav: boolean): void {
+  if (depth > before) {
+    top.querySelector<HTMLElement>('.titulo')?.focus({ preventScroll: true });
+  } else if (depth < before && !fromNav) {
+    const opener = openers[depth];
+    const target = opener?.isConnected
+      ? opener
+      : (nav.querySelector<HTMLElement>('[aria-current]') ?? main);
+    target.focus({ preventScroll: true });
+  }
+  openers.length = Math.min(openers.length, depth);
 }
 
 /** Topo e abas; a tela atual se atualiza por conta própria. */
@@ -145,7 +210,11 @@ function paint(): void {
     h(
       'div',
       { class: 'topo-titulo' },
-      h('span', { class: 'titulo' }, view?.title?.() ?? app.machine?.nome ?? 'FaKL-Code'),
+      h(
+        'span',
+        { class: 'titulo', tabindex: '-1' },
+        view?.title?.() ?? app.machine?.nome ?? 'FaKL-Code',
+      ),
       h(
         'span',
         { class: `conexao ${dot}`, title: app.erro },
@@ -193,6 +262,7 @@ function paint(): void {
         {
           class: active ? 'ativa' : '',
           type: 'button',
+          'aria-label': tabLabel(tab.label, count),
           'aria-current': active ? 'page' : false,
           onclick: () => {
             if (app.tab === tab.id && !detail) main.scrollTo({ top: 0, behavior: 'smooth' });
@@ -201,18 +271,14 @@ function paint(): void {
         },
         icon(tab.icon, 22),
         h('span', {}, tab.label),
-        count > 0 &&
-          h(
-            'span',
-            { class: 'contagem', 'aria-label': l10n.t('{0} pending', count) },
-            String(count),
-          ),
+        count > 0 && h('span', { class: 'contagem', 'aria-hidden': 'true' }, String(count)),
       );
     }),
   );
 }
 
 function update(): void {
+  announceChanges();
   current()?.update();
   // Debaixo de uma tela de detalhe, a aba também segue atualizada.
   if (detail) tabView?.view.update();
@@ -220,8 +286,10 @@ function update(): void {
 }
 
 function showApp(): void {
-  root.replaceChildren(top, main, nav, fab);
+  root.replaceChildren(top, main, nav, fab, live);
   app.stack = [{ name: 'agentes' }];
+  depth = 1;
+  openers.length = 0;
   history.replaceState({ depth: 0 }, '');
   routed();
 }
