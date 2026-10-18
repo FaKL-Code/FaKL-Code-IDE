@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -28,7 +29,7 @@ import { SshService } from './integrations/ssh.js';
 import { TOOL_SETS, type ToolSetName } from './mcp/tools.js';
 import { Orchestrator } from './orchestrator/orchestrator.js';
 import { chatMaestroPrompt, type ResourceSummary } from './orchestrator/prompts.js';
-import { providerKeyEnv, ProviderService } from './providers.js';
+import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './providers.js';
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
 import { UsageWindows } from './windows.js';
 import { McpLibrary } from './mcp-library.js';
@@ -179,6 +180,12 @@ export function createCore(options: CoreOptions): Core {
   const bus = new EventBus();
   const tokens = new AgentTokens();
   const secrets = new SecretVault();
+  // Tirou a chave do Codex: some também a cópia que o adaptador gravou na pasta própria.
+  secrets.onChange((name) => {
+    if (name === apiKeySecretName('openai') && !secrets.has(name)) {
+      clearCodexKey(codexKeyHome(options.configHome ?? homedir()));
+    }
+  });
   const email = new EmailService();
   const approvals = new Approvals(bus);
   const redact = (text: string): string => redactSecrets(text, secrets.all());
@@ -426,7 +433,12 @@ export function createCore(options: CoreOptions): Core {
         }
       : {}),
     // A chave de API do provedor vai só ao processo do agente dele (ADR 0035).
-    providerEnv: (profile: AgentProfile) => providerKeyEnv(profile, (name) => secrets.get(name)),
+    providerEnv: (profile: AgentProfile) => {
+      const codexHome = codexKeyHome(home);
+      const env = providerKeyEnv(profile, (name) => secrets.get(name), codexHome);
+      if (env.CODEX_HOME) mkdirSync(codexHome, { recursive: true, mode: 0o700 });
+      return env;
+    },
     ...(claudeAccounts ? { claudeAccounts } : {}),
     approvals,
     redact,

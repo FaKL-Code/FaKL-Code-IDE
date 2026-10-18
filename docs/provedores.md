@@ -12,6 +12,16 @@ máquina, em qualquer combinação, e funciona sem IA nenhuma
 | Ollama / LM Studio  | servidor local ligado, com um modelo de conversa | adaptador local da IDE                          |
 | Qualquer agente ACP | o login do próprio agente, ou uma chave          | o comando cadastrado (OpenCode, Qwen Code, ...) |
 
+### Codex com chave de API
+
+A chave fica no cofre do sistema, como as outras. Mas o `codex-acp` precisa dela num
+`auth.json` e, se escrevesse em `~/.codex`, apagaria o seu login da assinatura. Por isso,
+com uma chave guardada, o agente do Codex roda com um `CODEX_HOME` próprio,
+`~/.fakl/accounts/codex-chave`, onde o adaptador grava essa cópia. O `~/.codex` e o login
+da assinatura não são tocados, e **FaKL: Remover chave de API** apaga a cópia. A pasta
+própria não tem as skills do `~/.codex`, então o Codex em modo chave não as vê.
+([ADR 0041](adr/0041-chave-de-api-do-codex-em-pasta-propria.md))
+
 ### Gemini: só com chave de API
 
 Desde junho de 2026 o Google não aceita mais o login com conta Google pessoal no

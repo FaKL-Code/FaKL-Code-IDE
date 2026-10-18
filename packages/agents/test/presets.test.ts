@@ -176,6 +176,15 @@ describe('keyAuthMethod', () => {
     expect(keyAuthMethod(gemini, undefined, methods)).toBeUndefined();
   });
 
+  it('usa o método api-key que o codex-acp 2.x anuncia', () => {
+    expect(
+      keyAuthMethod(providerCommands().openai, { OPENAI_API_KEY: 'k' }, [
+        { id: 'api-key' },
+        { id: 'chat-gpt' },
+      ]),
+    ).toBe('api-key');
+  });
+
   it('não inventa método que o agente não anuncia', () => {
     expect(
       keyAuthMethod(providerCommands().openai, { OPENAI_API_KEY: 'k' }, [{ id: 'chatgpt' }]),

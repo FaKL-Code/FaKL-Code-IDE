@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 
@@ -15,6 +15,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  clearCodexKey,
+  codexKeyHome,
   ConfigStore,
   CoreClient,
   createCore,
@@ -455,6 +457,33 @@ describe('providerKeyEnv', () => {
     });
     // Agente ACP sem variável declarada: a chave não vai a lugar nenhum.
     expect(providerKeyEnv(profile('opencode'), get)).toEqual({});
+  });
+
+  it('o Codex com chave usa uma pasta própria, para não sobrescrever o login da assinatura', () => {
+    const withKey = new Map([[apiKeySecretName('openai'), 'chave-x']]);
+    const dir = '/home/ana/.fakl/accounts/codex-chave';
+    expect(providerKeyEnv(profile('openai'), (name) => withKey.get(name), dir)).toEqual({
+      OPENAI_API_KEY: 'chave-x',
+      CODEX_HOME: dir,
+    });
+    // Os outros provedores não ganham pasta, e sem chave o Codex segue com o ~/.codex.
+    expect(providerKeyEnv(profile('anthropic'), get, dir)).toEqual({
+      ANTHROPIC_API_KEY: 'chave-a',
+    });
+    expect(providerKeyEnv(profile('openai'), get, dir)).toEqual({});
+    expect(codexKeyHome('/home/ana').split(String.fromCharCode(92)).join('/')).toBe(dir);
+  });
+
+  it('apaga a cópia da chave que o adaptador gravou, sem erro se ela não existe', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'fakl-codex-'));
+    try {
+      await writeFile(join(home, 'auth.json'), '{"OPENAI_API_KEY":"x"}');
+      clearCodexKey(home);
+      await expect(access(join(home, 'auth.json'))).rejects.toThrow();
+      clearCodexKey(home);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
   });
 
   it('lê a versão da saída do CLI', () => {
