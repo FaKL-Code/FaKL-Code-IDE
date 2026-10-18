@@ -1,4 +1,14 @@
-import { isMaestro, mountCafe, OTHER_COLORS, PROVIDER_COLORS, STATE_LABEL } from '@fakl/cafe';
+import {
+  Announcer,
+  describeRoom,
+  describeSeat,
+  isMaestro,
+  mountCafe,
+  OTHER_COLORS,
+  PROVIDER_COLORS,
+  STATE_LABEL,
+  type SeatInfo,
+} from '@fakl/cafe';
 import { l10n, useLocale } from '@fakl/i18n';
 
 import type { ExternalSession } from '@fakl/protocol';
@@ -9,6 +19,10 @@ import { initCoach } from './coach.js';
 /*
  * Painel do cyber café na IDE: a sala de `@fakl/cafe` e, abaixo dela, a faixa
  * com a tela legível de cada agente. Conversa com a extensão por mensagens.
+ *
+ * Para teclado e leitor de tela (RNF-14): uma lista escondida com cada agente e
+ * seu estado (Enter ou Espaço abre a conversa) e uma região `aria-live=polite`
+ * que anuncia as mudanças de estado agrupadas, no máximo a cada 5 s.
  */
 
 interface VsCodeApi {
@@ -51,9 +65,110 @@ const room = mountCafe({
 });
 
 const strip = document.getElementById('telas') as HTMLDivElement;
+const present = document.getElementById('presentes') as HTMLUListElement;
+const live = document.getElementById('anuncio') as HTMLDivElement;
+const scene = document.getElementById('cena') as HTMLCanvasElement;
 const notice = document.getElementById('aviso') as HTMLParagraphElement;
 
+// ---------------------------------------------------------------- acessibilidade
+
+const ANNOUNCE_EVERY_MS = 5_000;
+const announcer = new Announcer({ minIntervalMs: ANNOUNCE_EVERY_MS });
+let announceTimer: number | undefined;
+/** Antes do primeiro retrato do café não há o que comparar (e não se anuncia a chegada de todos). */
+let loaded = false;
+let presentSignature = '';
+
+function seatInfos(): SeatInfo[] {
+  const limited = room.limited();
+  return room.seats().map((seat) => ({
+    id: seat.agent.sessionId,
+    name: seat.agent.nome,
+    state: seat.agent.state,
+    limited: seat.agent.runId !== undefined && limited.has(seat.agent.runId),
+    ...((seat.thumb?.titulo ?? seat.agent.papel)
+      ? { detail: seat.thumb?.titulo ?? seat.agent.papel }
+      : {}),
+  }));
+}
+
+function scheduleAnnouncement(): void {
+  if (announceTimer !== undefined) return;
+  const wait = announcer.waitMs(Date.now());
+  if (wait === undefined) return;
+  announceTimer = window.setTimeout(() => {
+    announceTimer = undefined;
+    const text = announcer.take(Date.now());
+    if (text) live.textContent = text;
+    scheduleAnnouncement();
+  }, wait);
+}
+
+/** Lista escondida, resumo da sala e anúncios; só mexe no DOM se o texto mudou. */
+function renderAccessible(): void {
+  const infos = seatInfos();
+  scene.setAttribute(
+    'aria-label',
+    `${l10n.t('Cyber café room with the agents')}. ${describeRoom(infos, room.offline)}`,
+  );
+  const signature = infos.map((info) => `${info.id}|${describeSeat(info)}`).join('||');
+  if (signature !== presentSignature) {
+    presentSignature = signature;
+    const focusedId = (document.activeElement as HTMLElement | null)?.dataset.sessionId;
+    present.replaceChildren(
+      ...infos.map((info) => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.sessionId = info.id;
+        button.textContent = describeSeat(info);
+        button.title = l10n.t('Open conversation with {0}', info.name);
+        // Enter e Espaço já ativam o botão e disparam o `click`: o mesmo do personagem.
+        button.addEventListener('click', () => {
+          vscode.postMessage({ type: 'open', sessionId: info.id });
+        });
+        item.append(button);
+        return item;
+      }),
+    );
+    if (focusedId) {
+      present.querySelector<HTMLElement>(`[data-session-id="${CSS.escape(focusedId)}"]`)?.focus();
+    }
+  }
+  if (loaded) {
+    announcer.observe(infos);
+    scheduleAnnouncement();
+  }
+}
+
+/** Foco, valores digitados e escolhas sobrevivem a quando a faixa se refaz a cada evento. */
+function keepInputs(rebuild: () => void): void {
+  const active = document.activeElement as HTMLElement | null;
+  const focusKey = active && strip.contains(active) ? active.dataset.foco : undefined;
+  const values = new Map<string, string>();
+  for (const field of strip.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+    'select[data-foco], input[data-foco]',
+  )) {
+    if (field.dataset.foco) values.set(field.dataset.foco, field.value);
+  }
+  rebuild();
+  for (const field of strip.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+    'select[data-foco], input[data-foco]',
+  )) {
+    const saved = field.dataset.foco ? values.get(field.dataset.foco) : undefined;
+    if (saved !== undefined) field.value = saved;
+  }
+  if (focusKey) {
+    strip.querySelector<HTMLElement>(`[data-foco="${CSS.escape(focusKey)}"]`)?.focus();
+  }
+}
+
 function renderStrip(): void {
+  renderAccessible();
+  keepInputs(drawStrip);
+}
+
+function drawStrip(): void {
   const list = room.seats();
   strip.replaceChildren(
     ...list.map((seat) => {
@@ -96,6 +211,7 @@ function renderStrip(): void {
       const open = document.createElement('button');
       open.type = 'button';
       open.className = 'tela-abrir';
+      open.dataset.foco = `${seat.agent.sessionId}:abrir`;
       open.title = l10n.t('Open conversation with {0}', seat.agent.nome);
       open.append(head, title, body);
       open.addEventListener('click', () => {
@@ -107,6 +223,7 @@ function renderStrip(): void {
         controls.className = 'atividade';
         const activity = document.createElement('select');
         activity.setAttribute('aria-label', l10n.t('Activity for {0}', seat.agent.nome));
+        activity.dataset.foco = `${seat.agent.sessionId}:atividade`;
         const choices = [
           ['sinuca', l10n.t('Pool')],
           ['fliperama', l10n.t('Arcade')],
@@ -122,6 +239,7 @@ function renderStrip(): void {
         }
         const duration = document.createElement('input');
         duration.type = 'number';
+        duration.dataset.foco = `${seat.agent.sessionId}:minutos`;
         duration.min = '1';
         duration.max = '60';
         duration.value = '2';
@@ -131,6 +249,7 @@ function renderStrip(): void {
         );
         const start = document.createElement('button');
         start.type = 'button';
+        start.dataset.foco = `${seat.agent.sessionId}:enviar`;
         start.textContent = l10n.t('Send');
         start.title = l10n.t('Send the agent to the activity for the chosen time');
         start.addEventListener('click', () => {
@@ -217,6 +336,11 @@ window.addEventListener('message', (event: MessageEvent<ToCafe>) => {
     case 'state':
       room.setOffline(false);
       room.applyState(message.state);
+      if (!loaded) {
+        // O primeiro retrato é o ponto de partida: só as mudanças depois dele são anunciadas.
+        loaded = true;
+        renderAccessible();
+      }
       return;
     case 'event':
       room.onEvent(message.event);

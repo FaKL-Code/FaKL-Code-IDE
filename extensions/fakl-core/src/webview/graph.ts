@@ -3,11 +3,25 @@ import { l10n, useLocale } from '@fakl/i18n';
 import type { ToTips } from '../tour-protocol.js';
 import type { GraphFromWebview, GraphToWebview, VaultGraphData } from '../vault-graph-protocol.js';
 import { initCoach } from './coach.js';
+import {
+  clampScale,
+  describeGraph,
+  describeNode,
+  moveFocus,
+  sortNodes,
+  stepInList,
+  zoomStep,
+  type Direction,
+} from './graph-model.js';
 
 /*
  * Grafo do vault (RF-403): nós são notas, arestas são wikilinks. Layout por
  * forças (repulsão, molas e gravidade) num canvas; arrastar move a vista,
  * a roda dá zoom, clicar abre a nota e passar o mouse destaca os vizinhos.
+ * Pelo teclado (RNF-14): Tab entra no canvas; as setas levam o foco à nota mais
+ * próxima na direção, Page Down/Up percorrem a lista em ordem alfabética, Enter
+ * abre, + e - dão zoom e Esc sai. Cada nota focada é lida num `aria-live`, com
+ * a lista dos seus links para pular de uma nota a outra.
  */
 
 interface VsCodeApi {
@@ -35,6 +49,8 @@ interface Node {
 const canvas = document.getElementById('grafo') as HTMLCanvasElement;
 const filterInput = document.getElementById('filtro') as HTMLInputElement;
 const info = document.getElementById('info') as HTMLDivElement;
+const announcement = document.getElementById('anuncio') as HTMLDivElement;
+const linkList = document.getElementById('links-da-nota') as HTMLUListElement;
 const context2d = canvas.getContext('2d');
 if (!context2d) throw new Error(l10n.t('2D canvas unavailable.'));
 const ctx = context2d;
@@ -45,6 +61,9 @@ let edges: [Node, Node][] = [];
 let neighbors = new Map<Node, Set<Node>>();
 let current: string | undefined;
 let hover: Node | undefined;
+/** Nota com o foco do teclado; o anel só aparece com o canvas focado. */
+let focused: Node | undefined;
+let canvasFocused = false;
 let filter = '';
 let view = { x: 0, y: 0, scale: 1 };
 let heat = 1;
@@ -56,6 +75,7 @@ const color = (name: string, fallback: string): string =>
 const FG = color('--vscode-foreground', '#ccc');
 const MUTED = color('--vscode-descriptionForeground', '#888');
 const ACCENT = color('--vscode-textLink-foreground', '#4a8fd9');
+const FOCUS = color('--vscode-focusBorder', '#4a8fd9');
 const PALETTE = ['#e07a5f', '#81b29a', '#f2cc8f', '#9b8fd6', '#5fa8d3', '#d67ab1', '#a3b18a'];
 
 function folderColor(folder: string): string {
@@ -94,10 +114,17 @@ function load(graph: VaultGraphData): void {
     neighbors.get(a)?.add(b);
     neighbors.get(b)?.add(a);
   }
+  if (focused) focused = byPath.get(focused.path);
   heat = 1;
+  // Com menos movimento pedido, o layout assenta de uma vez e a tela fica parada.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (let i = 0; i < (nodes.length > 1500 ? 60 : 200); i++) simulate();
+    heat = 0;
+  }
   const notas = nodes.length === 1 ? l10n.t('1 note') : l10n.t('{0} notes', nodes.length);
   const links = edges.length === 1 ? l10n.t('1 link') : l10n.t('{0} links', edges.length);
   info.textContent = `${notas} · ${links}`;
+  canvas.setAttribute('aria-label', describeGraph(nodes.length, edges.length));
   start();
 }
 
@@ -168,7 +195,7 @@ function draw(): void {
   ctx.translate(width / 2 + view.x, height / 2 + view.y);
   ctx.scale(view.scale, view.scale);
 
-  const focus = hover ?? (current ? byPath.get(current) : undefined);
+  const focus = hover ?? focused ?? (current ? byPath.get(current) : undefined);
   const near = focus ? neighbors.get(focus) : undefined;
   ctx.lineWidth = 1 / view.scale;
   for (const [a, b] of edges) {
@@ -200,6 +227,14 @@ function draw(): void {
     }
   }
   ctx.globalAlpha = 1;
+  if (canvasFocused && focused && visible(focused)) {
+    // Anel do foco do teclado, na cor de foco do tema.
+    ctx.strokeStyle = FOCUS;
+    ctx.lineWidth = 2 / view.scale;
+    ctx.beginPath();
+    ctx.arc(focused.x, focused.y, radius(focused) + 4 / view.scale, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 }
 
 function loop(): void {
@@ -277,7 +312,7 @@ canvas.addEventListener(
   (event) => {
     event.preventDefault();
     const factor = Math.exp(-event.deltaY * 0.0015);
-    const scale = Math.min(6, Math.max(0.15, view.scale * factor));
+    const scale = clampScale(view.scale * factor);
     const rect = canvas.getBoundingClientRect();
     const mx = event.clientX - rect.left - rect.width / 2;
     const my = event.clientY - rect.top - rect.height / 2;
@@ -289,6 +324,143 @@ canvas.addEventListener(
   },
   { passive: false },
 );
+
+// ---------------------------------------------------------------- teclado
+
+const ARROWS: Record<string, Direction> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+};
+
+function visibleNodes(): Node[] {
+  return nodes.filter(visible);
+}
+
+/** Notas ligadas a `n`, em ordem alfabética. */
+function linksOf(n: Node): Node[] {
+  return sortNodes([...(neighbors.get(n) ?? [])]);
+}
+
+/** Traz a nota para perto do centro se ela saiu da área visível. */
+function reveal(n: Node): void {
+  const x = n.x * view.scale + view.x;
+  const y = n.y * view.scale + view.y;
+  const w = canvas.clientWidth / 2 - 40;
+  const h = canvas.clientHeight / 2 - 40;
+  if (Math.abs(x) > w || Math.abs(y) > h) {
+    view = { ...view, x: -n.x * view.scale, y: -n.y * view.scale };
+  }
+}
+
+function announce(n: Node): void {
+  const related = linksOf(n);
+  announcement.textContent = describeNode({
+    title: n.title,
+    folder: n.folder,
+    links: related.map((r) => r.title),
+  });
+  linkList.replaceChildren(
+    ...related.slice(0, 100).map((r) => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = r.title;
+      button.addEventListener('click', () => {
+        focusNode(r);
+        canvas.focus();
+      });
+      item.append(button);
+      return item;
+    }),
+  );
+}
+
+function focusNode(n: Node | undefined): void {
+  if (!n) return;
+  focused = n;
+  reveal(n);
+  announce(n);
+}
+
+/** Primeira nota ao entrar com Tab: a aberta no editor, senão a primeira da lista. */
+function initialNode(): Node | undefined {
+  const open = current ? byPath.get(current) : undefined;
+  if (open && visible(open)) return open;
+  return sortNodes(visibleNodes())[0];
+}
+
+function zoomCenter(direction: 'in' | 'out'): void {
+  const scale = zoomStep(view.scale, direction);
+  const k = scale / view.scale;
+  view = { scale, x: view.x * k, y: view.y * k };
+}
+
+canvas.addEventListener('focus', () => {
+  canvasFocused = true;
+  if (!focused || !visible(focused)) focusNode(initialNode());
+  else announce(focused);
+});
+canvas.addEventListener('blur', () => {
+  canvasFocused = false;
+});
+canvas.addEventListener('keydown', (event) => {
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const direction = ARROWS[event.key];
+  let handled = true;
+  if (direction) {
+    focusNode(
+      focused
+        ? (moveFocus(
+            focused,
+            visibleNodes(),
+            direction,
+            new Set([...(neighbors.get(focused) ?? [])].map((n) => n.path)),
+          ) ?? focused)
+        : initialNode(),
+    );
+  } else if (event.key === 'PageDown' || event.key === 'PageUp') {
+    focusNode(
+      stepInList(sortNodes(visibleNodes()), focused?.path, event.key === 'PageDown' ? 1 : -1),
+    );
+  } else if (event.key === 'Home' || event.key === 'End') {
+    const sorted = sortNodes(visibleNodes());
+    focusNode(event.key === 'Home' ? sorted[0] : sorted[sorted.length - 1]);
+  } else if (event.key === 'Enter') {
+    if (focused) vscode.postMessage({ type: 'open', path: focused.path });
+  } else if (event.key === 'Escape') {
+    focused = undefined;
+    filterInput.focus();
+  } else if (event.key === '+' || event.key === '=') zoomCenter('in');
+  else if (event.key === '-' || event.key === '_') zoomCenter('out');
+  else if (event.key === '0') view = { x: 0, y: 0, scale: 1 };
+  else handled = false;
+  if (handled) event.preventDefault();
+});
+for (const [id, action] of [
+  [
+    'zoom-mais',
+    () => {
+      zoomCenter('in');
+    },
+  ],
+  [
+    'zoom-menos',
+    () => {
+      zoomCenter('out');
+    },
+  ],
+  [
+    'zoom-reiniciar',
+    () => {
+      view = { x: 0, y: 0, scale: 1 };
+    },
+  ],
+] as const) {
+  document.getElementById(id)?.addEventListener('click', action);
+}
+
 filterInput.addEventListener('input', () => {
   filter = filterInput.value.trim().toLowerCase();
 });

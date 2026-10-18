@@ -1,4 +1,11 @@
-import { mountCafe, type CafeRoom } from '@fakl/cafe';
+import {
+  Announcer,
+  describeRoom,
+  describeSeat,
+  mountCafe,
+  type CafeRoom,
+  type SeatInfo,
+} from '@fakl/cafe';
 import { l10n } from '@fakl/i18n';
 import type { CafeState } from '@fakl/protocol';
 
@@ -9,10 +16,79 @@ import { type View } from './parts.js';
 /** A sala do café (RF-302): o mesmo canvas entre visitas, para não perder a animação. */
 const canvas = document.createElement('canvas');
 canvas.className = 'cafe';
+/** Lista para leitor de tela e região de anúncios: o canvas sozinho não diz quem está na sala. */
+const present = h('ul', { class: 'so-leitor' });
+const live = h('div', { class: 'so-leitor', role: 'status', 'aria-live': 'polite' });
+let announcer = new Announcer({ minIntervalMs: 5_000 });
+let announceTimer: number | undefined;
+/** Só depois do primeiro retrato há o que comparar. */
+let loaded = false;
+let presentSignature = '';
 let room: CafeRoom | undefined;
 let open = false;
 /** Muda a cada fechamento: um `cafe.open` que volta depois de fechar não reabre a sala. */
 let generation = 0;
+
+function seatInfos(): SeatInfo[] {
+  const limited = room?.limited();
+  return (room?.seats() ?? []).map((seat) => ({
+    id: seat.agent.sessionId,
+    name: seat.agent.nome,
+    state: seat.agent.state,
+    limited: seat.agent.runId !== undefined && limited?.has(seat.agent.runId) === true,
+    ...((seat.thumb?.titulo ?? seat.agent.papel)
+      ? { detail: seat.thumb?.titulo ?? seat.agent.papel }
+      : {}),
+  }));
+}
+
+function scheduleAnnouncement(): void {
+  if (announceTimer !== undefined) return;
+  const wait = announcer.waitMs(Date.now());
+  if (wait === undefined) return;
+  announceTimer = window.setTimeout(() => {
+    announceTimer = undefined;
+    const text = announcer.take(Date.now());
+    if (text) live.textContent = text;
+    scheduleAnnouncement();
+  }, wait);
+}
+
+/** Atualiza a lista escondida, o resumo do canvas e os anúncios. */
+function renderAccessible(): void {
+  const infos = seatInfos();
+  canvas.setAttribute(
+    'aria-label',
+    `${l10n.t('Cyber café room with the agents')}. ${describeRoom(infos, room?.offline ?? true)}`,
+  );
+  const signature = infos.map((info) => `${info.id}|${describeSeat(info)}`).join('||');
+  if (signature !== presentSignature) {
+    presentSignature = signature;
+    present.replaceChildren(
+      ...infos.map((info) =>
+        h(
+          'li',
+          {},
+          h(
+            'button',
+            {
+              type: 'button',
+              title: l10n.t('Open conversation with {0}', info.name),
+              onclick: () => {
+                app.go({ name: 'conversa', sessionId: info.id });
+              },
+            },
+            describeSeat(info),
+          ),
+        ),
+      ),
+    );
+  }
+  if (loaded) {
+    announcer.observe(infos);
+    scheduleAnnouncement();
+  }
+}
 
 async function openRoom(): Promise<void> {
   const session = app.session;
@@ -21,6 +97,7 @@ async function openRoom(): Promise<void> {
     onOpen: (sessionId) => {
       app.go({ name: 'conversa', sessionId });
     },
+    onChange: renderAccessible,
     onRefresh: () => {
       void app.session
         ?.request<CafeState>('cafe.state')
@@ -41,7 +118,12 @@ async function openRoom(): Promise<void> {
     const cafe = await session.request<CafeState>('cafe.open');
     if (mine !== generation) return;
     room.setOffline(false);
+    loaded = false;
+    announcer = new Announcer({ minIntervalMs: 5_000 });
     room.applyState(cafe);
+    // O retrato inicial é o ponto de partida; só o que muda depois é anunciado.
+    loaded = true;
+    renderAccessible();
   } catch {
     open = false;
     room.setOffline(true);
@@ -50,6 +132,7 @@ async function openRoom(): Promise<void> {
 
 async function closeRoom(): Promise<void> {
   generation++;
+  loaded = false;
   room?.pause();
   if (!open) return;
   open = false;
@@ -57,11 +140,14 @@ async function closeRoom(): Promise<void> {
 }
 
 export function cafeView(): View {
+  canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', l10n.t('Cyber café room with the agents'));
   const el = h(
     'div',
     { class: 'tela sala' },
     canvas,
+    present,
+    live,
     h('p', { class: 'meta' }, l10n.t('Tap an agent to open its conversation.')),
   );
   const stop = app.onEvent((event) => {

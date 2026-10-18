@@ -59,10 +59,71 @@ body {
   cursor: pointer;
 }
 
-#acoes button:hover,
-#acoes button:focus-visible {
+#acoes button:hover {
   background: #0f2a33;
-  outline: none;
+}
+
+/* Foco do teclado sempre visível, na cor de foco do tema. */
+#acoes button:focus-visible,
+.tela-abrir:focus-visible,
+.externa-abrir:focus-visible,
+.atividade select:focus-visible,
+.atividade input:focus-visible,
+.atividade button:focus-visible,
+.so-leitor button:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, #06e0ff);
+  outline-offset: 2px;
+}
+
+#cena:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, #06e0ff);
+  outline-offset: -2px;
+}
+
+/* Só para leitor de tela; aparece quando um botão dentro dele recebe o foco. */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+#presentes {
+  list-style: none;
+}
+
+.so-leitor:focus-within {
+  top: 44px;
+  right: 8px;
+  width: auto;
+  max-width: 60%;
+  height: auto;
+  max-height: 50%;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  clip-path: none;
+  white-space: normal;
+  color: #e5e7eb;
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid var(--vscode-focusBorder, #06e0ff);
+}
+
+.so-leitor:focus-within button {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
 #telas {
@@ -91,9 +152,8 @@ body {
 }
 
 .tela:hover,
-.tela:focus-visible {
+.tela:focus-within {
   background: var(--vscode-list-hoverBackground);
-  outline: none;
 }
 
 .tela.externa {
@@ -232,4 +292,13 @@ pre[data-resultado='ok'] {
 
 pre[data-resultado='falhou'] {
   color: var(--vscode-testing-iconFailed, #e74c3c);
+}
+
+/* Com menos movimento pedido, as transições de cor ficam instantâneas. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
 }

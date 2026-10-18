@@ -173,8 +173,8 @@ body {
 
 .botao-icone {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 12px;
@@ -311,13 +311,13 @@ button.perigo {
 }
 
 button.pequeno {
-  min-height: 36px;
+  min-height: 44px;
   padding: 6px 12px;
   font-size: 14px;
 }
 
 button.link {
-  min-height: 0;
+  min-height: 44px;
   padding: 4px 0;
   border: 0;
   background: none;
@@ -1156,8 +1156,8 @@ label {
   position: absolute;
   right: 16px;
   bottom: calc(84px + env(safe-area-inset-bottom));
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   padding: 0;
   border-radius: 50%;
@@ -1283,8 +1283,8 @@ label {
 }
 
 .copiar-codigo {
-  min-height: 32px;
-  width: 36px;
+  min-height: 44px;
+  width: 44px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -1494,6 +1494,7 @@ label {
 }
 
 label.opcao {
+  min-height: 44px;
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
@@ -1702,10 +1703,10 @@ main.centro label {
 
 .voz-campo .microfone {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 40px;
-  height: 40px;
+  top: 2px;
+  right: 2px;
+  width: 44px;
+  height: 44px;
 }
 
 .microfone.ouvindo {
@@ -1834,4 +1835,52 @@ main.centro label {
   .microfone.transcrevendo {
     animation: none;
   }
+
+  /* Nada se mexe sozinho: o estado continua dito por texto e por rótulo. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Só para leitor de tela; aparece quando algo dentro dele recebe o foco. */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  list-style: none;
+}
+
+.so-leitor:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 8px;
+  clip-path: none;
+  white-space: normal;
+}
+
+.so-leitor button {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.titulo:focus-visible {
+  outline: 2px solid var(--ciano);
+  outline-offset: 2px;
+}
+
+.conteudo:focus-visible {
+  outline: none;
 }

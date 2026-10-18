@@ -39,7 +39,30 @@ export function patch(parent: Element, ...children: Child[]): void {
   const next = document.createElement(parent.tagName);
   append(next, children);
   if (next.innerHTML === parent.innerHTML) return;
+  // Quem navega pelo teclado não perde o foco quando o botão é refeito.
+  const path = focusPath(parent);
   parent.replaceChildren(...next.childNodes);
+  if (path) restoreFocus(parent, path);
+}
+
+/** Caminho (índices dos filhos) do elemento focado dentro de `parent`, se houver. */
+function focusPath(parent: Element): number[] | undefined {
+  const active = document.activeElement;
+  if (!active || active === parent || !parent.contains(active)) return undefined;
+  const path: number[] = [];
+  for (let node: Element = active; node !== parent;) {
+    const up = node.parentElement;
+    if (!up) return undefined;
+    path.unshift([...up.children].indexOf(node));
+    node = up;
+  }
+  return path;
+}
+
+function restoreFocus(parent: Element, path: readonly number[]): void {
+  let node: Element | undefined = parent;
+  for (const index of path) node = node?.children[index];
+  if (node instanceof HTMLElement) node.focus({ preventScroll: true });
 }
 
 export function toast(text: string, tone: 'info' | 'erro' = 'info'): void {

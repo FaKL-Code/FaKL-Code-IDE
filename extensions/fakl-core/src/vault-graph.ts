@@ -207,13 +207,23 @@ export class VaultGraphUi implements vscode.TreeDataProvider<TagItem>, vscode.Di
   canvas { display: block; width: 100vw; height: 100vh; }
   #filtro { position: absolute; top: 8px; left: 8px; width: 220px; padding: 4px 6px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent); }
   #info { position: absolute; bottom: 8px; left: 8px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+  #controles { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+  #controles button { min-width: 28px; padding: 3px 8px; color: var(--vscode-button-secondaryForeground, var(--vscode-foreground)); background: var(--vscode-button-secondaryBackground, transparent); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border, transparent)); border-radius: 3px; font: inherit; cursor: pointer; }
+  #controles button:hover { background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground)); }
+  canvas:focus-visible, #filtro:focus-visible, #controles button:focus-visible, .so-leitor button:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: -2px; }
+  .so-leitor { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .so-leitor:focus-within { position: absolute; top: 40px; left: 8px; width: auto; height: auto; max-width: 60%; margin: 0; padding: 4px; overflow: auto; max-height: 40%; clip-path: none; white-space: normal; background: var(--vscode-editorWidget-background); border: 1px solid var(--vscode-focusBorder); }
 </style>
 <title>${l10n.t('Vault graph')}</title>
 </head>
 <body>
-<canvas id="grafo" aria-label="${l10n.t('Graph of vault notes')}"></canvas>
+<canvas id="grafo" tabindex="0" role="application" aria-label="${l10n.t('Graph of vault notes')}" aria-describedby="ajuda"></canvas>
+<ul id="links-da-nota" class="so-leitor" aria-label="${l10n.t('Links of the focused note')}"></ul>
 <input id="filtro" type="search" placeholder="${l10n.t('Filter notes')}" aria-label="${l10n.t('Filter notes')}">
+<div id="controles" role="group" aria-label="${l10n.t('Graph zoom')}"><button id="zoom-menos" type="button" aria-label="${l10n.t('Zoom out')}" title="${l10n.t('Zoom out')}">-</button><button id="zoom-reiniciar" type="button" aria-label="${l10n.t('Reset view')}" title="${l10n.t('Reset view')}">1:1</button><button id="zoom-mais" type="button" aria-label="${l10n.t('Zoom in')}" title="${l10n.t('Zoom in')}">+</button></div>
 <div id="info"></div>
+<p id="ajuda" class="so-leitor">${l10n.t('Arrow keys move to the nearest note in that direction. Page Down and Page Up go through the notes in alphabetical order. Enter opens the note. Plus and minus zoom, zero resets the view. Escape leaves the graph.')}</p>
+<div id="anuncio" class="so-leitor" role="status" aria-live="polite"></div>
 <script nonce="${nonce}" src="${script.toString()}"></script>
 </body>
 </html>`;
