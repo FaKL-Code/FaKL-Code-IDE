@@ -4,6 +4,8 @@
  * vira um segredo `mcp.<id>`, guardado no cofre do sistema pela IDE.
  */
 
+import type { ResourceRisk } from './resources.js';
+
 /** Segredo pedido na instalação (`inputs` do mcp.json). */
 export interface McpInputSpec {
   readonly id: string;
@@ -40,12 +42,16 @@ export interface McpServerEntry {
 export interface InstalledMcpServer extends McpServerEntry {
   /** Ids de segredo ainda não guardados; enquanto houver, o servidor não vai aos agentes. */
   readonly faltando: readonly string[];
+  /** Achados da varredura; só vêm no resultado de `mcps.install`, para os itens instalados. */
+  readonly riscos?: readonly ResourceRisk[];
 }
 
 export interface McpCatalogServer extends McpServerEntry {
   /** Id da fonte que oferece o modelo. */
   readonly fonte: string;
   readonly instalado: boolean;
+  /** Achados da varredura estática do modelo (vazio: nada achado, sem garantia). */
+  readonly riscos: readonly ResourceRisk[];
 }
 
 /** `mcps.list`. */

@@ -10,6 +10,25 @@ export function isResourceKind(value: unknown): value is ResourceKind {
 /** Nível de custo declarado no bloco `fakl` do frontmatter. */
 export type ResourceLevel = 'leve' | 'padrao' | 'pesado';
 
+/** Gravidade de um achado da varredura estática (ADR 0042). */
+export type ResourceRiskSeverity = 'alta' | 'media' | 'baixa';
+
+/**
+ * Achado da varredura estática de um agente, skill ou servidor MCP. É heurística:
+ * um achado não prova má-fé, e a falta de achados não prova segurança.
+ */
+export interface ResourceRisk {
+  /** Id estável da regra (`prompt-injection`, `baixa-e-executa`, `mcp-shell`...). */
+  readonly regra: string;
+  readonly severidade: ResourceRiskSeverity;
+  /** Arquivo do item onde foi achado (`SKILL.md`, `scripts/x.sh`; `mcps.json` para MCP). */
+  readonly arquivo: string;
+  /** Linha (a partir de 1); para MCP, linha do JSON da definição do servidor. */
+  readonly linha: number;
+  /** Trecho curto da linha, com invisíveis trocados por `_`. */
+  readonly trecho: string;
+}
+
 /** Um agente ou skill, da biblioteca instalada ou de uma fonte de recursos. */
 export interface ResourceInfo {
   readonly kind: ResourceKind;
@@ -34,6 +53,8 @@ export interface ResourceInfo {
   readonly fonte?: string;
   /** Arquivo `.md` do agente ou `SKILL.md` da skill. */
   readonly path: string;
+  /** Achados da varredura; só vêm no catálogo e no resultado de `resources.install`. */
+  readonly riscos?: readonly ResourceRisk[];
 }
 
 /** `resources.list`: o que está instalado. */
@@ -49,6 +70,8 @@ export interface CatalogResourceInfo extends ResourceInfo {
   readonly fonte: string;
   /** Já está na biblioteca do usuário. */
   readonly instalado: boolean;
+  /** Achados da varredura estática do item na fonte (vazio: nada achado, sem garantia). */
+  readonly riscos: readonly ResourceRisk[];
 }
 
 /** `resources.catalog`: agentes e skills de todas as fontes cadastradas. */
