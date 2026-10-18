@@ -242,6 +242,13 @@ export class ProvidersUi implements vscode.Disposable {
       ),
       password: true,
       ignoreFocusOut: true,
+      ...(target.id === 'openai'
+        ? {
+            placeHolder: l10n.t(
+              'Codex keeps a copy in its own folder under ~/.fakl, not in ~/.codex, so your subscription login stays',
+            ),
+          }
+        : {}),
     });
     const key = value?.trim();
     if (!key) return;

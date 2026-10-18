@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
@@ -662,15 +663,36 @@ export class ProviderService {
   }
 }
 
-/** Variável e valor da chave de API que vão ao agente de um perfil, quando há chave no cofre. */
+/**
+ * Pasta do Codex só para o login por chave de API (ADR 0041). O adaptador grava a chave
+ * em `auth.json` dentro do `CODEX_HOME`; numa pasta própria, isso não sobrescreve o login
+ * da assinatura que fica em `~/.codex`.
+ */
+export function codexKeyHome(home: string): string {
+  return join(home, '.fakl', 'accounts', 'codex-chave');
+}
+
+/** Apaga a cópia da chave que o adaptador do Codex gravou na pasta própria. */
+export function clearCodexKey(dir: string): void {
+  rmSync(join(dir, 'auth.json'), { force: true });
+}
+
+/**
+ * Variável e valor da chave de API que vão ao agente de um perfil, quando há chave no
+ * cofre. Com `codexHome`, o agente do Codex também recebe a pasta própria como `CODEX_HOME`.
+ */
 export function providerKeyEnv(
   profile: AgentProfile,
   key: (name: `apikey.${string}`) => string | undefined,
+  codexHome?: string,
 ): Record<string, string> {
   const value = key(apiKeySecretName(profile.provedor));
   if (!value) return {};
   const name =
     profile.chaveEnv ??
     (isCliProvider(profile.provedor) ? PROVIDER_KEY_ENV[profile.provedor] : undefined);
-  return name ? { [name]: value } : {};
+  if (!name) return {};
+  return profile.provedor === 'openai' && codexHome
+    ? { [name]: value, CODEX_HOME: codexHome }
+    : { [name]: value };
 }

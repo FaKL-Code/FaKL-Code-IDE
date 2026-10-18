@@ -29,7 +29,11 @@ export const providerCommands = (): Readonly<Record<CliProvider, AcpCommand>> =>
     args: [],
     install: 'npm install -g @agentclientprotocol/codex-acp',
     login: l10n.t('run `codex login` in a terminal, or store an API key'),
-    keyAuth: { env: PROVIDER_KEY_ENV.openai, methods: ['openai-api-key', 'codex-api-key'] },
+    // O codex-acp 2.x anuncia `api-key`; os outros dois são das versões antigas.
+    keyAuth: {
+      env: PROVIDER_KEY_ENV.openai,
+      methods: ['api-key', 'openai-api-key', 'codex-api-key'],
+    },
   },
   google: {
     command: 'gemini',
