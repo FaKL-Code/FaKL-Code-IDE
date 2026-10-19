@@ -259,7 +259,8 @@ describe('ConfigStore', () => {
     const bus = new EventBus();
     const events: FaklEvent[] = [];
     bus.subscribe(['config.changed'], (event) => events.push(event));
-    const store = new ConfigStore({ home, bus });
+    // A conferência periódica cobre o aviso que o macOS às vezes perde sob carga.
+    const store = new ConfigStore({ home, bus, pollMs: 200 });
     await store.load();
     store.watch();
     try {
@@ -267,9 +268,9 @@ describe('ConfigStore', () => {
         join(store.profilesDir, 'novo.yaml'),
         'id: novo\nnome: Novo\nprovedor: google\nmodelo: gemini-pro\n',
       );
-      await waitFor(() => store.profile('novo') !== undefined, 3_000);
+      await waitFor(() => store.profile('novo') !== undefined, 8_000);
       expect(store.profile('novo')?.modelo).toBe('gemini-pro');
-      await waitFor(() => events.length > 0, 3_000);
+      await waitFor(() => events.length > 0, 8_000);
     } finally {
       store.dispose();
     }

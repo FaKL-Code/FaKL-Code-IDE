@@ -1,5 +1,5 @@
 import { watch, type FSWatcher } from 'node:fs';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { AgentProfile } from '@fakl/agents';
@@ -151,6 +151,8 @@ const POLICIES: readonly PermissionPolicyName[] = PERMISSION_MODES;
 const COSTS = ['baixo', 'médio', 'alto'] as const;
 const PROFILE_ID = /^[a-z0-9][a-z0-9-]{0,62}$/;
 const RELOAD_DELAY_MS = 150;
+/** Conferência periódica dos arquivos, para quando o sistema perde um aviso de mudança (FSEvents do macOS sob carga, pastas de rede). */
+const POLL_MS = 5_000;
 
 /** O que a primeira abertura achou, para os exemplos do config.yaml citarem o que existe. */
 export interface FirstRunInfo {
@@ -662,6 +664,8 @@ export interface ConfigStoreOptions {
    * o que achou, para o config.yaml comentado citar o que existe.
    */
   readonly firstRun?: () => Promise<FirstRunInfo>;
+  /** Intervalo da conferência periódica dos arquivos; só os testes trocam. */
+  readonly pollMs?: number;
 }
 
 /**
@@ -675,6 +679,9 @@ export class ConfigStore {
   private current: FaklConfig = DEFAULT_CONFIG;
   private readonly watchers: FSWatcher[] = [];
   private reloadTimer: NodeJS.Timeout | undefined;
+  private pollTimer: NodeJS.Timeout | undefined;
+  /** Retrato dos arquivos da última leitura, para a conferência periódica achar o que mudou. */
+  private signature: string | undefined;
   private problems: string[] = [];
 
   constructor(private readonly options: ConfigStoreOptions) {}
@@ -795,10 +802,37 @@ export class ConfigStore {
         this.options.log?.(l10n.t('could not watch {0}: {1}', dir, String(error)));
       }
     }
+    void this.fileSignature().then((sig) => {
+      this.signature ??= sig;
+    });
+    this.pollTimer = setInterval(() => {
+      void this.fileSignature().then((sig) => {
+        if (this.signature !== undefined && sig !== this.signature) schedule();
+      });
+    }, this.options.pollMs ?? POLL_MS);
+    this.pollTimer.unref();
+  }
+
+  /** Nome, tamanho e data dos arquivos que o Core lê; muda quando qualquer um deles muda. */
+  private async fileSignature(): Promise<string> {
+    const names = (await readdir(this.profilesDir).catch(() => [] as string[]))
+      .filter((name) => name.endsWith('.yaml') || name.endsWith('.yml'))
+      .sort();
+    const files = [this.configFile, ...names.map((name) => join(this.profilesDir, name))];
+    const parts = await Promise.all(
+      files.map(async (file) => {
+        const info = await stat(file).catch(() => undefined);
+        return info ? `${file}:${String(info.size)}:${String(info.mtimeMs)}` : `${file}:-`;
+      }),
+    );
+    return parts.join('|');
   }
 
   async reload(): Promise<void> {
+    // O retrato vem antes da leitura: o que mudar durante ela aparece na próxima conferência.
+    const before = await this.fileSignature();
     await this.load();
+    this.signature = before;
     this.options.bus?.publish('config.changed', 'config', {
       profiles: this.entries.map((entry) => entry.profile.id),
       errors: this.problems,
@@ -958,6 +992,7 @@ export class ConfigStore {
 
   dispose(): void {
     clearTimeout(this.reloadTimer);
+    clearInterval(this.pollTimer);
     for (const watcher of this.watchers) watcher.close();
     this.watchers.length = 0;
   }
