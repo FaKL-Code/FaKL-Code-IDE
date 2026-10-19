@@ -1,9 +1,9 @@
 {
-  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.5/FaKL-Code-win32-x64-1.135.0000105.zip",
-  "name": "0.1.5",
-  "version": "6149598c346139c111ab51314ccf79a08c319f17",
-  "productVersion": "1.135.105.0",
-  "hash": "62d663ceb43aaaabea315acdd9736f940cb42d82",
-  "timestamp": 1792335309848,
-  "sha256hash": "839e7344088976d8cf0f6d6b530977340cfa7e897d96b54f9f917e5ca0696b56"
+  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.6/FaKL-Code-win32-x64-1.135.0000106.zip",
+  "name": "0.1.6",
+  "version": "658fe50223cdcd38ce45d77a5cd2178429d1098d",
+  "productVersion": "1.135.106.0",
+  "hash": "73d03f8c3d6b5ca8b49038fadb3226bb4c9b8421",
+  "timestamp": 1792369364071,
+  "sha256hash": "f90d4bd1aa0bbe9f7463ab389814a64b94c2b92c9ac1e3e24acc383088bdfd61"
 }
