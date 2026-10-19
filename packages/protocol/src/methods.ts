@@ -94,7 +94,19 @@ export const CoreMethods = {
   ],
   /** Caixas IMAP configuradas na IDE; credenciais nunca são entregues aos agentes. */
   email: ['configure', 'accounts', 'verify', 'inbox', 'read'],
-  ssh: ['hosts.list', 'hosts.upsert', 'hosts.delete', 'exec', 'read', 'write', 'list', 'stat'],
+  ssh: [
+    'hosts.list',
+    'hosts.upsert',
+    'hosts.delete',
+    'exec',
+    'read',
+    'write',
+    'list',
+    'stat',
+    'forward.list',
+    'forward.open',
+    'forward.close',
+  ],
   hostinger: [
     'status',
     'vps.list',

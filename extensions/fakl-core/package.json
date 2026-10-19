@@ -818,6 +818,42 @@
         "icon": "$(edit)"
       },
       {
+        "command": "fakl.ssh.forward.open",
+        "title": "%command.ssh.forward.open%",
+        "category": "FaKL",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "fakl.ssh.forward.close",
+        "title": "%command.ssh.forward.close%",
+        "category": "FaKL",
+        "icon": "$(close)"
+      },
+      {
+        "command": "fakl.ssh.forward.browser",
+        "title": "%command.ssh.forward.browser%",
+        "category": "FaKL",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "fakl.ssh.forward.reopen",
+        "title": "%command.ssh.forward.reopen%",
+        "category": "FaKL",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "fakl.ssh.forward.forget",
+        "title": "%command.ssh.forward.forget%",
+        "category": "FaKL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fakl.ssh.forward.menu",
+        "title": "%command.ssh.forward.menu%",
+        "category": "FaKL",
+        "icon": "$(plug)"
+      },
+      {
         "command": "fakl.ssh.keygen",
         "title": "%command.ssh.keygen%",
         "category": "FaKL",
@@ -1223,6 +1259,10 @@
           "name": "%view.ssh.hosts%"
         },
         {
+          "id": "fakl.ssh.forwards",
+          "name": "%view.ssh.forwards%"
+        },
+        {
           "id": "fakl.hostinger",
           "name": "Hostinger"
         }
@@ -1297,6 +1337,10 @@
       {
         "view": "fakl.ssh.hosts",
         "contents": "%viewsWelcome.ssh.hosts.1%"
+      },
+      {
+        "view": "fakl.ssh.forwards",
+        "contents": "%viewsWelcome.ssh.forwards.1%"
       },
       {
         "view": "fakl.resources.mcpLibrary",
@@ -1559,6 +1603,11 @@
         {
           "command": "fakl.ssh.add",
           "when": "view == fakl.ssh.hosts",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fakl.ssh.forward.open",
+          "when": "view == fakl.ssh.forwards",
           "group": "navigation@1"
         },
         {
@@ -1857,6 +1906,31 @@
           "command": "fakl.github.issue.new",
           "when": "view =~ /^fakl\\.github\\./ && viewItem == repo",
           "group": "1_repo@1"
+        },
+        {
+          "command": "fakl.ssh.forward.open",
+          "when": "view == fakl.ssh.hosts && viewItem =~ /^ssh-/",
+          "group": "navigation@5"
+        },
+        {
+          "command": "fakl.ssh.forward.browser",
+          "when": "view == fakl.ssh.forwards && viewItem =~ /^fwd-ativo/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.ssh.forward.reopen",
+          "when": "view == fakl.ssh.forwards && viewItem =~ /^fwd-fechado/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fakl.ssh.forward.close",
+          "when": "view == fakl.ssh.forwards && viewItem =~ /^fwd-(ativo|reconectando|erro|abrindo)/",
+          "group": "inline@2"
+        },
+        {
+          "command": "fakl.ssh.forward.forget",
+          "when": "view == fakl.ssh.forwards && viewItem =~ /-fav$/",
+          "group": "navigation@9"
         },
         {
           "command": "fakl.ssh.addToWorkspace",
