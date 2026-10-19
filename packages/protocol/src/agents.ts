@@ -61,7 +61,7 @@ export function isPermissionMode(value: unknown): value is PermissionPolicyName 
  * Perfil de agente (SDD 7), guardado em `~/.fakl/profiles/<id>.yaml` e
  * sincronizado entre máquinas.
  */
-export const AGENT_ADAPTERS = ['acp', 'ollama'] as const;
+export const AGENT_ADAPTERS = ['acp', 'ollama', 'terminal'] as const;
 export type AgentAdapterName = (typeof AGENT_ADAPTERS)[number];
 
 export interface AgentProfileDefinition {
@@ -72,7 +72,10 @@ export interface AgentProfileDefinition {
    * `ollama` e `lmstudio` para modelos locais.
    */
   readonly provedor: string;
-  /** `acp` para CLIs de agente; `ollama` para modelos locais pela API compatível com OpenAI. */
+  /**
+   * `acp` para CLIs de agente; `ollama` para modelos locais pela API compatível com OpenAI;
+   * `terminal` para qualquer CLI interativa, que roda num terminal do VS Code (ADR 0047).
+   */
   readonly adaptador: AgentAdapterName;
   /** Adaptador `ollama`: endereço da API, como `http://127.0.0.1:11434/v1`. */
   readonly endpoint?: string;
@@ -97,6 +100,19 @@ export interface AgentProfileDefinition {
   readonly ferramentasPermitidas?: readonly string[];
   /** Modo de permissão quando quem inicia o agente não escolhe; vence o do config.yaml. */
   readonly permissoes?: PermissionPolicyName;
+  /** Adaptador `terminal`: como saber que a CLI terminou de trabalhar (heurística, ADR 0047). */
+  readonly terminal?: TerminalProfileOptions;
+}
+
+/**
+ * Heurística de "pronto" de um agente de terminal: a CLI está ociosa quando fica
+ * `silencioSegundos` sem escrever e a última linha da tela casa com `prompt`.
+ */
+export interface TerminalProfileOptions {
+  /** Expressão regular (sintaxe do JavaScript) da linha de prompt da CLI; sem ela vale só o silêncio. */
+  readonly prompt?: string;
+  /** Segundos sem saída para considerar a CLI ociosa; padrão 3. */
+  readonly silencioSegundos?: number;
 }
 
 /** `profiles.list` e `profiles.get`: o perfil e o arquivo de onde veio. */
@@ -247,6 +263,10 @@ export interface AgentSessionInfo {
   readonly ultimaFala?: string;
   /** Último aviso de limite do agente; some quando ele volta a trabalhar. */
   readonly limite?: AgentLimitInfo;
+  /** Adaptador do perfil; ausente em Cores antigos (valem `acp`). */
+  readonly adaptador?: AgentAdapterName;
+  /** Id da sessão no próprio agente (ACP), para "Continuar no terminal". */
+  readonly sessaoDoAgente?: string;
 }
 
 /** `agents.send`: mensagem para uma sessão viva. */
@@ -480,3 +500,48 @@ export interface AgentTerminalLinesParams {
   readonly lines: readonly AgentTerminalLine[];
   readonly state: AgentState;
 }
+
+/**
+ * Ponte do agente de terminal (ADR 0047). O PTY vive na extensão `fakl-core`
+ * (terminal do VS Code); o Core só fala com ela por estes métodos e comandos.
+ */
+
+/** `agents.terminalHost.register`: a extensão se oferece para hospedar terminais. */
+export interface TerminalHostRegisterParams {
+  /** Sessões cujo terminal esta extensão ainda mantém (reconexão). */
+  readonly sessions?: readonly string[];
+}
+
+/** Estados que a extensão informa a partir do fluxo do terminal. */
+export type TerminalReportedState = 'ocioso' | 'executando';
+
+/** Corpo comum de `agents.terminalHost.output|state|exit|ready`. */
+export interface TerminalHostReportParams {
+  readonly sessionId: string;
+  /** `output`: linhas já sem escapes ANSI, separadas por `
+`. */
+  readonly text?: string;
+  /** `state`. */
+  readonly state?: TerminalReportedState;
+  /** `exit`: código de saída do comando, quando se sabe. */
+  readonly code?: number;
+  /** `exit`: motivo de uma falha que não é código de saída. */
+  readonly error?: string;
+}
+
+/** Comando do Core para a extensão (notificação `agents.terminalHost.command`). */
+export type TerminalHostCommand =
+  | {
+      readonly type: 'spawn';
+      readonly sessionId: string;
+      readonly nome: string;
+      /** Vem do perfil; nada que o agente escreve vira comando. */
+      readonly command: string;
+      readonly args: readonly string[];
+      readonly cwd: string;
+      readonly env: Readonly<Record<string, string>>;
+      readonly prompt?: string;
+      readonly silencioSegundos?: number;
+    }
+  | { readonly type: 'input'; readonly sessionId: string; readonly text: string }
+  | { readonly type: 'stop'; readonly sessionId: string };

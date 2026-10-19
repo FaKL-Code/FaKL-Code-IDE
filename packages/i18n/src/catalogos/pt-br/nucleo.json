@@ -205,5 +205,13 @@
   "You are a programming agent working in a project folder (the worktree).": "Você é um agente de programação trabalhando numa pasta de projeto (o worktree).",
   "yours": "seu",
   "true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history": "true mostra, só para leitura, as conversas das extensões do Codex e do Claude Code, lendo o histórico local delas",
-  "store an API key from Google AI Studio (a personal Google account no longer works)": "guarde uma chave de API do Google AI Studio (a conta Google pessoal não funciona mais)"
+  "store an API key from Google AI Studio (a personal Google account no longer works)": "guarde uma chave de API do Google AI Studio (a conta Google pessoal não funciona mais)",
+  "{0}: the terminal adapter needs a comando": "{0}: o adaptador de terminal precisa de um comando",
+  "{0}: terminal.prompt is not a valid regular expression": "{0}: terminal.prompt não é uma expressão regular válida",
+  "{0}: terminal.silencioSegundos must be a number from 0.5 to 600": "{0}: terminal.silencioSegundos deve ser um número de 0,5 a 600",
+  "state must be {0}": "state deve ser {0}",
+  "no IDE window is connected to the Core": "nenhuma janela da IDE está conectada ao Core",
+  "only the IDE can host agent terminals": "só a IDE pode hospedar terminais de agentes",
+  "the IDE window that hosted the terminal went away": "a janela da IDE que hospedava o terminal sumiu",
+  "this connection is not hosting agent terminals": "esta conexão não hospeda terminais de agentes"
 }

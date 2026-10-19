@@ -5,6 +5,7 @@ import { l10n, useLocale } from '@fakl/i18n';
 import {
   CoreNotifications,
   type AgentTerminalLinesParams,
+  type TerminalHostCommand,
   type EventNotificationParams,
 } from '@fakl/protocol';
 import type MarkdownIt from 'markdown-it';
@@ -240,6 +241,8 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
         agentEvents.dispatch((params as EventNotificationParams).event);
       } else if (method === CoreNotifications.terminalLines) {
         agentEvents.dispatchTerminal(params as AgentTerminalLinesParams);
+      } else if (method === CoreNotifications.terminalHost) {
+        agentEvents.dispatchHost(params as TerminalHostCommand);
       }
     });
     await client.request('events.subscribe', {

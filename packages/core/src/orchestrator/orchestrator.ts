@@ -1006,12 +1006,15 @@ export class Orchestrator implements Disposable {
         ),
       );
     }
-    const remote = ready.filter((profile) => profile.adaptador !== 'ollama');
+    // Um agente de terminal não recebe as ferramentas MCP do maestro (ADR 0047).
+    const capable = ready.filter((profile) => profile.adaptador !== 'terminal');
+    const pool = capable.length > 0 ? capable : ready;
+    const remote = pool.filter((profile) => profile.adaptador !== 'ollama');
     const maestro =
       remote.find((profile) => profile.podeSerMaestro) ??
-      ready.find((profile) => profile.podeSerMaestro) ??
+      pool.find((profile) => profile.podeSerMaestro) ??
       remote[0] ??
-      ready[0];
+      pool[0];
     if (!maestro) throw RpcError.invalidParams(noProviderMessage());
     return maestro.id;
   }

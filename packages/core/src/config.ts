@@ -15,6 +15,7 @@ import {
   type AgentProfileDefinition,
   type AgentProfileEntry,
   type McpServerConfig,
+  type TerminalProfileOptions,
   PERMISSION_MODES,
   type PermissionPolicyName,
   isVozModo,
@@ -293,6 +294,10 @@ export function parseProfile(raw: unknown, where: string): AgentProfileDefinitio
       l10n.t('{0}: chaveEnv must be the name of an environment variable', where),
     );
   }
+  if (adaptador === 'terminal' && !comando) {
+    throw new ConfigError(l10n.t('{0}: the terminal adapter needs a comando', where));
+  }
+  const terminal = parseTerminalOptions(raw.terminal, where);
   const pontosFortes = optionalStrings(raw, 'pontosFortes', where);
   const regras = optionalStrings(raw, 'regras', where);
   const ferramentas = optionalStrings(raw, 'ferramentasPermitidas', where);
@@ -313,6 +318,37 @@ export function parseProfile(raw: unknown, where: string): AgentProfileDefinitio
     ...(typeof raw.podeSerMaestro === 'boolean' ? { podeSerMaestro: raw.podeSerMaestro } : {}),
     ...(ferramentas ? { ferramentasPermitidas: ferramentas } : {}),
     ...(permissoes ? { permissoes: permissoes as PermissionPolicyName } : {}),
+    ...(terminal ? { terminal } : {}),
+  };
+}
+
+/** `terminal:` de um perfil de agente de terminal: regex do prompt e segundos de silêncio. */
+function parseTerminalOptions(raw: unknown, where: string): TerminalProfileOptions | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (!isObject(raw))
+    throw new ConfigError(l10n.t('{0}: {1} must be an object', where, 'terminal'));
+  const prompt = optionalString(raw, 'prompt', where);
+  if (prompt !== undefined) {
+    try {
+      new RegExp(prompt);
+    } catch {
+      throw new ConfigError(
+        l10n.t('{0}: terminal.prompt is not a valid regular expression', where),
+      );
+    }
+  }
+  const silencio = raw.silencioSegundos;
+  if (
+    silencio !== undefined &&
+    (typeof silencio !== 'number' || !Number.isFinite(silencio) || silencio < 0.5 || silencio > 600)
+  ) {
+    throw new ConfigError(
+      l10n.t('{0}: terminal.silencioSegundos must be a number from 0.5 to 600', where),
+    );
+  }
+  return {
+    ...(prompt ? { prompt } : {}),
+    ...(typeof silencio === 'number' ? { silencioSegundos: silencio } : {}),
   };
 }
 

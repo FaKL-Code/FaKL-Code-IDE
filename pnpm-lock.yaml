@@ -134,6 +134,9 @@ importers:
 
   extensions/fakl-core:
     devDependencies:
+      '@fakl/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
       '@fakl/cafe':
         specifier: workspace:*
         version: link:../../packages/cafe
