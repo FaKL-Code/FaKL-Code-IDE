@@ -248,5 +248,6 @@
   "Permission denied: {0}": "Permissão negada: {0}",
   "State: {0} -> {1} ({2})": "Estado: {0} -> {1} ({2})",
   "State: {0} -> {1}": "Estado: {0} -> {1}",
-  "Changed file: {0}": "Arquivo alterado: {0}"
+  "Changed file: {0}": "Arquivo alterado: {0}",
+  "token saving mode: desligado, equilibrado (default) or agressivo": "modo de economia de tokens: desligado, equilibrado (padrão) ou agressivo"
 }

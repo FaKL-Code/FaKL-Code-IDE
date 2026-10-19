@@ -20,6 +20,21 @@ export const MAESTRO_TOOLS: readonly McpTool[] = [
     inputSchema: { type: 'object', properties: {} },
   },
   {
+    name: 'suggest_profile',
+    method: 'maestro.suggestProfile',
+    description:
+      'Suggests the cheapest profile likely to do a subtask well, from the task text (no model call, no cost). Returns profileId, complexity (baixa, media, alta), the signals found and the reason. spawn_agent without profileId already does this when token saving is on; call this to see the choice first or to override it.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        instrucoes: { type: 'string', description: 'The subtask instructions you plan to send' },
+        criterio: { type: 'string', description: 'How to know the subtask is done' },
+        papel: { type: 'string', description: 'executor, revisor or maestro' },
+      },
+      required: ['instrucoes'],
+    },
+  },
+  {
     name: 'spawn_agent',
     method: 'maestro.spawnAgent',
     description:
@@ -30,7 +45,7 @@ export const MAESTRO_TOOLS: readonly McpTool[] = [
         profileId: {
           type: 'string',
           description:
-            'Profile id (see list_profiles). Without it, the profile suggested by the agent or by the first skill applies',
+            'Profile id (see list_profiles). Without it, the profile suggested by the agent or by the first skill applies; otherwise, with token saving on, the cheapest profile fit for the task (see suggest_profile)',
         },
         agente: {
           type: 'string',
