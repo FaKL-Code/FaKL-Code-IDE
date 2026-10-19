@@ -111,7 +111,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     agentEvents,
   );
   const windows = new UsageWindowsView(agentEvents);
-  const vault = new VaultUi(agentEvents);
+  const vault = new VaultUi(agentEvents, context);
   const vaultGraph = new VaultGraphUi(context.extensionUri, () => vault.root, agentEvents);
   const remote = new RemoteUi(context, agentEvents);
   const externas = new ExternalSessionsFeed();

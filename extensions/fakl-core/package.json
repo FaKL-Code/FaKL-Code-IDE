@@ -520,6 +520,30 @@
         "icon": "$(gear)"
       },
       {
+        "command": "fakl.vault.embeddings.configure",
+        "title": "%command.vault.embeddings.configure%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fakl.vault.embeddings.setKey",
+        "title": "%command.vault.embeddings.setKey%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fakl.vault.embeddings.clearKey",
+        "title": "%command.vault.embeddings.clearKey%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "fakl.vault.embeddings.confirm",
+        "title": "%command.vault.embeddings.confirm%",
+        "category": "FaKL",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "fakl.vault.search",
         "title": "%command.vault.search%",
         "category": "FaKL",

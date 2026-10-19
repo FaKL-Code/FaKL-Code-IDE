@@ -120,16 +120,26 @@ export interface VaultConfig {
   readonly semantica?: SemanticConfig;
 }
 
-/** `vault.semantica`: modelo de embeddings num servidor local compatível com OpenAI. */
+/**
+ * `vault.semantica`: modelo de embeddings num servidor compatível com OpenAI.
+ * `ollama` e `lmstudio` são locais; `openai` é qualquer API que fale
+ * `POST <endpoint>/embeddings` (OpenAI, Voyage, Mistral, Azure, servidor próprio),
+ * com a chave no cofre do sistema e o texto das notas saindo da máquina (ADR 0050).
+ */
 export interface SemanticConfig {
   readonly provedor: SemanticProvider;
-  /** Ex.: nomic-embed-text no Ollama. */
+  /** Ex.: nomic-embed-text no Ollama, text-embedding-3-small na OpenAI. */
   readonly modelo: string;
-  /** Padrão: o endereço local do provedor. */
+  /** Padrão: o endereço local do provedor; obrigatório em `openai`. */
   readonly endpoint?: string;
+  /**
+   * Só em `openai`: o servidor (host e porta) para o qual a pessoa confirmou o envio das
+   * notas. Sem ele, ou se o endpoint mudar de servidor, nada é enviado.
+   */
+  readonly confirmadoPara?: string;
 }
 
-export const SEMANTIC_PROVIDERS = ['ollama', 'lmstudio'] as const;
+export const SEMANTIC_PROVIDERS = ['ollama', 'lmstudio', 'openai'] as const;
 export type SemanticProvider = (typeof SEMANTIC_PROVIDERS)[number];
 
 export class ConfigError extends Error {
@@ -546,7 +556,18 @@ function parseSemantic(raw: unknown, at: string): SemanticConfig | undefined {
   if (endpoint && !/^https?:\/\//.test(endpoint)) {
     throw new ConfigError(l10n.t('{0}: endpoint must start with http:// or https://', at));
   }
-  return { provedor: provedor as SemanticProvider, modelo, ...(endpoint ? { endpoint } : {}) };
+  if (provedor === 'openai' && !endpoint) {
+    throw new ConfigError(
+      l10n.t('{0} needs endpoint (e.g. https://api.openai.com/v1) for provedor openai', at),
+    );
+  }
+  const confirmadoPara = optionalString(raw, 'confirmadoPara', at);
+  return {
+    provedor: provedor as SemanticProvider,
+    modelo,
+    ...(endpoint ? { endpoint } : {}),
+    ...(provedor === 'openai' && confirmadoPara ? { confirmadoPara } : {}),
+  };
 }
 
 function parseRunDefaults(

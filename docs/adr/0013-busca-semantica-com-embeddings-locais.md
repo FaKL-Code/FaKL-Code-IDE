@@ -36,5 +36,5 @@ forte, e o índice por texto (ADR 0008) já cobre a busca do dia a dia.
 - O texto das notas não sai da máquina, e não há segredo novo para guardar.
 - A primeira indexação de um vault grande leva alguns minutos num modelo
   pequeno; a busca por texto continua valendo enquanto isso.
-- Um provedor por API (OpenAI e afins) fica para depois: basta um `endpoint`
-  com chave no cofre (ADR 0010), se a pessoa quiser.
+- Um provedor por API (OpenAI e afins) ficou para depois e veio na
+  [ADR 0050](0050-busca-semantica-por-api-de-embeddings.md), com chave no cofre (ADR 0010).

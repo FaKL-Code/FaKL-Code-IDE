@@ -11,11 +11,30 @@ import type { IndexedNote, SearchHit, VaultIndex } from './index.js';
 /** `fetch` injetável, para testes. */
 export type EmbedFetch = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal },
-) => Promise<{ ok: boolean; status: number; json(): Promise<unknown>; text(): Promise<string> }>;
+  init: {
+    method: string;
+    headers: Record<string, string>;
+    body: string;
+    signal?: AbortSignal;
+    redirect?: 'error';
+  },
+) => Promise<{
+  ok: boolean;
+  status: number;
+  headers?: { get(name: string): string | null };
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}>;
 
 const CHUNK_CHARS = 800;
 const BATCH = 16;
+/** API remota: lotes maiores, menos pedidos (os limites são por pedido e por minuto). */
+const REMOTE_BATCH = 64;
+const MAX_RETRIES = 4;
+const BACKOFF_MS = 1000;
+const MAX_WAIT_MS = 30_000;
+/** Estimativa de tokens: ~4 caracteres por token, o suficiente para um aviso de custo. */
+const CHARS_PER_TOKEN = 4;
 const SAVE_DELAY_MS = 2000;
 const REQUEST_TIMEOUT_MS = 60_000;
 const STORE_VERSION = 1;
@@ -32,6 +51,7 @@ interface Entry {
 
 interface StoredFile {
   readonly versao: number;
+  readonly provedor?: string;
   readonly modelo: string;
   readonly endpoint: string;
   readonly notas: Record<string, { hash: string; trechos: { texto: string; vetor: string }[] }>;
@@ -44,6 +64,36 @@ export interface SemanticStatus {
   readonly indexadas: number;
   readonly pendentes: number;
   readonly erro?: string;
+  /** API remota: as notas saem da máquina para `servidor`. */
+  readonly remota?: boolean;
+  /** Servidor (host e porta) que receberia as notas; só em API remota. */
+  readonly servidor?: string;
+  /** API remota sem a confirmação do envio para o servidor atual: nada é enviado. */
+  readonly aguardaConfirmacao?: boolean;
+  /** API remota: há chave no cofre. */
+  readonly chave?: boolean;
+  /** O que ainda seria enviado (só enquanto aguarda a confirmação). */
+  readonly estimativa?: SemanticEstimate;
+}
+
+/** Custo aproximado de indexar o que falta, para o aviso antes de enviar. */
+export interface SemanticEstimate {
+  readonly notas: number;
+  readonly trechos: number;
+  readonly tokens: number;
+}
+
+export function isRemoteSemantic(config: SemanticConfig): boolean {
+  return config.provedor === 'openai';
+}
+
+/** Servidor (host e porta) de um endpoint; vazio se o endereço não for válido. */
+export function endpointHost(endpoint: string): string {
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return '';
+  }
 }
 
 /** Endereço base do servidor de embeddings, sem barra no fim. */
@@ -112,19 +162,27 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+const sleepFor = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 export interface SemanticIndexOptions {
   readonly config: SemanticConfig;
   /** Arquivo dos vetores; sem ele, ficam só em memória. */
   readonly file?: string;
   readonly fetch?: EmbedFetch;
   readonly log?: (message: string) => void;
+  /** Chave da API remota, lida do cofre a cada pedido; nunca vai a arquivo, log ou erro. */
+  readonly apiKey?: () => string | undefined;
+  /** Espera entre tentativas do 429; injetável para os testes. */
+  readonly sleep?: (ms: number) => Promise<void>;
 }
 
 /**
- * Busca semântica no vault (RF-407, ADR 0013). Os vetores vêm de um modelo de
+ * Busca semântica no vault (RF-407, ADR 0013 e 0050). Os vetores vêm de um modelo de
  * embeddings num servidor local (Ollama ou LM Studio), então o texto das notas
- * não sai da máquina. Notas privadas nunca são enviadas ao modelo. O índice é
- * incremental: só trechos de notas cujo conteúdo mudou são recalculados.
+ * não sai da máquina, ou de uma API compatível com a da OpenAI, caso em que sai: só
+ * depois de a pessoa confirmar o servidor (`confirmadoPara`) e com a chave do cofre.
+ * Notas privadas nunca são enviadas ao modelo. O índice é incremental: só trechos
+ * cujo conteúdo mudou são recalculados, e vetores de outro modelo são descartados.
  */
 export class SemanticIndex {
   private readonly entries = new Map<string, Entry>();
@@ -137,10 +195,21 @@ export class SemanticIndex {
   private disposed = false;
   private readonly endpoint: string;
   private readonly fetcher: EmbedFetch;
+  private readonly remote: boolean;
 
   constructor(private readonly options: SemanticIndexOptions) {
     this.endpoint = semanticEndpoint(options.config);
     this.fetcher = options.fetch ?? fetch;
+    this.remote = isRemoteSemantic(options.config);
+  }
+
+  /** API remota sem confirmação do envio para este servidor: não há pedido nenhum. */
+  private get awaiting(): boolean {
+    return (
+      this.remote &&
+      (this.options.config.confirmadoPara === undefined ||
+        this.options.config.confirmadoPara !== endpointHost(this.endpoint))
+    );
   }
 
   /** Carrega os vetores gravados e indexa o que mudou desde a última vez. */
@@ -169,14 +238,55 @@ export class SemanticIndex {
   }
 
   status(): SemanticStatus {
+    const awaiting = this.awaiting;
     return {
       ativa: true,
       modelo: this.options.config.modelo,
       endpoint: this.endpoint,
       indexadas: this.entries.size,
-      pendentes: this.queue.size,
+      pendentes: awaiting ? this.pending().length : this.queue.size,
       ...(this.lastError ? { erro: this.lastError } : {}),
+      ...(this.remote
+        ? {
+            remota: true,
+            servidor: endpointHost(this.endpoint),
+            chave: Boolean(this.options.apiKey?.()),
+            ...(awaiting ? { aguardaConfirmacao: true, estimativa: this.estimate() } : {}),
+          }
+        : {}),
     };
+  }
+
+  /** Notas públicas cujo conteúdo ainda não tem vetor. */
+  private pending(): IndexedNote[] {
+    return (this.index?.all() ?? []).filter(
+      (note) => !note.private && this.entries.get(note.path)?.hash !== hashOf(note),
+    );
+  }
+
+  /** Tokens aproximados do que seria enviado, descontando trechos já em cache. */
+  estimate(): SemanticEstimate {
+    const cache = this.vectorCache();
+    let notes = 0;
+    let chunks = 0;
+    let chars = 0;
+    for (const note of this.pending()) {
+      const missing = chunkNote(note.title, note.body).filter((text) => !cache.has(text));
+      if (missing.length === 0) continue;
+      notes++;
+      chunks += missing.length;
+      chars += missing.reduce((sum, text) => sum + text.length, 0);
+    }
+    return { notas: notes, trechos: chunks, tokens: Math.ceil(chars / CHARS_PER_TOKEN) };
+  }
+
+  /** Vetores já calculados por conteúdo do trecho (título incluso): o cache entre notas. */
+  private vectorCache(): Map<string, Float32Array> {
+    const cache = new Map<string, Float32Array>();
+    for (const entry of this.entries.values()) {
+      for (const chunk of entry.chunks) cache.set(chunk.text, chunk.vector);
+    }
+    return cache;
   }
 
   /** Espera a fila esvaziar (testes e a primeira busca). */
@@ -238,7 +348,7 @@ export class SemanticIndex {
   }
 
   private kick(): void {
-    if (this.working || this.queue.size === 0 || this.disposed) return;
+    if (this.working || this.queue.size === 0 || this.disposed || this.awaiting) return;
     this.working = this.drain().finally(() => {
       this.working = undefined;
       // O que chegou enquanto a fila andava; um erro para a fila até a próxima mudança.
@@ -257,52 +367,124 @@ export class SemanticIndex {
       const hash = hashOf(note);
       const texts = chunkNote(note.title, note.body);
       try {
-        const vectors: Float32Array[] = [];
-        for (let i = 0; i < texts.length; i += BATCH) {
-          vectors.push(...(await this.embed(texts.slice(i, i + BATCH))));
+        // Trechos iguais aos já calculados (desta ou de outra nota) não são reenviados.
+        const cache = this.vectorCache();
+        const missing = [...new Set(texts.filter((text) => !cache.has(text)))];
+        const size = this.remote ? REMOTE_BATCH : BATCH;
+        for (let i = 0; i < missing.length; i += size) {
+          const part = missing.slice(i, i + size);
+          const vectors = await this.embed(part);
+          part.forEach((text, at) => cache.set(text, vectors[at] ?? new Float32Array()));
         }
         // Fechado durante o pedido: o resultado não vale mais.
         if (this.closed()) return;
         this.entries.set(path, {
           hash,
-          chunks: texts.map((text, i) => ({ text, vector: vectors[i] ?? new Float32Array() })),
+          chunks: texts.map((text) => ({ text, vector: cache.get(text) ?? new Float32Array() })),
         });
         this.scheduleSave();
       } catch (error) {
         this.queue.add(path);
-        this.lastError = errorText(error);
+        this.lastError = this.scrub(errorText(error));
         this.options.log?.(l10n.t('semantic search: {0}', this.lastError));
         return;
       }
     }
   }
 
+  /** Tira a chave de qualquer texto que vá a erro ou log (servidores às vezes a repetem). */
+  private scrub(text: string): string {
+    const key = this.options.apiKey?.();
+    return key ? text.split(key).join('***') : text;
+  }
+
   private async embed(inputs: readonly string[]): Promise<Float32Array[]> {
-    const response = await this.fetcher(`${this.endpoint}/embeddings`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ model: this.options.config.modelo, input: inputs }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    }).catch((error: unknown) => {
-      throw new Error(
-        l10n.t(
-          'the embeddings server at {0} did not respond ({1})',
-          this.endpoint,
-          errorText(error),
-        ),
-        { cause: error },
-      );
-    });
-    if (!response.ok) {
-      const detail = (await response.text().catch(() => '')).slice(0, 200);
-      throw new Error(l10n.t('embeddings: HTTP {0} {1}', String(response.status), detail).trim());
+    if (this.awaiting) throw new Error(l10n.t('embeddings: sending the notes was not confirmed'));
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (this.remote) {
+      const key = this.options.apiKey?.();
+      if (!key) {
+        throw new Error(
+          l10n.t('embeddings: no API key saved; use "FaKL: Save the embeddings API key"'),
+        );
+      }
+      // `authorization` é o padrão da OpenAI e afins; `api-key`, o do Azure.
+      headers.authorization = `Bearer ${key}`;
+      headers['api-key'] = key;
     }
-    const body = (await response.json()) as {
-      data?: { embedding?: number[]; index?: number }[];
-    };
-    const data = [...(body.data ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-    if (data.length !== inputs.length) throw new Error(l10n.t('embeddings: incomplete response'));
-    return data.map((item) => Float32Array.from(item.embedding ?? []));
+    const sleep = this.options.sleep ?? sleepFor;
+    for (let attempt = 0; ; attempt++) {
+      const response = await this.fetcher(`${this.endpoint}/embeddings`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ model: this.options.config.modelo, input: inputs }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        // A chave só vai ao servidor configurado, nunca a um redirecionamento.
+        ...(this.remote ? { redirect: 'error' as const } : {}),
+      }).catch((error: unknown) => {
+        throw new Error(
+          this.scrub(
+            l10n.t(
+              'the embeddings server at {0} did not respond ({1})',
+              this.endpoint,
+              errorText(error),
+            ),
+          ),
+        );
+      });
+      if (response.status === 429 && attempt < MAX_RETRIES) {
+        const asked = Number(response.headers?.get('retry-after'));
+        const wait = Number.isFinite(asked) && asked > 0 ? asked * 1000 : BACKOFF_MS * 2 ** attempt;
+        await sleep(Math.min(MAX_WAIT_MS, wait));
+        if (this.disposed) throw new Error(l10n.t('embeddings: closed'));
+        continue;
+      }
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            l10n.t(
+              'embeddings: the server refused the API key (HTTP {0})',
+              String(response.status),
+            ),
+          );
+        }
+        if (response.status === 429) {
+          throw new Error(l10n.t('embeddings: rate limit (HTTP 429); will try again later'));
+        }
+        const detail = this.scrub((await response.text().catch(() => '')).slice(0, 200));
+        throw new Error(l10n.t('embeddings: HTTP {0} {1}', String(response.status), detail).trim());
+      }
+      return this.parse(await response.json().catch(() => undefined), inputs.length);
+    }
+  }
+
+  private parse(body: unknown, expected: number): Float32Array[] {
+    const data = (body as { data?: unknown } | undefined)?.data;
+    if (!Array.isArray(data) || data.length !== expected) {
+      throw new Error(l10n.t('embeddings: incomplete response'));
+    }
+    const items = (data as ({ embedding?: unknown; index?: unknown } | null)[]).map(
+      (item, position) => ({
+        embedding: item?.embedding,
+        at: typeof item?.index === 'number' ? item.index : position,
+      }),
+    );
+    items.sort((a, b) => a.at - b.at);
+    const first = items[0]?.embedding;
+    const size = Array.isArray(first) ? first.length : 0;
+    const vectors: number[][] = [];
+    for (const { embedding } of items) {
+      if (
+        !Array.isArray(embedding) ||
+        embedding.length === 0 ||
+        embedding.length !== size ||
+        !embedding.every((n) => typeof n === 'number' && Number.isFinite(n))
+      ) {
+        throw new Error(l10n.t('embeddings: malformed response'));
+      }
+      vectors.push(embedding as number[]);
+    }
+    return vectors.map((vector) => Float32Array.from(vector));
   }
 
   private async load(): Promise<void> {
@@ -315,6 +497,7 @@ export class SemanticIndex {
       // Outro modelo ou servidor: vetores incompatíveis, recomeça.
       if (
         stored.versao !== STORE_VERSION ||
+        (stored.provedor ?? this.options.config.provedor) !== this.options.config.provedor ||
         stored.modelo !== this.options.config.modelo ||
         stored.endpoint !== this.endpoint
       ) {
@@ -346,6 +529,7 @@ export class SemanticIndex {
     if (!file) return;
     const stored: StoredFile = {
       versao: STORE_VERSION,
+      provedor: this.options.config.provedor,
       modelo: this.options.config.modelo,
       endpoint: this.endpoint,
       notas: Object.fromEntries(

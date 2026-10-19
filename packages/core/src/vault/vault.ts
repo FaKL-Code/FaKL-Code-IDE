@@ -78,6 +78,10 @@ export interface VaultServiceOptions {
   readonly dataDir?: string;
   /** `fetch` do servidor de embeddings; padrão, o global. */
   readonly fetch?: EmbedFetch;
+  /** Chave da API de embeddings, do cofre de segredos (ADR 0050). */
+  readonly embeddingsKey?: () => string | undefined;
+  /** Espera entre tentativas do limite de taxa; só os testes trocam. */
+  readonly sleep?: (ms: number) => Promise<void>;
 }
 
 function pad(n: number): string {
@@ -245,11 +249,18 @@ export class VaultService implements Disposable {
         ...(this.options.dataDir ? { file: join(this.options.dataDir, 'embeddings.json') } : {}),
         ...(this.options.fetch ? { fetch: this.options.fetch } : {}),
         ...(this.options.log ? { log: this.options.log } : {}),
+        ...(this.options.embeddingsKey ? { apiKey: this.options.embeddingsKey } : {}),
+        ...(this.options.sleep ? { sleep: this.options.sleep } : {}),
       });
       this.semantic = semantic;
       await semantic.start(this.index);
     }
     this.options.log?.(l10n.t('vault opened at {0} ({1} notes)', root, String(this.index.size)));
+  }
+
+  /** A chave de embeddings mudou: tenta de novo o que parou por falta ou recusa dela. */
+  embeddingsKeyChanged(): void {
+    this.semantic?.reconcile();
   }
 
   /** Sincroniza agora e publica `vault.sync`. */
