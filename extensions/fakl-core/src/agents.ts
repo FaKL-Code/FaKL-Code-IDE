@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import { commandLine, resumeSuggestion, shellFlavor } from '@fakl/agents';
 import type { CoreClient } from '@fakl/core';
 import { l10n } from '@fakl/i18n';
 import type {
@@ -21,6 +22,7 @@ import type {
   ClaudeAccountSlot,
   FaklEvent,
   PermissionPolicyName,
+  TerminalHostCommand,
 } from '@fakl/protocol';
 import { isFinalAgentState } from '@fakl/protocol';
 import * as vscode from 'vscode';
@@ -34,6 +36,7 @@ import {
   stateLabel,
 } from './board.js';
 import { AgentLiveTerminals } from './agent-terminal.js';
+import { TerminalAgentHost } from './terminal-agent-host.js';
 import { firstLocalFolder, remoteRoots } from './ssh-workspace.js';
 import { permissionLine } from './webview/chat-model.js';
 import { Transcript, type ChatItem } from '@fakl/conversa';
@@ -49,6 +52,17 @@ async function defaultWorkFolder(): Promise<string> {
 export class AgentEventRouter {
   private readonly listeners = new Set<(event: FaklEvent) => void>();
   private readonly terminalListeners = new Set<(params: AgentTerminalLinesParams) => void>();
+  private readonly hostListeners = new Set<(command: TerminalHostCommand) => void>();
+
+  /** Comando do Core ao hospedeiro de terminais (agente de terminal, ADR 0047). */
+  dispatchHost(command: TerminalHostCommand): void {
+    for (const listener of this.hostListeners) listener(command);
+  }
+
+  listenHost(listener: (command: TerminalHostCommand) => void): vscode.Disposable {
+    this.hostListeners.add(listener);
+    return new vscode.Disposable(() => this.hostListeners.delete(listener));
+  }
 
   /** Linhas novas de um terminal anexado (`agents.terminal.lines`). */
   dispatchTerminal(params: AgentTerminalLinesParams): void {
@@ -200,6 +214,8 @@ export class AgentControl implements vscode.Disposable {
   private readonly board = new AgentBoard();
   private readonly logs = new SessionLogs(this.board);
   private readonly liveTerminals = new AgentLiveTerminals();
+  /** Terminais reais dos agentes de terminal (ADR 0047). */
+  private readonly terminalHost = new TerminalAgentHost(vscode.window);
   private readonly tree = new AgentTreeProvider(this.board);
   private readonly transcripts = new Map<string, Transcript>();
   private readonly view: vscode.TreeView<AgentSessionInfo>;
@@ -242,6 +258,11 @@ export class AgentControl implements vscode.Disposable {
       this.view,
       this.logs,
       this.liveTerminals,
+      {
+        dispose: () => {
+          this.terminalHost.dispose();
+        },
+      },
       this.sessionsChanged,
       this.patched,
       this.filesChanged,
@@ -255,6 +276,9 @@ export class AgentControl implements vscode.Disposable {
       router.listenTerminal((params) => {
         this.liveTerminals.onLines(params);
       }),
+      router.listenHost((command) => {
+        this.terminalHost.onCommand(command);
+      }),
     );
     this.registerCommands();
     this.updateTitle();
@@ -264,12 +288,14 @@ export class AgentControl implements vscode.Disposable {
   connected(client: CoreClient): void {
     this.client = client;
     this.liveTerminals.connected(client);
+    this.terminalHost.connected(client);
     void this.reload();
   }
 
   disconnected(): void {
     this.client = undefined;
     this.liveTerminals.disconnected();
+    this.terminalHost.disconnected();
   }
 
   dispose(): void {
@@ -287,6 +313,53 @@ export class AgentControl implements vscode.Disposable {
 
   transcript(sessionId: string): readonly ChatItem[] {
     return this.transcriptFor(sessionId).items;
+  }
+
+  /**
+   * Abre um terminal na pasta do agente com o comando que retoma a MESMA conversa
+   * na CLI do provedor. O texto abre editável: só `claude --resume` e `gemini --resume`
+   * foram conferidos com `--help`; o do Codex pode precisar de ajuste.
+   */
+  private async continueInTerminal(session: AgentSessionInfo): Promise<void> {
+    const suggestion = resumeSuggestion(session.provedor, session.sessaoDoAgente);
+    const shell = shellFlavor(vscode.env.shell, process.platform);
+    const initial = suggestion ? commandLine(suggestion.command, suggestion.args, shell) : '';
+    const typed = await vscode.window.showInputBox({
+      title: l10n.t('Continue in the terminal'),
+      prompt:
+        suggestion && !suggestion.confirmed
+          ? l10n.t(
+              'Command that resumes this conversation in the CLI. It was not verified for this CLI: check it before running.',
+            )
+          : l10n.t('Command that resumes this conversation in the CLI. Edit it if needed.'),
+      value: initial,
+      ignoreFocusOut: true,
+    });
+    const command = typed?.trim();
+    if (!command) return;
+    if (!isFinalAgentState(session.state)) {
+      const stop = l10n.t('Stop the agent and continue');
+      const keep = l10n.t('Continue without stopping');
+      const choice = await vscode.window.showWarningMessage(
+        l10n.t(
+          'The agent is still running in the IDE. Two programs on the same conversation can overwrite each other.',
+        ),
+        { modal: true },
+        stop,
+        keep,
+      );
+      if (!choice) return;
+      if (choice === stop) {
+        await vscode.commands.executeCommand('fakl.agents.stop', session);
+      }
+    }
+    const terminal = vscode.window.createTerminal({
+      name: l10n.t('Continue: {0} ({1})', session.nome, session.sessionId.slice(-6)),
+      cwd: session.worktree?.path ?? session.cwd,
+      iconPath: new vscode.ThemeIcon('terminal'),
+    });
+    terminal.show();
+    terminal.sendText(command, true);
   }
 
   /** Chamado quando o Core não consegue iniciar um agente; o erro continua indo ao chamador. */
@@ -786,6 +859,27 @@ export class AgentControl implements vscode.Disposable {
         // Garante a conexão antes de abrir: o terminal anexa assim que aparece.
         if (!(await this.requireClient())) return;
         this.liveTerminals.show(session);
+      }),
+      // Assumir o agente: o terminal real dele, para digitar direto na CLI (ADR 0047).
+      vscode.commands.registerCommand('fakl.agents.takeOver', async (arg?: unknown) => {
+        const session = await this.pickSession(arg, (s) => !isFinalAgentState(s.state));
+        if (!session) return;
+        if (this.terminalHost.show(session.sessionId)) return;
+        if (session.adaptador === 'terminal') {
+          void vscode.window.showInformationMessage(
+            l10n.t(
+              'The terminal of this agent is not open in this window. Send a message in the chat to start it again.',
+            ),
+          );
+          return;
+        }
+        // Agente ACP: não há terminal vivo; oferece continuar a conversa na CLI do provedor.
+        await vscode.commands.executeCommand('fakl.agents.continueInTerminal', session);
+      }),
+      vscode.commands.registerCommand('fakl.agents.continueInTerminal', async (arg?: unknown) => {
+        const session = await this.pickSession(arg, () => true);
+        if (!session) return;
+        await this.continueInTerminal(session);
       }),
       vscode.commands.registerCommand('fakl.agents.clearFinished', () => {
         const before = new Set(this.board.list().map((s) => s.sessionId));

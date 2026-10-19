@@ -63,18 +63,18 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 
 ### 2.2 Agentes
 
-| ID     | Requisito                                                                                                    | Marco | Critério de aceite                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------------------- |
-| RF-101 | O usuário deve criar, editar e apagar perfis de agente                                                       | M2    | Perfil salvo persiste após reiniciar e sincroniza entre máquinas      |
-| RF-102 | A IDE deve executar agentes Claude Code, Codex CLI e Gemini CLI usando o login ou a chave do usuário         | M2    | Uma tarefa simples conclui em cada provedor                           |
-| RF-103 | A IDE deve executar qualquer agente compatível com ACP ou qualquer CLI de terminal por um adaptador genérico | M2    | Um agente ACP de terceiros roda sem código novo                       |
-| RF-104 | A IDE deve suportar modelos locais via Ollama e LM Studio                                                    | M2    | Com Ollama instalado, um perfil local executa uma tarefa              |
-| RF-105 | Cada agente deve trabalhar num git worktree e num terminal próprios                                          | M2    | Dois agentes no mesmo repositório não alteram os arquivos um do outro |
-| RF-106 | A mesa de controle deve mostrar a árvore de agentes ao vivo com status, custo, logs e terminal               | M2    | Estados mudam na tela em menos de 1 s após o evento                   |
-| RF-107 | O usuário deve ver o diff de cada agente e aceitar ou rejeitar por arquivo                                   | M2    | Aceitar aplica no branch da tarefa; rejeitar descarta                 |
-| RF-108 | O usuário deve poder pausar, retomar, parar e mandar mensagem a qualquer agente                              | M2    | A ação tem efeito em até 2 s                                          |
-| RF-109 | A IDE deve notificar pelo sistema quando um agente termina, falha ou pede decisão                            | M2    | Notificação nativa aparece no Windows e no macOS                      |
-| RF-110 | Ao fechar a IDE com agentes ativos, ela deve perguntar: esperar terminar, ou parar agora                     | M2    | Ambas as opções funcionam; nenhum processo sobra após o fechamento    |
+| ID     | Requisito                                                                                                    | Marco | Critério de aceite                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-101 | O usuário deve criar, editar e apagar perfis de agente                                                       | M2    | Perfil salvo persiste após reiniciar e sincroniza entre máquinas                                                                                          |
+| RF-102 | A IDE deve executar agentes Claude Code, Codex CLI e Gemini CLI usando o login ou a chave do usuário         | M2    | Uma tarefa simples conclui em cada provedor                                                                                                               |
+| RF-103 | A IDE deve executar qualquer agente compatível com ACP ou qualquer CLI de terminal por um adaptador genérico | M2    | Um agente ACP de terceiros roda sem código novo; uma CLI interativa roda como agente de terminal, no terminal do VS Code (ADR 0047)                       |
+| RF-104 | A IDE deve suportar modelos locais via Ollama e LM Studio                                                    | M2    | Com Ollama instalado, um perfil local executa uma tarefa                                                                                                  |
+| RF-105 | Cada agente deve trabalhar num git worktree e num terminal próprios                                          | M2    | Dois agentes no mesmo repositório não alteram os arquivos um do outro; o terminal é de leitura (ADR 0046) e, no agente de terminal, interativo (ADR 0047) |
+| RF-106 | A mesa de controle deve mostrar a árvore de agentes ao vivo com status, custo, logs e terminal               | M2    | Estados mudam na tela em menos de 1 s após o evento                                                                                                       |
+| RF-107 | O usuário deve ver o diff de cada agente e aceitar ou rejeitar por arquivo                                   | M2    | Aceitar aplica no branch da tarefa; rejeitar descarta                                                                                                     |
+| RF-108 | O usuário deve poder pausar, retomar, parar e mandar mensagem a qualquer agente                              | M2    | A ação tem efeito em até 2 s                                                                                                                              |
+| RF-109 | A IDE deve notificar pelo sistema quando um agente termina, falha ou pede decisão                            | M2    | Notificação nativa aparece no Windows e no macOS                                                                                                          |
+| RF-110 | Ao fechar a IDE com agentes ativos, ela deve perguntar: esperar terminar, ou parar agora                     | M2    | Ambas as opções funcionam; nenhum processo sobra após o fechamento                                                                                        |
 
 ### 2.3 Orquestração
 
@@ -431,12 +431,12 @@ interface AgentHandle {
 
 ### 8.2 Adaptadores e provedores
 
-| Adaptador    | Provedores                                                                          | Como conecta                                | Observações                                                                    |
-| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| `acp`        | Gemini CLI (nativo), Claude Code e Codex (via adaptadores ACP), qualquer agente ACP | JSON-RPC sobre stdio                        | Preferido: eventos estruturados, pedidos de permissão e diffs vindos do agente |
-| `claude-sdk` | Claude                                                                              | Claude Agent SDK dentro do Core             | Alternativa quando for preciso controle mais fino de ferramentas e custo       |
-| `pty`        | Qualquer CLI de terminal                                                            | Pseudo-terminal com parser de saída         | Fallback; menos estrutura, estados inferidos pela saída                        |
-| `ollama`     | Ollama e LM Studio                                                                  | API HTTP compatível com OpenAI em localhost | O adaptador faz o laço de ferramentas, já que não há CLI de agente (ADR 0012)  |
+| Adaptador    | Provedores                                                                          | Como conecta                                | Observações                                                                           |
+| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `acp`        | Gemini CLI (nativo), Claude Code e Codex (via adaptadores ACP), qualquer agente ACP | JSON-RPC sobre stdio                        | Preferido: eventos estruturados, pedidos de permissão e diffs vindos do agente        |
+| `claude-sdk` | Claude                                                                              | Claude Agent SDK dentro do Core             | Alternativa quando for preciso controle mais fino de ferramentas e custo              |
+| `terminal`   | Qualquer CLI de terminal (Aider, Claude Code, Codex...)                             | Terminal integrado do VS Code (ADR 0047)    | Fallback; sem estrutura, estados inferidos pela saída; Core só digita em aprovar tudo |
+| `ollama`     | Ollama e LM Studio                                                                  | API HTTP compatível com OpenAI em localhost | O adaptador faz o laço de ferramentas, já que não há CLI de agente (ADR 0012)         |
 
 Lovable não é um adaptador de execução: entra como conector (seção 11.4), e o maestro pode delegar a ele por meio do repositório sincronizado.
 
@@ -464,7 +464,7 @@ A detecção (`detect`) roda ao abrir a IDE e informa na mesa de controle quais 
 - O maestro integra resultados com merge dos branches dos subagentes no branch da tarefa; conflitos viram subtarefa de resolução.
 - Worktrees de sessões finalizadas são removidos ao fim da execução; os branches ficam até o merge ou descarte.
 - Variáveis de ambiente passam por lista de permissão; nenhuma variável com segredo é herdada do shell do usuário.
-- Cada sessão tem um terminal **de leitura** (ADR 0046): o Core monta, dos eventos da sessão (saída do agente, ferramentas, pedidos de permissão e decisões, estados, erros), linhas de terminal com cores ANSI simples num buffer circular de 10.000 linhas, com segredos removidos. `agents.terminal.attach` entrega o histórico e passa a notificar as linhas novas (`agents.terminal.lines`) até `agents.terminal.detach`; a IDE mostra isso num `Pseudoterminal` por agente, sem entrada de teclado. Não há PTY: os agentes falam ACP, que não é um terminal. O PTY interativo, com a saída bruta dos comandos e miniaturas por `@xterm/headless`, continua pendente e depende de um adaptador para CLIs sem ACP (RF-103).
+- Cada sessão tem um terminal **de leitura** (ADR 0046): o Core monta, dos eventos da sessão (saída do agente, ferramentas, pedidos de permissão e decisões, estados, erros), linhas de terminal com cores ANSI simples num buffer circular de 10.000 linhas, com segredos removidos. `agents.terminal.attach` entrega o histórico e passa a notificar as linhas novas (`agents.terminal.lines`) até `agents.terminal.detach`; a IDE mostra isso num `Pseudoterminal` por agente, sem entrada de teclado. Não há PTY: os agentes falam ACP, que não é um terminal. O PTY interativo existe só para o adaptador `terminal` (ADR 0047, `docs/agente-de-terminal.md`): o PTY é o terminal integrado do VS Code, hospedado pela extensão `fakl-core`, que lê a saída pela integração de shell e a conta ao Core. Miniaturas por `@xterm/headless` continuam pendentes.
 
 ## 9. Orquestração
 

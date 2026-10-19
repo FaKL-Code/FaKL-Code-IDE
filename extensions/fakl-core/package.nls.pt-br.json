@@ -100,6 +100,8 @@
   "command.tasks.refresh": "Atualizar tarefas",
   "command.agents.terminal": "Abrir terminal na pasta do agente",
   "command.agents.liveTerminal": "Abrir terminal ao vivo do agente (somente leitura)",
+  "command.agents.takeOver": "Assumir o agente (digitar no terminal dele)",
+  "command.agents.continueInTerminal": "Continuar no terminal (retomar a mesma conversa na CLI)",
   "command.vault.menu": "Vault",
   "command.vault.configure": "Configurar o vault",
   "command.vault.search": "Buscar no vault",

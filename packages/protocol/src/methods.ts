@@ -28,6 +28,12 @@ export const CoreMethods = {
     // Terminal de leitura de cada agente (ADR 0046): histórico e linhas novas.
     'terminal.attach',
     'terminal.detach',
+    // Ponte do agente de terminal (ADR 0047): só a extensão da IDE chama.
+    'terminalHost.register',
+    'terminalHost.ready',
+    'terminalHost.output',
+    'terminalHost.state',
+    'terminalHost.exit',
     'diff',
     'fileContent',
     'applyFiles',
@@ -168,6 +174,8 @@ export const CoreNotifications = {
   event: 'events.event',
   /** Linhas novas do terminal de um agente anexado com `agents.terminal.attach`. */
   terminalLines: 'agents.terminal.lines',
+  /** Comando do Core ao terminal hospedado pela extensão (criar, enviar texto, encerrar). */
+  terminalHost: 'agents.terminalHost.command',
 } as const;
 
 /** Nome completo de um método, por exemplo `runs.start` ou `agents.terminal.attach`. */

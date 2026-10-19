@@ -50,6 +50,30 @@ describe('parseProfile', () => {
     expect(() => parseProfile({ ...raw, adaptador: 'pty' }, 'a')).toThrow(/adaptador/);
   });
 
+  it('aceita perfis de agente de terminal e valida comando, prompt e silêncio', () => {
+    const raw = {
+      id: 'aider',
+      nome: 'Aider',
+      provedor: 'aider',
+      adaptador: 'terminal',
+      comando: 'aider',
+      terminal: { prompt: '^>$', silencioSegundos: 4 },
+    };
+    expect(parseProfile(raw, 'a')).toMatchObject({
+      adaptador: 'terminal',
+      comando: 'aider',
+      terminal: { prompt: '^>$', silencioSegundos: 4 },
+    });
+    expect(() => parseProfile({ ...raw, comando: undefined }, 'a')).toThrow(/comando/);
+    expect(() => parseProfile({ ...raw, terminal: { prompt: '(' } }, 'a')).toThrow(
+      /regular expression/,
+    );
+    expect(() => parseProfile({ ...raw, terminal: { silencioSegundos: 0 } }, 'a')).toThrow(
+      /silencioSegundos/,
+    );
+    expect(() => parseProfile({ ...raw, terminal: 'x' }, 'a')).toThrow(/terminal/);
+  });
+
   it('aceita o modo de permissão do perfil, inclusive autopilot', () => {
     const raw = { id: 'qwen', nome: 'Qwen', provedor: 'ollama', adaptador: 'ollama' };
     expect(parseProfile({ ...raw, permissoes: 'autopilot' }, 'a').permissoes).toBe('autopilot');

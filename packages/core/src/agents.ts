@@ -33,6 +33,7 @@ import {
   isClaudeAccountSlot,
   isPermissionMode,
   PERMISSION_MODES,
+  type AgentAdapterName,
   type AgentLimitInfo,
   type AgentState,
   type ClaudeAccountRef,
@@ -73,6 +74,7 @@ import {
   type StoredSession,
 } from './agent-store.js';
 import { AgentTerminals } from './agent-terminal.js';
+import { TerminalHost } from './terminal-host.js';
 import type { EventBus } from './events/bus.js';
 import {
   objectParams,
@@ -434,12 +436,16 @@ export class AgentRuntime {
   private readonly adapterFor: (profile: AgentProfile) => AgentAdapter;
   /** Terminal de leitura de cada agente, montado dos eventos (ADR 0046). */
   private readonly terminals: AgentTerminals;
+  /** Ponte com os terminais da IDE para os agentes de terminal (ADR 0047). */
+  private readonly terminalHost = new TerminalHost();
 
   constructor(
     private readonly bus: EventBus,
     private readonly options: AgentRuntimeOptions = {},
   ) {
-    this.adapterFor = options.adapterFor ?? ((profile) => adapterForProfile(profile));
+    this.adapterFor =
+      options.adapterFor ??
+      ((profile) => adapterForProfile(profile, process.env, this.terminalHost));
     this.terminals = new AgentTerminals(bus, {
       ...(options.redact ? { redact: options.redact } : {}),
       exists: (id) => this.sessions.has(id) || this.dormant.has(id),
@@ -552,6 +558,7 @@ export class AgentRuntime {
     });
     router.register('agents.list', () => this.list());
     this.terminals.register(router);
+    this.terminalHost.register(router);
     router.register('agents.send', async (params) => {
       const p = objectParams(params);
       const exibir = typeof p.exibir === 'string' && p.exibir.trim() ? p.exibir : undefined;
@@ -1153,12 +1160,19 @@ export class AgentRuntime {
         ...(fala ? { ultimaFala: fala } : {}),
         ...(s.title ? { titulo: s.title } : {}),
         ...(s.limite ? { limite: s.limite } : {}),
+        adaptador: s.profile.adaptador,
+        ...(s.handle.remoteSessionId ? { sessaoDoAgente: s.handle.remoteSessionId } : {}),
         // Encerrada, mas uma mensagem nova abre o agente de novo.
         ...(isFinalAgentState(state) && this.persisted(s) ? { retomavel: true } : {}),
       };
     });
     const accounts = this.options.claudeAccounts;
     const providers = new Map(this.profiles.map((profile) => [profile.id, profile.provedor]));
+    const adapters = new Map(this.profiles.map((profile) => [profile.id, profile.adaptador]));
+    const adapterOf = (profileId: string): { adaptador?: AgentAdapterName } => {
+      const adaptador = adapters.get(profileId);
+      return adaptador ? { adaptador } : {};
+    };
     const providerOf = (profileId: string): { provedor?: string } => {
       const provedor = providers.get(profileId);
       return provedor ? { provedor } : {};
@@ -1179,6 +1193,8 @@ export class AgentRuntime {
       ...(r.taskId ? { taskId: r.taskId } : {}),
       ...(r.retomada ? { retomada: r.retomada } : {}),
       ...(r.titulo ? { titulo: r.titulo } : {}),
+      ...adapterOf(r.profileId),
+      ...(r.acpSessionId ? { sessaoDoAgente: r.acpSessionId } : {}),
       retomavel: true,
       iniciadaEm: r.criadoEm,
       atividadeEm: r.atualizadoEm,
@@ -1285,6 +1301,7 @@ export class AgentRuntime {
     // Estado final de cada sessão no disco: na próxima abertura elas voltam retomáveis.
     await Promise.all([...this.sessions.values()].map((s) => this.saveNow(s)));
     await this.options.store?.flush();
+    this.terminalHost.dispose();
   }
 
   private session(p: Record<string, unknown>): Session {
