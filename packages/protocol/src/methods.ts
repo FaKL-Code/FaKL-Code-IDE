@@ -67,6 +67,7 @@ export const CoreMethods = {
     'appendDaily',
     'daily',
     'configure',
+    'configureSemantic',
   ],
   /** GitHub no Core: ferramentas dos agentes e o credential helper (SDD 11.1). */
   github: [

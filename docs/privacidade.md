@@ -45,20 +45,42 @@ Não acontecem em uma instalação nova: dependem de você ter ligado ou informa
 
 Só acontecem quando você pede (comando, botão, mensagem).
 
-| O que                                     | Para onde                                                                             | O que vai                                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Conferir as versões dos conectores**    | `registry.npmjs.org`                                                                  | O nome dos pacotes                                                                                         |
-| **Procurar atualização da FaKL-Code**     | `raw.githubusercontent.com`                                                           | Um GET sem corpo                                                                                           |
-| Atualizar um adaptador ou CLI             | Registro do npm, pelo `npm install -g` que a IDE digita no terminal                   | O que o `npm` envia; o comando vai sem Enter, para você conferir e rodar                                   |
-| Testar o relay (`remote.test`)            | O seu relay                                                                           | Uma conexão e, se houver, a chave do relay                                                                 |
-| Login no GitHub                           | `github.com` (fluxo de dispositivo) e `api.github.com`                                | O client id da aplicação e o código do dispositivo                                                         |
-| Enviar o resultado de uma tarefa          | `origin` (`git push`), nos modos que publicam o branch ou o PR e nos projetos Lovable | O branch da tarefa                                                                                         |
-| Ações do GitHub, da Hostinger e do e-mail | `api.github.com`, `developers.hostinger.com`, o servidor IMAP que você informou       | O que a ação precisa: o token do serviço e os dados do pedido                                              |
-| SSH                                       | O servidor que você escolheu                                                          | A sessão SSH                                                                                               |
-| Voz por OpenAI ou Groq                    | `api.openai.com/v1` ou `api.groq.com/openai/v1` (ou o `endpoint` de `voz:`)           | O áudio gravado e a chave do provedor; nos modos "navegador do celular" e "local" não vai a esses serviços |
-| Busca semântica do vault (embeddings)     | O servidor de `vault.semantica` (padrão: Ollama ou LM Studio em `127.0.0.1`)          | Trechos das notas; ficam na máquina se o servidor for local                                                |
-| Agentes locais (Ollama, LM Studio)        | `127.0.0.1` (ou o `endpoint` do perfil)                                               | A conversa; ao listar os provedores, o Core também pergunta quais modelos o servidor local tem             |
-| PWA do celular                            | O seu relay (`vapid.json` e o canal cifrado)                                          | O mesmo do controle remoto                                                                                 |
+| O que                                     | Para onde                                                                                          | O que vai                                                                                                                        |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Conferir as versões dos conectores**    | `registry.npmjs.org`                                                                               | O nome dos pacotes                                                                                                               |
+| **Procurar atualização da FaKL-Code**     | `raw.githubusercontent.com`                                                                        | Um GET sem corpo                                                                                                                 |
+| Atualizar um adaptador ou CLI             | Registro do npm, pelo `npm install -g` que a IDE digita no terminal                                | O que o `npm` envia; o comando vai sem Enter, para você conferir e rodar                                                         |
+| Testar o relay (`remote.test`)            | O seu relay                                                                                        | Uma conexão e, se houver, a chave do relay                                                                                       |
+| Login no GitHub                           | `github.com` (fluxo de dispositivo) e `api.github.com`                                             | O client id da aplicação e o código do dispositivo                                                                               |
+| Enviar o resultado de uma tarefa          | `origin` (`git push`), nos modos que publicam o branch ou o PR e nos projetos Lovable              | O branch da tarefa                                                                                                               |
+| Ações do GitHub, da Hostinger e do e-mail | `api.github.com`, `developers.hostinger.com`, o servidor IMAP que você informou                    | O que a ação precisa: o token do serviço e os dados do pedido                                                                    |
+| SSH                                       | O servidor que você escolheu                                                                       | A sessão SSH                                                                                                                     |
+| Voz por OpenAI ou Groq                    | `api.openai.com/v1` ou `api.groq.com/openai/v1` (ou o `endpoint` de `voz:`)                        | O áudio gravado e a chave do provedor; nos modos "navegador do celular" e "local" não vai a esses serviços                       |
+| Busca semântica do vault (embeddings)     | O servidor de `vault.semantica` (padrão: Ollama ou LM Studio em `127.0.0.1`)                       | Trechos das notas; ficam na máquina se o servidor for local                                                                      |
+| Busca semântica por API de embeddings     | O `endpoint` de `vault.semantica` com `provedor: openai` (OpenAI, Voyage, Mistral, Azure ou o seu) | Trechos das notas públicas e as buscas, **fora da máquina**, e a chave da API; só depois de você confirmar o servidor (ADR 0050) |
+| Agentes locais (Ollama, LM Studio)        | `127.0.0.1` (ou o `endpoint` do perfil)                                                            | A conversa; ao listar os provedores, o Core também pergunta quais modelos o servidor local tem                                   |
+| PWA do celular                            | O seu relay (`vapid.json` e o canal cifrado)                                                       | O mesmo do controle remoto                                                                                                       |
+
+## Busca semântica por API de embeddings (notas saem da máquina)
+
+A busca semântica do vault funciona de dois jeitos. Com um modelo local (Ollama ou LM Studio) o
+texto das notas fica na sua máquina. Com o provedor **API compatível com a da OpenAI**
+(`provedor: openai` em `vault.semantica`), o conteúdo das notas indexadas **sai da máquina**
+para o servidor do `endpoint` e é processado por ele, sob os termos de quem o opera.
+
+- **Desligada por padrão.** Sem `vault.semantica` nada é enviado.
+- **Confirmação uma vez, com o domínio.** Antes do primeiro envio a IDE mostra o servidor
+  (por exemplo, `api.openai.com`) e uma estimativa de notas, trechos e tokens. Só o "sim" grava
+  `confirmadoPara` no `config.yaml`; sem ele, ou se o endpoint mudar de servidor, o Core não faz
+  pedido nenhum e a busca fica parada.
+- **O que vai:** o título e os trechos (cerca de 800 caracteres) das notas públicas, o texto
+  de cada busca e o nome do modelo. Notas privadas (`privado: true`) nunca vão.
+- **A chave** da API fica no cofre do sistema (comando **FaKL: Guardar a chave da API de
+  embeddings**), nunca em arquivo, e só é enviada ao servidor configurado.
+- **Como desligar:** **FaKL: Busca semântica: escolher o provedor de embeddings** e
+  "Desligar a busca semântica", ou remover `vault.semantica`. O arquivo de vetores
+  (`~/.fakl/data/embeddings.json`) fica na máquina e é descartado quando o provedor, o modelo
+  ou o endpoint mudam.
 
 ## O que não é da FaKL-Code
 

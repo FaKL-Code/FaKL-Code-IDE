@@ -490,7 +490,12 @@ function actionsOf(id: SetupStepId, snapshot: SetupSnapshot): SetupAction[] {
           : []),
       ];
     case 'vault':
-      return [{ id: 'fakl.vault.configure', rotulo: l10n.t('Set up the vault'), principal: true }];
+      return [
+        { id: 'fakl.vault.configure', rotulo: l10n.t('Set up the vault'), principal: true },
+        ...(snapshot.vault?.ativo
+          ? [{ id: 'fakl.vault.embeddings.configure', rotulo: l10n.t('Semantic search') }]
+          : []),
+      ];
     case 'ssh':
       return [
         { id: 'fakl.ssh.add', rotulo: l10n.t('Add a host'), principal: true },

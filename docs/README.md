@@ -75,3 +75,4 @@
 | [0044](adr/0044-identidade-do-controle-remoto-cifrada-em-repouso.md)           | Identidade do controle remoto cifrada em repouso                      |
 | [0045](adr/0045-inventario-de-rede-e-interruptor-das-consultas-automaticas.md) | Inventário de rede e interruptor das consultas automáticas            |
 | [0046](adr/0046-terminal-ao-vivo-somente-leitura-por-agente.md)                | Terminal ao vivo, somente leitura, por agente                         |
+| [0050](adr/0050-busca-semantica-por-api-de-embeddings.md)                      | Busca semântica por API de embeddings compatível com a da OpenAI      |

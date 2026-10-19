@@ -109,6 +109,7 @@ describe('cofre', () => {
       'hostinger.token': false,
       'voz.token': false,
       'remote.identidade': false,
+      'vault.embeddings': false,
     });
   });
 });

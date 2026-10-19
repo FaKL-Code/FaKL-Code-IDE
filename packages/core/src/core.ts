@@ -18,7 +18,7 @@ import {
 import { AgentSessionStore } from './agent-store.js';
 import { AgentRuntime, type AgentRuntimeOptions } from './agents.js';
 import { ClaudeAccounts } from './claude-accounts.js';
-import { ConfigStore, type FirstRunInfo, type VaultConfig } from './config.js';
+import { ConfigStore, type FirstRunInfo, type SemanticConfig, type VaultConfig } from './config.js';
 import { CostTracker } from './costs.js';
 import { EventBus, type Disposable } from './events/bus.js';
 import type { HostPort } from './host.js';
@@ -41,7 +41,7 @@ import { objectParams, Router, RpcError, stringArrayParam, stringParam } from '.
 import { RemoteGateway } from './remote/gateway.js';
 import { RpcServer } from './rpc/server.js';
 import { registerUi } from './ui.js';
-import { REMOTE_IDENTITY_SECRET, SecretVault } from './secrets.js';
+import { EMBEDDINGS_SECRET, REMOTE_IDENTITY_SECRET, SecretVault } from './secrets.js';
 import { Approvals } from './security/approvals.js';
 import { CafeService } from './cafe.js';
 import { ExternalSessionsService } from './external-sessions.js';
@@ -49,6 +49,7 @@ import { AuditLog } from './security/audit.js';
 import { redactSecrets } from './security/scan.js';
 import { AgentTokens } from './tokens.js';
 import { ulid } from './ulid.js';
+import { endpointHost } from './vault/semantic.js';
 import { VaultService } from './vault/vault.js';
 import { VozService } from './voz.js';
 
@@ -619,11 +620,52 @@ export function createCore(options: CoreOptions): Core {
     costs: tracker,
     orchestrator,
     redact,
+    embeddingsKey: () => secrets.get(EMBEDDINGS_SECRET),
     ...(dataDir ? { dataDir } : {}),
     ...(options.machine ? { machine: options.machine } : {}),
     ...(options.log ? { log: options.log } : {}),
   });
   vault.register(router);
+  secrets.onChange((name) => {
+    if (name === EMBEDDINGS_SECRET) vault.embeddingsKeyChanged();
+  });
+  router.register('vault.configureSemantic', async (params, context) => {
+    // Escolher o servidor e confirmar o envio das notas é decisão da pessoa, na IDE.
+    if (context.principal !== undefined) {
+      throw RpcError.invalidParams(l10n.t('only the IDE configures semantic search'));
+    }
+    if (!config) throw RpcError.invalidParams(l10n.t('Settings unavailable'));
+    const current = config.config.vault;
+    if (!current)
+      throw RpcError.invalidParams(l10n.t('No vault configured; set vault.caminho in config.yaml'));
+    const p = objectParams(params);
+    const rest = {
+      caminho: current.caminho,
+      ...(current.remoto ? { remoto: current.remoto } : {}),
+      ...(current.sincronizar !== undefined ? { sincronizar: current.sincronizar } : {}),
+    };
+    let semantica: SemanticConfig | undefined;
+    if (p.provedor !== null) {
+      const provedor = stringParam(p, 'provedor');
+      const modelo = stringParam(p, 'modelo');
+      const endpoint = typeof p.endpoint === 'string' && p.endpoint ? p.endpoint : undefined;
+      // Confirmar vale para o servidor do endpoint de agora; trocar de servidor pede de novo.
+      const confirmar = p.confirmar === true && provedor === 'openai' && endpoint;
+      semantica = {
+        provedor: provedor as SemanticConfig['provedor'],
+        modelo,
+        ...(endpoint ? { endpoint } : {}),
+        ...(confirmar ? { confirmadoPara: endpointHost(endpoint) } : {}),
+      };
+    }
+    try {
+      await config.setVault({ ...rest, ...(semantica ? { semantica } : {}) });
+    } catch (error) {
+      throw RpcError.invalidParams(error instanceof Error ? error.message : String(error));
+    }
+    await reopenVault();
+    return vault.status();
+  });
   router.register('vault.configure', async (params) => {
     if (!config) throw RpcError.invalidParams(l10n.t('Settings unavailable'));
     const p = objectParams(params);

@@ -1,6 +1,5 @@
 import { closeSync, openSync, readSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 
 import type { CoreClient, PlaybookInfo, SearchHit, VaultStatus } from '@fakl/core';
@@ -9,6 +8,7 @@ import type { Run, Task } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
 import type { AgentEventRouter } from './agents.js';
+import { EmbeddingsUi } from './vault-embeddings.js';
 import type { EmbedNote } from './vault-embed.js';
 
 interface GraphNode {
@@ -54,15 +54,23 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
 
   readonly onDidChangeTreeData = this.changed.event;
 
-  constructor(router: AgentEventRouter) {
+  private readonly embeddings: EmbeddingsUi;
+
+  constructor(router: AgentEventRouter, context: vscode.ExtensionContext) {
     this.item = vscode.window.createStatusBarItem('fakl.vault', vscode.StatusBarAlignment.Left, 99);
     this.item.name = l10n.t('FaKL vault');
     this.item.command = 'fakl.vault.menu';
     this.backlinksView = vscode.window.createTreeView('fakl.vault.backlinks', {
       treeDataProvider: this,
     });
+    this.embeddings = new EmbeddingsUi(context, {
+      client: () => this.client,
+      status: () => this.status,
+      reload: () => this.reload(),
+    });
     this.disposables.push(
       this.item,
+      this.embeddings,
       this.changed,
       this.backlinksView,
       router.listen((event) => {
@@ -97,7 +105,8 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
 
   connected(client: CoreClient): void {
     this.client = client;
-    void this.reload();
+    // A chave vai antes: o Core indexa assim que o vault abre.
+    void this.embeddings.connected(client).then(() => this.reload());
   }
 
   disconnected(): void {
@@ -347,6 +356,14 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
     const actions: (vscode.QuickPickItem & { command?: string })[] = this.root
       ? [
           { label: `$(search) ${l10n.t('Search the vault')}`, command: 'fakl.vault.search' },
+          ...(this.status?.semantica?.aguardaConfirmacao
+            ? [
+                {
+                  label: `$(shield) ${l10n.t('Confirm sending notes to the embeddings API')}`,
+                  command: 'fakl.vault.embeddings.confirm',
+                },
+              ]
+            : []),
           ...(this.status?.semantica
             ? [
                 {
@@ -364,6 +381,10 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
           {
             label: `$(window) ${l10n.t('Open the vault in a window')}`,
             command: 'fakl.vault.openWindow',
+          },
+          {
+            label: `$(sparkle) ${l10n.t('Semantic search: choose the embeddings provider')}`,
+            command: 'fakl.vault.embeddings.configure',
           },
           {
             label: `$(gear) ${l10n.t('Change folder or remote')}`,
@@ -462,21 +483,26 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
     }
   }
 
+  /** API de embeddings configurada, mas sem o "sim" da pessoa ao envio das notas. */
+  private awaitingConfirmation(): boolean {
+    return this.status?.semantica?.aguardaConfirmacao === true;
+  }
+
   private async search(semantic: boolean): Promise<void> {
     const client = this.requireClient();
     if (!client || !(await this.requireVault())) return;
+    if (semantic && this.awaitingConfirmation()) {
+      await vscode.commands.executeCommand('fakl.vault.embeddings.confirm');
+      if (this.awaitingConfirmation()) return;
+    }
     if (semantic && !this.status?.semantica) {
       const choice = await vscode.window.showInformationMessage(
         l10n.t(
-          'Semantic search is off. Turn it on in vault.semantica in config.yaml, with a local embeddings model (e.g. nomic-embed-text on Ollama).',
+          'Semantic search is off. Choose an embeddings provider: a local model (e.g. nomic-embed-text on Ollama) or an OpenAI-compatible API.',
         ),
-        l10n.t('Open config.yaml'),
+        l10n.t('Choose the provider'),
       );
-      if (choice) {
-        await vscode.window.showTextDocument(
-          vscode.Uri.file(join(homedir(), '.fakl', 'config.yaml')),
-        );
-      }
+      if (choice) await vscode.commands.executeCommand('fakl.vault.embeddings.configure');
       return;
     }
     const pick = vscode.window.createQuickPick<vscode.QuickPickItem & { path: string }>();

@@ -600,7 +600,7 @@ No Mac, o Obsidian abre a mesma pasta. Como o Obsidian não sincroniza com a IDE
 
 - Índice de texto completo em memória, atualizado por observador de arquivos (ADR 0008).
 - Grafo de links e backlinks extraído dos wikilinks na indexação.
-- Busca semântica opcional (RF-407): embeddings por trecho de nota, com modelo local via Ollama ou LM Studio (`vault.semantica` no config.yaml), guardados em `~/.fakl/data/embeddings.json`. Desligada por padrão; notas privadas nunca vão ao modelo (ADR 0013).
+- Busca semântica opcional (RF-407): embeddings por trecho de nota, com modelo local via Ollama ou LM Studio (`vault.semantica` no config.yaml), guardados em `~/.fakl/data/embeddings.json`. Também aceita uma API compatível com a da OpenAI (`provedor: openai`, ADR 0050): a chave fica no cofre do sistema (`vault.embeddings`), o texto das notas públicas sai da máquina e nada é enviado antes de a pessoa confirmar o servidor. Desligada por padrão; notas privadas nunca vão ao modelo (ADR 0013).
 
 ### 10.4 Ferramentas MCP do vault
 

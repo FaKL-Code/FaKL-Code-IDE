@@ -15,7 +15,14 @@ export const SECRET_NAMES = [
   'hostinger.token',
   'voz.token',
   'remote.identidade',
+  'vault.embeddings',
 ] as const;
+/**
+ * Chave da API de embeddings da busca semântica do vault (ADR 0050). Não reaproveita
+ * `apikey.<provedor>`: essa vai ao ambiente dos agentes daquele provedor, e a chave
+ * de embeddings só pode ir ao endpoint configurado em `vault.semantica`.
+ */
+export const EMBEDDINGS_SECRET = 'vault.embeddings';
 /** Chave de 32 bytes que cifra `~/.fakl/remote/identity.json` (ADR 0044). */
 export const REMOTE_IDENTITY_SECRET = 'remote.identidade';
 /**
