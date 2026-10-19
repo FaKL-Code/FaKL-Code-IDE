@@ -9,6 +9,7 @@ export * from './tasks.js';
 export * from './remote.js';
 export * from './integrations.js';
 export * from './cafe.js';
+export * from './ci.js';
 export * from './external.js';
 export * from './github.js';
 export * from './email.js';

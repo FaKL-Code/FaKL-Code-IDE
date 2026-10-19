@@ -1,17 +1,23 @@
 import {
   Announcer,
+  AnnouncerGroup,
+  describeKitchen,
   describeRoom,
   describeSeat,
   isMaestro,
   mountCafe,
+  mountKitchen,
   OTHER_COLORS,
   PROVIDER_COLORS,
+  renderKitchenCards,
+  renderKitchenList,
+  RunAnnouncer,
   STATE_LABEL,
   type SeatInfo,
 } from '@fakl/cafe';
 import { l10n, useLocale } from '@fakl/i18n';
 
-import type { ExternalSession } from '@fakl/protocol';
+import type { CiRun, ExternalSession } from '@fakl/protocol';
 
 import type { FromCafe, ToCafe } from '../cafe-protocol.js';
 import { initCoach } from './coach.js';
@@ -64,6 +70,47 @@ const room = mountCafe({
   },
 });
 
+const kitchenBlock = document.getElementById('cozinha-bloco') as HTMLDivElement;
+const kitchenCanvas = document.getElementById('cozinha') as HTMLCanvasElement;
+const kitchenList = document.getElementById('ci-presentes') as HTMLUListElement;
+const kitchenCards = document.getElementById('ci-telas') as HTMLDivElement;
+
+function openRun(run: CiRun): void {
+  vscode.postMessage({ type: 'ciAbrir', repo: run.repo, id: run.id, url: run.url });
+}
+
+const kitchen = mountKitchen({
+  canvas: kitchenCanvas,
+  onOpen: openRun,
+  onChange: () => {
+    renderKitchen();
+  },
+});
+
+/** Cozinha do CI: só aparece com repositórios acompanhados; lista, cartões e anúncios seguem a bancada. */
+function renderKitchen(): void {
+  const status = kitchen.status;
+  const runs = kitchen.runs();
+  const visible = status !== undefined && status.repos.length > 0;
+  kitchenBlock.hidden = !visible;
+  kitchenCanvas.setAttribute(
+    'aria-label',
+    [
+      describeKitchen(status) || l10n.t('CI kitchen'),
+      runs.length === 0 ? l10n.t('No runs yet.') : '',
+    ]
+      .filter(Boolean)
+      .join('. '),
+  );
+  renderKitchenList(kitchenList, runs, { onOpen: openRun });
+  renderKitchenCards(kitchenCards, runs, { onOpen: openRun });
+  if (visible) {
+    // A primeira leitura fixa o ponto de partida; só o que muda depois é anunciado.
+    runAnnouncer.observe(runs);
+    if (loaded) scheduleAnnouncement();
+  }
+}
+
 const strip = document.getElementById('telas') as HTMLDivElement;
 const present = document.getElementById('presentes') as HTMLUListElement;
 const live = document.getElementById('anuncio') as HTMLDivElement;
@@ -74,6 +121,9 @@ const notice = document.getElementById('aviso') as HTMLParagraphElement;
 
 const ANNOUNCE_EVERY_MS = 5_000;
 const announcer = new Announcer({ minIntervalMs: ANNOUNCE_EVERY_MS });
+/** Resultados do CI entram na mesma região `aria-live`, agrupados com os dos agentes. */
+const runAnnouncer = new RunAnnouncer({ minIntervalMs: ANNOUNCE_EVERY_MS });
+const speech = new AnnouncerGroup(announcer, runAnnouncer);
 let announceTimer: number | undefined;
 /** Antes do primeiro retrato do café não há o que comparar (e não se anuncia a chegada de todos). */
 let loaded = false;
@@ -94,11 +144,11 @@ function seatInfos(): SeatInfo[] {
 
 function scheduleAnnouncement(): void {
   if (announceTimer !== undefined) return;
-  const wait = announcer.waitMs(Date.now());
+  const wait = speech.waitMs(Date.now());
   if (wait === undefined) return;
   announceTimer = window.setTimeout(() => {
     announceTimer = undefined;
-    const text = announcer.take(Date.now());
+    const text = speech.take(Date.now());
     if (text) live.textContent = text;
     scheduleAnnouncement();
   }, wait);
@@ -335,7 +385,9 @@ window.addEventListener('message', (event: MessageEvent<ToCafe>) => {
   switch (message.type) {
     case 'state':
       room.setOffline(false);
+      kitchen.setOffline(false);
       room.applyState(message.state);
+      kitchen.apply(message.state.ci);
       if (!loaded) {
         // O primeiro retrato é o ponto de partida: só as mudanças depois dele são anunciadas.
         loaded = true;
@@ -343,13 +395,16 @@ window.addEventListener('message', (event: MessageEvent<ToCafe>) => {
       }
       return;
     case 'event':
-      room.onEvent(message.event);
+      // Execuções do CI vão para a cozinha; o resto, para a sala.
+      if (message.event.topic === 'ci.run') kitchen.onRun(message.event.data as CiRun);
+      else room.onEvent(message.event);
       return;
     case 'externas':
       renderExternal(message.sessoes);
       return;
     case 'offline':
       room.setOffline(true);
+      kitchen.setOffline(true);
       renderExternal([]);
       return;
   }
@@ -363,5 +418,8 @@ document.getElementById('nova-tarefa')?.addEventListener('click', () => {
 });
 
 renderStrip();
+renderKitchen();
+// Duração das execuções em andamento anda sozinha: refaz os cartões de vez em quando.
+window.setInterval(renderKitchen, 10_000);
 vscode.postMessage({ type: 'ready' });
 initCoach(vscode, 'cafe');

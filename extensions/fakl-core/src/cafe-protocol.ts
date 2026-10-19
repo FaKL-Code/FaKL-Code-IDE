@@ -16,4 +16,6 @@ export type FromCafe =
   | { readonly type: 'externasAbrir'; readonly id: string }
   /** Botões da sala: conversar com um agente novo ou abrir uma tarefa com maestro. */
   | { readonly type: 'newAgent' }
-  | { readonly type: 'newTask' };
+  | { readonly type: 'newTask' }
+  /** Clicaram numa execução da cozinha do CI: abre no painel de Actions da IDE. */
+  | { readonly type: 'ciAbrir'; readonly repo: string; readonly id: number; readonly url: string };
