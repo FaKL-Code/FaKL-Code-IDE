@@ -1,21 +1,21 @@
 {
-  "tag": "v0.1.9",
-  "name": "0.1.9",
-  "productVersion": "1.140.109.0",
-  "publishedAt": 1792422570082,
-  "page": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/tag/v0.1.9",
+  "tag": "v0.1.10",
+  "name": "0.1.10",
+  "productVersion": "1.140.110.0",
+  "publishedAt": 1792433634788,
+  "page": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/tag/v0.1.10",
   "platforms": {
     "win32-x64": {
-      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.9/FaKL-CodeUserSetup-x64-1.140.0000109.exe",
-      "sha256": "f288220a2ec04e4568f39666dab90116f97597aece3aa3b1f029536a81a33ef1"
+      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.10/FaKL-CodeUserSetup-x64-1.140.0000110.exe",
+      "sha256": "5bee7e09042c13bddc397d3a297a2f0ce6ac2b3f802908811da40eba0f031745"
     },
     "darwin-arm64": {
-      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.9/FaKL-Code-darwin-arm64-1.140.0000109.zip",
-      "sha256": "7da93d7c89184e6550b18a91df8e03ae05a8010ca4260850e4e8c7ca7d534261"
+      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.10/FaKL-Code-darwin-arm64-1.140.0000110.zip",
+      "sha256": "eb41dcf0c367f94a2e923baeb90857a17667ab40da9817a071d19db88cb564f8"
     },
     "linux-x64": {
-      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.9/FaKL-Code-linux-x64-1.140.0000109.tar.gz",
-      "sha256": "0080516c8c15093ec2f116ec5e3014be17cc1dd1ad8729ae32562f01c791ee68"
+      "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.10/FaKL-Code-linux-x64-1.140.0000110.tar.gz",
+      "sha256": "e399be74397e53c4703d5eb1b61b9f1e4aafab77ca953c5c124f8ee2c1a75ec8"
     }
   }
 }
