@@ -7,6 +7,7 @@
 //   confirma o pedido por voz; leva o @fakl/voz embutido, como o chat e a Mesa;
 // - cafe/: o cyber café (webview), a sala em canvas com os agentes, mais os
 //   PNGs de packages/cafe/assets/ e assets.json com a lista do que existe;
+// - cozinha/: a cozinha do CI (webview), as execuções do GitHub Actions em tela própria;
 // - mermaid/: diagramas Mermaid no preview de Markdown;
 // - graph/: o grafo de notas do vault (webview);
 // - github/: o GitHub em tela cheia (webview), com README e Markdown renderizados;
@@ -51,6 +52,7 @@ const common = {
 
 await mkdir('dist/chat', { recursive: true });
 await mkdir('dist/cafe', { recursive: true });
+await mkdir('dist/cozinha', { recursive: true });
 await mkdir('dist/mesa', { recursive: true });
 await mkdir('dist/falar', { recursive: true });
 await mkdir('dist/mermaid', { recursive: true });
@@ -117,6 +119,15 @@ await Promise.all([
     ...common,
     entryPoints: ['src/webview/mermaid-preview.ts'],
     outfile: 'dist/mermaid/mermaid-preview.js',
+    platform: 'browser',
+    target: 'es2022',
+    format: 'iife',
+  }),
+  copyFile('src/webview/cozinha.css', 'dist/cozinha/cozinha.css'),
+  build({
+    ...common,
+    entryPoints: ['src/webview/cozinha.ts'],
+    outfile: 'dist/cozinha/cozinha.js',
     platform: 'browser',
     target: 'es2022',
     format: 'iife',

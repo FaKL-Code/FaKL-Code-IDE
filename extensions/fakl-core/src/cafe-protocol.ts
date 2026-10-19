@@ -17,5 +17,5 @@ export type FromCafe =
   /** Botões da sala: conversar com um agente novo ou abrir uma tarefa com maestro. */
   | { readonly type: 'newAgent' }
   | { readonly type: 'newTask' }
-  /** Clicaram numa execução da cozinha do CI: abre no painel de Actions da IDE. */
-  | { readonly type: 'ciAbrir'; readonly repo: string; readonly id: number; readonly url: string };
+  /** Abre a cozinha do CI, que tem tela própria (ADR 0053). */
+  | { readonly type: 'abrirCozinha' };

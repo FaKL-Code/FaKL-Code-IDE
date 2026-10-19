@@ -13,16 +13,9 @@ import { moveToNewWindow } from './janelas.js';
 import { attachTips } from './tour.js';
 
 /** Eventos que o café anima; o resto chega por `cafe.state`. */
-const ANIMATED = new Set([
-  'agent.state',
-  'agent.thumbnail',
-  'run.round',
-  'run.limit',
-  'run.done',
-  'ci.run',
-]);
+const ANIMATED = new Set(['agent.state', 'agent.thumbnail', 'run.round', 'run.limit', 'run.done']);
 /** Eventos que mudam o placar ou a lista de agentes. */
-const REFRESH = new Set(['run.done', 'cost.update', 'ci.run']);
+const REFRESH = new Set(['run.done', 'cost.update']);
 
 /**
  * Cyber café (SDD 13): uma sala em pixel art onde cada agente é um avatar num
@@ -151,16 +144,9 @@ export class CafeUi implements vscode.Disposable {
       case 'newTask':
         await vscode.commands.executeCommand('fakl.tasks.new');
         return;
-      case 'ciAbrir': {
-        const [owner, name] = message.repo.split('/');
-        await vscode.commands.executeCommand('fakl.github.openRun', {
-          owner,
-          name,
-          id: message.id,
-          url: message.url,
-        });
+      case 'abrirCozinha':
+        await vscode.commands.executeCommand('fakl.ci.open');
         return;
-      }
     }
   }
 
@@ -244,9 +230,7 @@ export class CafeUi implements vscode.Disposable {
 <title>${l10n.t('Cyber café')}</title>
 </head>
 <body>
-<div id="sala" data-assets="${assets.toString()}" data-files="${escapeAttr(this.assetList(media))}"><canvas id="cena" role="img" aria-label="${escapeAttr(l10n.t('Cyber café room with the agents'))}"></canvas><p id="aviso" hidden></p><div id="acoes"><button id="novo-agente" type="button" aria-label="${escapeAttr(l10n.t('Add agent'))}" title="${escapeAttr(l10n.t('Chat with a new agent; it sits down at a PC'))}">${l10n.t('+ Agent')}</button><button id="nova-tarefa" type="button" aria-label="${escapeAttr(l10n.t('Add task'))}" title="${escapeAttr(l10n.t('Task with a maestro, who calls the agents'))}">${l10n.t('+ Task')}</button></div><ul id="presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('Agents in the café'))}"></ul><div id="anuncio" class="so-leitor" role="status" aria-live="polite"></div></div>
-<div id="cozinha-bloco" hidden><canvas id="cozinha" role="img" aria-label="${escapeAttr(l10n.t('CI kitchen'))}"></canvas><ul id="ci-presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('CI runs in the kitchen'))}"></ul></div>
-<div id="ci-telas" role="list" aria-label="${escapeAttr(l10n.t('CI runs'))}" hidden></div>
+<div id="sala" data-assets="${assets.toString()}" data-files="${escapeAttr(this.assetList(media))}"><canvas id="cena" role="img" aria-label="${escapeAttr(l10n.t('Cyber café room with the agents'))}"></canvas><p id="aviso" hidden></p><div id="acoes"><button id="novo-agente" type="button" aria-label="${escapeAttr(l10n.t('Add agent'))}" title="${escapeAttr(l10n.t('Chat with a new agent; it sits down at a PC'))}">${l10n.t('+ Agent')}</button><button id="nova-tarefa" type="button" aria-label="${escapeAttr(l10n.t('Add task'))}" title="${escapeAttr(l10n.t('Task with a maestro, who calls the agents'))}">${l10n.t('+ Task')}</button><button id="abrir-cozinha" type="button" title="${escapeAttr(l10n.t('Open the CI kitchen, with the GitHub Actions runs'))}">${l10n.t('CI kitchen')}</button></div><ul id="presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('Agents in the café'))}"></ul><div id="anuncio" class="so-leitor" role="status" aria-live="polite"></div></div>
 <div id="telas" role="list" aria-label="${escapeAttr(l10n.t('Agent screens'))}"></div>
 <div id="externas" role="list" aria-label="${escapeAttr(l10n.t('Conversations from other tools'))}" hidden></div>
 <script nonce="${nonce}" src="${script.toString()}"></script>

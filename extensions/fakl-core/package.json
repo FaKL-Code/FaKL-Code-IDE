@@ -21,6 +21,7 @@
     "onTerminalProfile:fakl.ssh.terminal",
     "onWebviewPanel:fakl.mesa",
     "onWebviewPanel:fakl.cafe",
+    "onWebviewPanel:fakl.ci",
     "onWebviewPanel:fakl.chatJanela"
   ],
   "capabilities": {
@@ -97,6 +98,12 @@
         "title": "%command.cafe.open%",
         "category": "FaKL",
         "icon": "$(coffee)"
+      },
+      {
+        "command": "fakl.ci.open",
+        "title": "%command.ci.open%",
+        "category": "FaKL",
+        "icon": "$(github-action)"
       },
       {
         "command": "fakl.ci.acompanhar",
@@ -1118,6 +1125,12 @@
       {
         "command": "fakl.janela.cafe",
         "title": "%command.janela.cafe%",
+        "category": "FaKL",
+        "icon": "$(multiple-windows)"
+      },
+      {
+        "command": "fakl.janela.cozinha",
+        "title": "%command.janela.cozinha%",
         "category": "FaKL",
         "icon": "$(multiple-windows)"
       },
@@ -2433,6 +2446,12 @@
           "maxItems": 5,
           "default": [],
           "description": "%config.ci.repositorios%"
+        },
+        "fakl.ci.concluidasSaemApos": {
+          "type": "number",
+          "minimum": 0,
+          "default": 15,
+          "description": "%config.ci.concluidasSaemApos%"
         },
         "fakl.rede.consultasAutomaticas": {
           "type": "boolean",

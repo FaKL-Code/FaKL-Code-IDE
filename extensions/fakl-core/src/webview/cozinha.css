@@ -1,0 +1,241 @@
+/* Cozinha do CI em tela própria: bancadas em canvas e um cartão por execução, com as cores do tema. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#barra {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+}
+
+#barra h1 {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+#barra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#barra button,
+#vazio button {
+  padding: 3px 10px;
+  font: inherit;
+  color: var(--vscode-button-secondaryForeground, inherit);
+  background: var(--vscode-button-secondaryBackground, transparent);
+  border: 1px solid var(--vscode-panel-border, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#barra button:hover:not(:disabled),
+#vazio button:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
+#barra button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#barra button:focus-visible,
+#vazio button:focus-visible,
+.ci-abrir:focus-visible,
+.ci-dispensar:focus-visible,
+.so-leitor button:focus-visible,
+#cozinha:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+#aviso {
+  margin: 0;
+  padding: 6px 12px;
+  color: var(--vscode-editorWarning-foreground);
+}
+
+#cozinha-bloco {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 8px 8px 0;
+  background: #0d1117;
+}
+
+#cozinha {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 50vh;
+  image-rendering: pixelated;
+}
+
+#ci-telas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-y: auto;
+}
+
+#vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--vscode-descriptionForeground);
+  text-align: center;
+}
+
+/* Só para leitor de tela; aparece quando um botão dentro dele recebe o foco. */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ci-tela {
+  --cor: var(--vscode-descriptionForeground);
+  position: relative;
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  text-align: left;
+  background: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border, transparent);
+  border-left: 4px solid var(--cor);
+  border-radius: 4px;
+}
+
+.ci-tela:hover,
+.ci-tela:focus-within {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.ci-abrir {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.ci-dispensar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--vscode-descriptionForeground);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.ci-dispensar:hover {
+  color: var(--vscode-foreground);
+  border-color: var(--vscode-panel-border, currentColor);
+}
+
+.ci-cabeca {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-right: 24px;
+}
+
+.ci-cabeca span,
+.ci-titulo {
+  color: var(--vscode-descriptionForeground);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ci-tela[data-estado='trabalhando'] {
+  --cor: var(--vscode-charts-blue, #2563eb);
+}
+
+.ci-tela[data-estado='sucesso'] {
+  --cor: var(--vscode-charts-green, #3fbf6f);
+}
+
+.ci-tela[data-estado='falha'] {
+  --cor: var(--vscode-errorForeground);
+  border-color: var(--vscode-errorForeground);
+}
+
+.ci-tela[data-estado='aguardando'] {
+  --cor: var(--vscode-editorWarning-foreground);
+  border-color: var(--vscode-editorWarning-foreground);
+}
+
+.ci-duracao {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.ci-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9em;
+}
+
+.ci-jobs li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ci-jobs li[data-estado='falha'] {
+  color: var(--vscode-errorForeground);
+}

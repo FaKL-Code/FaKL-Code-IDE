@@ -1,8 +1,9 @@
 # Café do CI
 
-O cyber café mostra também as execuções do GitHub Actions dos repositórios que você
-acompanha, como uma cozinha: uma bancada por execução, com um cozinheiro, e uma xícara por
-job. Decisão na [ADR 0051](adr/0051-cafe-do-ci.md); o café em si está no [SDD](sdd.md), seção 13.
+A cozinha do CI mostra as execuções do GitHub Actions dos repositórios que você acompanha: uma
+bancada por execução, com um cozinheiro, e uma xícara por job. Ela tem tela própria (e o café
+tem um botão que a abre). Decisões na [ADR 0051](adr/0051-cafe-do-ci.md) e na
+[ADR 0053](adr/0053-cozinha-do-ci-em-tela-propria.md); o café em si está no [SDD](sdd.md), seção 13.
 
 ## Como ligar
 
@@ -10,8 +11,9 @@ job. Decisão na [ADR 0051](adr/0051-cafe-do-ci.md); o café em si está no [SDD
 2. Abra uma pasta que tenha o GitHub como `origin`, ou rode **FaKL: Acompanhar o CI de um
    repositório** e marque até 5 repositórios (a lista da conta ou `dono/nome` digitado). A
    escolha fica na configuração `fakl.ci.repositorios`.
-3. Abra o café (**FaKL: Abrir o cyber café**). A cozinha aparece abaixo da sala quando há
-   repositório acompanhado. Na aba Café do app do celular ela aparece do mesmo jeito.
+3. Abra a cozinha (**FaKL: Abrir a cozinha do CI**, o botão **Cozinha do CI** do café ou o
+   item do CI na barra de status). Ela pode ir para outra janela, em outro monitor (**FaKL:
+   Cozinha do CI em outra janela**). Na aba Café do app do celular ela aparece abaixo da sala.
 
 O repositório da pasta aberta conta entre os 5. Passou do limite, a IDE avisa quais ficaram de
 fora.
@@ -38,6 +40,23 @@ Abaixo do canvas, um cartão por execução traz o nome do workflow, o repositó
 duração e os jobs. Clicar na bancada ou no cartão abre a execução no painel de Actions da IDE
 (ou no navegador, sem login); no celular, abre o GitHub no navegador do aparelho. A barra de
 status da IDE mostra o número de fluxos falhando; clicar abre o café.
+
+## Tirar o que já passou
+
+Como o agente que termina e sai do café, e como o **Limpar encerrados** da Mesa:
+
+- **x no cartão** tira aquela execução da tela. Ela volta sozinha se o estado dela mudar (alguém
+  reexecuta, uma falha passa a verde).
+- **Limpar concluídas** tira de uma vez tudo o que já terminou (sucesso, falha e cancelada). O
+  que está em andamento, na fila ou esperando aprovação fica.
+- **Mostrar as removidas** traz tudo de volta.
+- Execuções com **sucesso ou canceladas saem sozinhas** depois de 15 minutos
+  (`fakl.ci.concluidasSaemApos`, em minutos; `0` desliga). **Falha não sai sozinha**: ela pede
+  atenção, então fica até você tirar ou até chegar uma execução mais nova do mesmo fluxo.
+
+O que foi tirado fica só na tela da cozinha (e some ao fechar a IDE por completo); o GitHub e o
+Core não são avisados, e os placares (builds verdes seguidos, fluxos falhando) continuam contando
+tudo o que o Core leu.
 
 ## Quando a IDE consulta o GitHub
 

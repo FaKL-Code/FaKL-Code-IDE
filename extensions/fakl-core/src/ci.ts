@@ -14,7 +14,7 @@ const LIMIT = 5;
  * Café do CI na IDE (ADR 0051): diz ao Core quais repositórios acompanhar (as
  * pastas abertas e os marcados em `fakl.ci.repositorios`), mostra o número de
  * fluxos falhando na barra de status e oferece os comandos. A cozinha em si
- * fica no painel do café. Nada é consultado aqui: tudo vem do Core, que só
+ * fica na tela própria (`ci-panel.ts`). Nada é consultado aqui: tudo vem do Core, que só
  * fala com o GitHub com a conta conectada e, sozinho, com o interruptor
  * `fakl.rede.consultasAutomaticas` ligado.
  */
@@ -28,7 +28,7 @@ export class CiUi implements vscode.Disposable {
   constructor(router: AgentEventRouter) {
     this.item = vscode.window.createStatusBarItem('fakl.ci', vscode.StatusBarAlignment.Left, 98);
     this.item.name = l10n.t('CI of the followed repositories');
-    this.item.command = 'fakl.cafe.open';
+    this.item.command = 'fakl.ci.open';
     this.disposables.push(
       this.item,
       router.listen((event) => {
@@ -188,6 +188,6 @@ export class CiUi implements vscode.Disposable {
     // Sem esperar o evento de mudança da configuração: o Core precisa da lista nova antes da leitura.
     await this.pushWatch();
     await this.refreshNow();
-    if (chosen.length > 0) await vscode.commands.executeCommand('fakl.cafe.open');
+    if (chosen.length > 0) await vscode.commands.executeCommand('fakl.ci.open');
   }
 }

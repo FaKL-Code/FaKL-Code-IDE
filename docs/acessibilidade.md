@@ -48,10 +48,12 @@ O canvas é um alvo focável (`role="application"`, com o total de notas e links
 
 ### Cozinha do CI
 
+A cozinha tem tela própria (**FaKL: Abrir a cozinha do CI**). Os botões **Limpar concluídas**, **Mostrar as removidas** e **Atualizar agora**, e o botão de tirar de cada cartão (com nome acessível que diz qual execução sai), se alcançam pelo teclado.
+
 - A cozinha tem rótulo próprio ("CI: 1 falhando, 2 rodando, 7 verdes seguidos") e uma lista escondida
   com uma linha por execução; Enter ou Espaço abre a execução no painel de Actions.
-- Os resultados (passou, falhou, esperando aprovação) entram na mesma região `aria-live` dos agentes,
-  na mesma frase agrupada. "Começou" e "entrou na fila" não são anunciados, e o primeiro retrato
+- Os resultados (passou, falhou, esperando aprovação) entram numa região `aria-live` da tela.
+  "Começou" e "entrou na fila" não são anunciados, e o primeiro retrato
   não é anunciado.
 - Com `prefers-reduced-motion`, a bancada fica parada e o estado se lê de uma imagem fixa.
 

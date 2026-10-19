@@ -12,6 +12,8 @@ import { ciStateText, describeRun, formatSeconds, runKey, runSeconds } from './c
 
 export interface KitchenDomOptions {
   readonly onOpen: (run: CiRun) => void;
+  /** Quando dado, cada cartão ganha um botão para tirar a execução da tela. */
+  readonly onDismiss?: (run: CiRun) => void;
   readonly now?: number;
 }
 
@@ -85,6 +87,22 @@ export function renderKitchenCards(
           options.onOpen(run);
         });
         card.append(open);
+        if (options.onDismiss) {
+          const dismiss = document.createElement('button');
+          dismiss.type = 'button';
+          dismiss.className = 'ci-dispensar';
+          dismiss.dataset.run = `dispensar:${runKey(run)}`;
+          dismiss.textContent = 'x';
+          dismiss.title = l10n.t('Remove this run from the kitchen');
+          dismiss.setAttribute(
+            'aria-label',
+            l10n.t('Remove the run {0} from the kitchen', describeRun(run, now)),
+          );
+          dismiss.addEventListener('click', () => {
+            options.onDismiss?.(run);
+          });
+          card.append(dismiss);
+        }
         return card;
       }),
     );
