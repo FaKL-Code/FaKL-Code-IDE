@@ -31,6 +31,7 @@ import { Orchestrator } from './orchestrator/orchestrator.js';
 import { chatMaestroPrompt, type ResourceSummary } from './orchestrator/prompts.js';
 import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './providers.js';
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
+import { Economia } from './economia/economia.js';
 import { Scorecard } from './scorecard.js';
 import { UsageWindows } from './windows.js';
 import { McpLibrary } from './mcp-library.js';
@@ -102,6 +103,8 @@ export interface Core {
   readonly costs: CostTracker;
   /** Placar dos agentes por perfil (ADR 0043). */
   readonly scorecard: Scorecard;
+  /** Modo econômico de tokens e o livro-caixa dele (ADR 0052). */
+  readonly economia: Economia;
   readonly orchestrator: Orchestrator;
   readonly vault: VaultService;
   readonly remote?: RemoteGateway;
@@ -208,10 +211,10 @@ export function createCore(options: CoreOptions): Core {
     const launcher = options.mcp;
     const sets = [...new Set(wanted)];
     if (!launcher || sets.length === 0) return [];
-    const token = tokens.issue(
-      sessionId,
-      sets.flatMap((set) => TOOL_SETS[set].map((tool) => tool.method)),
-    );
+    const token = tokens.issue(sessionId, [
+      ...sets.flatMap((set) => TOOL_SETS[set].map((tool) => tool.method)),
+      'economia.registrar',
+    ]);
     return [
       {
         name: 'fakl',
@@ -222,6 +225,8 @@ export function createCore(options: CoreOptions): Core {
           FAKL_CORE_SOCKET: options.socketPath,
           FAKL_AGENT_TOKEN: token,
           FAKL_MCP_TOOLS: sets.join(','),
+          // Modo econômico vigente quando a sessão começa (ADR 0052).
+          FAKL_ECONOMIA: economia.modo,
           // O servidor MCP responde aos agentes no idioma da IDE.
           FAKL_LOCALE: currentLocale(),
         },
@@ -428,7 +433,9 @@ export function createCore(options: CoreOptions): Core {
       orchestrator.sessionMcp(sessionId, profile) ??
       mcpFor(sessionId, ['orquestrar', ...integrationSets()]),
     sessionPrompt: () =>
-      options.mcp ? chatMaestroPrompt(resourceSummary, agents.profileList()) : undefined,
+      options.mcp
+        ? chatMaestroPrompt(resourceSummary, agents.profileList(), economia.modo !== 'desligado')
+        : undefined,
     ...(resources
       ? {
           beforeStart: async (profile: AgentProfile, env: Readonly<Record<string, string>>) => {
@@ -478,11 +485,21 @@ export function createCore(options: CoreOptions): Core {
     ...(options.log ? { log: options.log } : {}),
   });
   scorecard.register(router);
+  const economia = new Economia({
+    modo: () => config?.config.economia ?? 'equilibrado',
+    setModo: async (modo) => {
+      await config?.setEconomia(modo);
+    },
+    ...(dataDir ? { dataDir } : {}),
+    ...(options.log ? { log: options.log } : {}),
+  });
+  economia.register(router);
   const orchestrator = new Orchestrator({
     bus,
     agents,
     costs: tracker,
     scorecard,
+    economia,
     profiles: () => agents.profileList(),
     defaults: () => ({
       ...(config?.config.limites ? { limites: config.config.limites } : {}),
@@ -727,6 +744,7 @@ export function createCore(options: CoreOptions): Core {
     ...(config ? { config } : {}),
     costs: tracker,
     scorecard,
+    economia,
     orchestrator,
     vault,
     ...(remote ? { remote } : {}),
@@ -751,6 +769,7 @@ export function createCore(options: CoreOptions): Core {
       }
       await tracker.load();
       await scorecard.load();
+      await economia.load();
       await claudeAccounts?.init();
       await sources?.load().catch((error: unknown) => {
         options.log?.(l10n.t('could not read the resource sources: {0}', String(error)));
@@ -805,6 +824,8 @@ export function createCore(options: CoreOptions): Core {
       await tracker.flush();
       scorecard.dispose();
       await scorecard.flush();
+      economia.dispose();
+      await economia.flush();
       await audit.flush();
       await server.close();
     },

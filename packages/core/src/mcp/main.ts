@@ -6,6 +6,7 @@
  */
 import { l10n, localeFromEnv, useLocale } from '@fakl/i18n';
 
+import { isModoEconomia } from '../economia/compactar.js';
 import { CoreClient } from '../rpc/client.js';
 import { McpServer } from './server.js';
 import { TOOL_SETS, type ToolSetName } from './tools.js';
@@ -43,6 +44,13 @@ const server = new McpServer({
   tools,
   call: async (method, args) => (await core()).request(method, args),
   write: (line) => process.stdout.write(line),
+  // O modo vale desde que a sessão começou (ADR 0052); sem a variável, nada muda.
+  modo: () => (isModoEconomia(process.env.FAKL_ECONOMIA) ? process.env.FAKL_ECONOMIA : 'desligado'),
+  registrar: (somas) => {
+    void core()
+      .then((c) => c.request('economia.registrar', somas))
+      .catch(() => undefined);
+  },
 });
 
 process.stdin.setEncoding('utf8');

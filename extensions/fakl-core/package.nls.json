@@ -309,5 +309,8 @@
   "walkthrough.tour.primeira.description": "Creates a sample folder and asks an agent to read it, so you can watch the Desk and the café react. The agent only reads.\n[Start the first task](command:fakl.tour.firstTask)",
   "walkthrough.tour.primeira.altText": "A robot icon, for the first agent",
   "command.rede.verificarAdaptadores": "Check adapter versions",
-  "config.rede.consultasAutomaticas": "Let FaKL-Code make its automatic network queries: the latest agent adapter versions on npm (Providers and Doctor) and, on macOS, the new-version notice on GitHub. Turn it off to stop both; the commands \"Check adapter versions\" and \"Check for FaKL-Code updates\" still work by hand. It does not cover the editor's own updater (set `update.mode` to `none`), extension updates, or the services you configured (GitHub, relay, voice, and so on). See docs/privacidade.md."
+  "config.rede.consultasAutomaticas": "Let FaKL-Code make its automatic network queries: the latest agent adapter versions on npm (Providers and Doctor) and, on macOS, the new-version notice on GitHub. Turn it off to stop both; the commands \"Check adapter versions\" and \"Check for FaKL-Code updates\" still work by hand. It does not cover the editor's own updater (set `update.mode` to `none`), extension updates, or the services you configured (GitHub, relay, voice, and so on). See docs/privacidade.md.",
+  "command.economia.show": "Show token saving",
+  "command.economia.setMode": "Change token saving mode",
+  "command.economia.reset": "Reset token saving counters"
 }

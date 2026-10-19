@@ -47,3 +47,7 @@ export * from './mcp-library.js';
 export * from './sources.js';
 export * from './voz.js';
 export * from './providers.js';
+export * from './economia/compactar.js';
+export * from './economia/economia.js';
+export * from './economia/repeticao.js';
+export * from './economia/roteador.js';

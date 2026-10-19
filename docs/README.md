@@ -77,3 +77,4 @@
 | [0046](adr/0046-terminal-ao-vivo-somente-leitura-por-agente.md)                | Terminal ao vivo, somente leitura, por agente                           |
 | [0047](adr/0047-agente-de-terminal-sobre-o-terminal-do-vscode.md)              | Agente de terminal interativo sobre o terminal do VS Code               |
 | [0051](adr/0051-cafe-do-ci.md)                                                 | Café do CI: as execuções do GitHub Actions como a cozinha do cyber café |
+| [0052](adr/0052-modo-economico-de-tokens.md)                                   | Modo econômico de tokens                                                |
