@@ -1130,5 +1130,6 @@
   "Refresh now": "Atualizar agora",
   "Follow a repository": "Acompanhar um repositório",
   "No repository is being followed. Open a folder with a GitHub origin or pick the repositories to follow.": "Nenhum repositório está sendo acompanhado. Abra uma pasta com origin no GitHub ou escolha os repositórios a acompanhar.",
-  "Show removed ({0})": "Mostrar as removidas ({0})"
+  "Show removed ({0})": "Mostrar as removidas ({0})",
+  "Semantic search cache: {0} snippets and questions not sent again (~{1} embedding tokens, counted apart)": "Cache da busca semântica: {0} trechos e perguntas que não foram enviados de novo (~{1} tokens de embeddings, contados à parte)"
 }

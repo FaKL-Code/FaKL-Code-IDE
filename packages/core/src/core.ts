@@ -670,6 +670,9 @@ export function createCore(options: CoreOptions): Core {
     orchestrator,
     redact,
     embeddingsKey: () => secrets.get(EMBEDDINGS_SECRET),
+    economizou: ({ itens, caracteres }) => {
+      economia.registrar({ embeddingsEvitados: itens, caracteresEmbeddings: caracteres });
+    },
     ...(dataDir ? { dataDir } : {}),
     ...(options.machine ? { machine: options.machine } : {}),
     ...(options.log ? { log: options.log } : {}),

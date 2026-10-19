@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -239,6 +239,35 @@ describe('livro-caixa', () => {
     expect(outra.status().total.caracteresCompactados).toBe(4000);
     await e.reset();
     expect(e.status().total.respostas).toBe(0);
+  });
+
+  it('conta os embeddings evitados à parte, sem inflar os tokens economizados', () => {
+    const modo = { atual: 'equilibrado' as ModoEconomia };
+    const e = nova(modo);
+    e.registrar({ caracteresCompactados: 4000, embeddingsEvitados: 3, caracteresEmbeddings: 2400 });
+    const { total } = e.status();
+    expect(total.tokensEstimados).toBe(1000);
+    expect(total.tokensEmbeddings).toBe(600);
+    expect(total.embeddingsEvitados).toBe(3);
+  });
+
+  it('relê um arquivo de antes dos contadores novos sem virar NaN', async () => {
+    const modo = { atual: 'equilibrado' as ModoEconomia };
+    await writeFile(
+      join(dir, 'economia.json'),
+      JSON.stringify({
+        versao: 1,
+        desde: '2026-10-01',
+        total: { respostas: 2, caracteresCompactados: 800 },
+        dias: { [new Date().toISOString().slice(0, 10)]: { respostas: 2 } },
+      }),
+    );
+    const e = nova(modo);
+    await e.load();
+    e.registrar({ embeddingsEvitados: 1, caracteresEmbeddings: 40 });
+    expect(e.status().total.embeddingsEvitados).toBe(1);
+    expect(e.status().total.respostas).toBe(2);
+    expect(Number.isNaN(e.status().hoje.tokensEmbeddings)).toBe(false);
   });
 
   it('atende status, setModo e registrar pelo roteador, rejeitando valores ruins', async () => {

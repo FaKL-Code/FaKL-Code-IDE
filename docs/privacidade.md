@@ -82,7 +82,9 @@ para o servidor do `endpoint` e é processado por ele, sob os termos de quem o o
 - **Como desligar:** **FaKL: Busca semântica: escolher o provedor de embeddings** e
   "Desligar a busca semântica", ou remover `vault.semantica`. O arquivo de vetores
   (`~/.fakl/data/embeddings.json`) fica na máquina e é descartado quando o provedor, o modelo
-  ou o endpoint mudam.
+  ou o endpoint mudam. O mesmo arquivo guarda uma reserva de vetores de trechos que saíram do índice
+  (nota movida ou apagada, trecho editado e desfeito), só com o hash do texto, nunca o texto; nota que
+  virou privada não entra nela.
 
 | O que                                     | Para onde                                                                             | O que vai                                                                                                  |
 | ----------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |

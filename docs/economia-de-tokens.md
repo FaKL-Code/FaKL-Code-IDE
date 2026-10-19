@@ -17,6 +17,14 @@ A FaKL-Code reduz o que os agentes gastam sem pedir nada de você. Vem ligada, n
 - **Pedidos de brevidade.** O Maestro e os executores recebem a orientação de dar instruções
   precisas e relatos curtos.
 
+- **Cache da busca semântica.** A mesma pergunta (sem contar espaços a mais) não é embutida duas
+  vezes na sessão; e o trecho de uma nota movida, ou editado e depois desfeito, não volta ao servidor
+  de embeddings (a reserva de vetores fica em `~/.fakl/data/embeddings.json`, só com o hash do
+  texto). Só importa quando o provedor é uma API paga; com Ollama ou LM Studio economiza tempo. Os
+  embeddings evitados aparecem à parte no resumo, porque são tokens de modelo de embeddings, bem mais
+  baratos, e não entram na soma de "tokens economizados". Vale com a economia desligada também: é
+  cache interno, não muda o que o agente recebe.
+
 ## Onde ver
 
 A barra de status mostra `~N tokens economizados hoje`. Clique nela para ver o total desde o
