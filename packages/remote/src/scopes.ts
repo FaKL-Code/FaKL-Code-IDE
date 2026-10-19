@@ -28,6 +28,8 @@ const METHODS: Record<RemoteScope, readonly string[]> = {
     'cafe.open',
     'cafe.close',
     'cafe.state',
+    // Só leitura: o celular vê a cozinha do CI; `ci.watch.set` fica de fora (ADR 0051).
+    'ci.status',
     'remote.push.subscribe',
     'remote.push.unsubscribe',
     'voz.status',

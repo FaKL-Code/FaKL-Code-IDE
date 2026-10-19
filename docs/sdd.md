@@ -131,14 +131,15 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 
 ### 2.7 Cyber café
 
-| ID     | Requisito                                                         | Marco | Critério de aceite                               |
-| ------ | ----------------------------------------------------------------- | ----- | ------------------------------------------------ |
-| RF-601 | Sala isométrica em pixel art com um avatar por agente ativo       | M6    | Avatares surgem e somem com os agentes           |
-| RF-602 | Monitor de cada PC mostra miniatura ao vivo do trabalho do agente | M6    | Miniatura atualiza pelo menos a cada 2 s         |
-| RF-603 | Estados do agente viram animações distintas (tabela da seção 13)  | M6    | Cada estado tem animação própria                 |
-| RF-604 | Ao concluir tarefa, o avatar faz uma atividade de pausa e volta   | M6    | Pausa dura entre 20 e 60 s e não atrasa o agente |
-| RF-605 | Clicar num PC abre a sessão do agente na mesa de controle         | M6    | Abre a sessão certa                              |
-| RF-606 | Placar do dia com tarefas, PRs e custo                            | M6    | Valores batem com a mesa de controle             |
+| ID     | Requisito                                                         | Marco | Critério de aceite                                 |
+| ------ | ----------------------------------------------------------------- | ----- | -------------------------------------------------- |
+| RF-601 | Sala isométrica em pixel art com um avatar por agente ativo       | M6    | Avatares surgem e somem com os agentes             |
+| RF-602 | Monitor de cada PC mostra miniatura ao vivo do trabalho do agente | M6    | Miniatura atualiza pelo menos a cada 2 s           |
+| RF-603 | Estados do agente viram animações distintas (tabela da seção 13)  | M6    | Cada estado tem animação própria                   |
+| RF-604 | Ao concluir tarefa, o avatar faz uma atividade de pausa e volta   | M6    | Pausa dura entre 20 e 60 s e não atrasa o agente   |
+| RF-605 | Clicar num PC abre a sessão do agente na mesa de controle         | M6    | Abre a sessão certa                                |
+| RF-606 | Placar do dia com tarefas, PRs e custo                            | M6    | Valores batem com a mesa de controle               |
+| RF-607 | Cozinha do CI: execuções do GitHub Actions como bancadas do café  | M6    | Estado da bancada bate com o do GitHub; só leitura |
 
 ## 3. Requisitos não funcionais
 
@@ -750,6 +751,25 @@ O Core envia só os dados (texto e cores); o café desenha a miniatura num canva
 - Troféus no placar por conquistas (uma execução com 5 agentes, 100 PRs). Uma semana sem limite estourado e o rádio lo-fi ficam para depois.
 - Abaixo da sala, uma faixa com a tela legível de cada agente; clicar nela, no avatar ou no PC abre a sessão.
 
+### 13.4 Cozinha do CI
+
+As execuções do GitHub Actions dos repositórios acompanhados viram uma cozinha abaixo da sala (ADR 0051, [docs/cafe-do-ci.md](cafe-do-ci.md)). O café continua só consumindo dados do Core: o serviço `ci` consulta a API, e o café recebe o retrato em `cafe.state` (campo `ci`) e as mudanças no evento `ci.run`.
+
+| Estado da execução ou do job | Animação                                              |
+| ---------------------------- | ----------------------------------------------------- |
+| `trabalhando`                | Cozinheiro mexe a colher, vapor, xícara enchendo      |
+| `sucesso`                    | Comemoração, sino, xícara servida                     |
+| `falha`                      | Mãos na cabeça, luz de alarme, fumaça, xícara rachada |
+| `aguardando` (aprovação)     | Senhas na fila                                        |
+| `fila`                       | Cozinheiro parado, xícaras vazias                     |
+| `cancelada`                  | Bancada vazia, avental no gancho                      |
+
+- Um cozinheiro por execução (a mais recente de cada fluxo, no máximo 8) e uma xícara por job. A miniatura de cada execução (workflow, branch, duração, jobs) é um cartão abaixo do canvas, porque a fonte de pixel só tem dígitos.
+- O placar da cozinha traz builds verdes seguidos, fluxos falhando e execuções em andamento.
+- Até 5 repositórios: o da pasta aberta e os de `fakl.ci.repositorios`. Consulta com intervalo adaptativo, só com a conta do GitHub conectada e, sozinha, só com `fakl.rede.consultasAutomaticas` ligada.
+- Somente leitura: não dispara, cancela nem reexecuta workflow. No controle remoto, `ci.status` está em `ver` e `ci.watch.set` fora de todos os escopos.
+- Lista escondida e região `aria-live` do café também cobrem as execuções, com anúncio agrupado; `prefers-reduced-motion` para a animação.
+
 ## 14. Segurança
 
 ### 14.1 Modelo de ameaças
@@ -844,7 +864,7 @@ flowchart LR
 | M3 Controle remoto        | Fase 2        | Relay no VPS, pareamento, PWA, push, editor no navegador                          | RF-301 a RF-306, RNF-08                  | Você acompanha e aprova uma execução inteira pelo celular            |
 | M4 Vault                  | Fase 3        | Vault Obsidian, sincronização git, índice, MCP do vault, notas de sessão          | RF-401 a RF-407                          | Notas fluem entre as máquinas e os agentes usam o vault como memória |
 | M5 Integrações            | Fase 4        | GitHub completo, SSH com políticas, Hostinger, Lovable e email IMAP               | RF-501 a RF-510                          | Deploy num VPS feito por agente, com snapshot e aprovação            |
-| M6 Cyber café             | Fase 5        | Sala, avatares, miniaturas, animações, placar                                     | RF-601 a RF-606                          | Você entende o estado de todos os agentes só olhando a sala          |
+| M6 Cyber café             | Fase 5        | Sala, avatares, miniaturas, animações, placar, cozinha do CI                      | RF-601 a RF-607                          | Você entende o estado de todos os agentes só olhando a sala          |
 
 ### 16.1 Primeiros passos do M1
 
