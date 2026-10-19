@@ -33,6 +33,8 @@ export interface KitchenOptions {
   readonly onOpen: (run: CiRun) => void;
   /** As execuções na bancada mudaram; a lista e o texto de acessibilidade se refazem. */
   readonly onChange?: () => void;
+  /** Tira execuções da bancada antes do corte de 8 (as dispensadas e as que já saíram); sem isto, vale tudo. */
+  readonly filter?: (runs: readonly CiRun[], now: number) => readonly CiRun[];
 }
 
 export interface Kitchen {
@@ -45,6 +47,8 @@ export interface Kitchen {
   readonly status: CiStatus | undefined;
   /** As execuções que estão na bancada agora, na ordem em que aparecem. */
   runs(): CiRun[];
+  /** Redesenha com o que o `filter` deixa passar agora (depois de dispensar ou restaurar). */
+  refresh(): void;
   pause(): void;
   resume(): void;
 }
@@ -203,7 +207,8 @@ export function mountKitchen(options: KitchenOptions): Kitchen {
 
   function render(): void {
     const now = Date.now();
-    shown = kitchenRuns(allRuns(status), now);
+    const all = allRuns(status);
+    shown = kitchenRuns(options.filter ? [...options.filter(all, now)] : all, now);
     const layout = kitchenLayout(shown.length);
     if (canvas.width !== layout.width || canvas.height !== layout.height) {
       canvas.width = layout.width;
@@ -298,6 +303,7 @@ export function mountKitchen(options: KitchenOptions): Kitchen {
       return status;
     },
     runs: () => shown,
+    refresh: changed,
     pause,
     resume,
   };

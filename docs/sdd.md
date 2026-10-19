@@ -754,7 +754,7 @@ O Core envia só os dados (texto e cores); o café desenha a miniatura num canva
 
 ### 13.4 Cozinha do CI
 
-As execuções do GitHub Actions dos repositórios acompanhados viram uma cozinha abaixo da sala (ADR 0051, [docs/cafe-do-ci.md](cafe-do-ci.md)). O café continua só consumindo dados do Core: o serviço `ci` consulta a API, e o café recebe o retrato em `cafe.state` (campo `ci`) e as mudanças no evento `ci.run`.
+As execuções do GitHub Actions dos repositórios acompanhados viram uma cozinha, numa tela própria (ADR 0051 e 0053, [docs/cafe-do-ci.md](cafe-do-ci.md)). A cozinha só consome dados do Core: o serviço `ci` consulta a API, e a tela recebe o retrato em `ci.status` e as mudanças no evento `ci.run`. Como o café e a Mesa, ela deixa tirar o que já passou: dispensar uma execução, limpar as concluídas e mostrar de novo.
 
 | Estado da execução ou do job | Animação                                              |
 | ---------------------------- | ----------------------------------------------------- |
@@ -769,7 +769,7 @@ As execuções do GitHub Actions dos repositórios acompanhados viram uma cozinh
 - O placar da cozinha traz builds verdes seguidos, fluxos falhando e execuções em andamento.
 - Até 5 repositórios: o da pasta aberta e os de `fakl.ci.repositorios`. Consulta com intervalo adaptativo, só com a conta do GitHub conectada e, sozinha, só com `fakl.rede.consultasAutomaticas` ligada.
 - Somente leitura: não dispara, cancela nem reexecuta workflow. No controle remoto, `ci.status` está em `ver` e `ci.watch.set` fora de todos os escopos.
-- Lista escondida e região `aria-live` do café também cobrem as execuções, com anúncio agrupado; `prefers-reduced-motion` para a animação.
+- Lista escondida e região `aria-live` da cozinha cobrem as execuções, com anúncio agrupado; `prefers-reduced-motion` para a animação.
 
 ## 14. Segurança
 

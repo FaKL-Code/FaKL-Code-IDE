@@ -1121,5 +1121,14 @@
   "Up to {0} repositories, counting the one open in the IDE. The café shows their runs.": "Até {0} repositórios, contando o aberto na IDE. O café mostra as execuções deles.",
   "Repository to follow, as owner/name or a github.com address": "Repositório a acompanhar, como dono/nome ou um endereço do github.com",
   "Use the form owner/name": "Use a forma dono/nome",
-  "No runs yet.": "Nenhuma execução ainda."
+  "No runs yet.": "Nenhuma execução ainda.",
+  "Open the CI kitchen, with the GitHub Actions runs": "Abrir a cozinha do CI, com as execuções do GitHub Actions",
+  "Remove the finished runs from the kitchen": "Tirar da cozinha as execuções que já terminaram",
+  "Bring back the runs you removed": "Trazer de volta as execuções que você tirou",
+  "Show removed": "Mostrar as removidas",
+  "Ask GitHub for the runs now": "Pedir as execuções ao GitHub agora",
+  "Refresh now": "Atualizar agora",
+  "Follow a repository": "Acompanhar um repositório",
+  "No repository is being followed. Open a folder with a GitHub origin or pick the repositories to follow.": "Nenhum repositório está sendo acompanhado. Abra uma pasta com origin no GitHub ou escolha os repositórios a acompanhar.",
+  "Show removed ({0})": "Mostrar as removidas ({0})"
 }

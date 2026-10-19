@@ -230,5 +230,7 @@
   "{0} green in a row": "{0} verdes seguidos",
   "{0} in {1}: {2}": "{0} em {1}: {2}",
   "{0} CI runs {1}": "{0} execuções do CI: {1}",
-  "Open this CI run": "Abrir esta execução do CI"
+  "Open this CI run": "Abrir esta execução do CI",
+  "Remove this run from the kitchen": "Tirar esta execução da cozinha",
+  "Remove the run {0} from the kitchen": "Tirar da cozinha a execução {0}"
 }
