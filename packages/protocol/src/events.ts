@@ -27,6 +27,7 @@ export const EVENT_TOPICS = [
   'vault.sync',
   'remote.device',
   'remote.status',
+  'ssh.forward',
   'claude.account',
   'ci.run',
   'ui.reveal',

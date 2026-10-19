@@ -599,6 +599,8 @@ export function createCore(options: CoreOptions): Core {
     ...guards,
     ...(options.configHome ? { home: options.configHome } : {}),
     ...(dataDir ? { file: join(dataDir, 'ssh-hosts.json') } : {}),
+    ...(dataDir ? { forwardsFile: join(dataDir, 'ssh-forwards.json') } : {}),
+    onForward: (info) => bus.publish('ssh.forward', 'ssh', info),
     beforeWrite: (host) => hostinger.snapshotBeforeWrite(host),
     redact,
     ...(options.sshCommand ? { sshCommand: options.sshCommand } : {}),
@@ -844,6 +846,7 @@ export function createCore(options: CoreOptions): Core {
     },
     stop: async () => {
       remote?.dispose();
+      await ssh.closeForwards();
       config?.dispose();
       vaultWatch.dispose();
       cafe.dispose();

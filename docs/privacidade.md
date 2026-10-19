@@ -84,6 +84,23 @@ para o servidor do `endpoint` e é processado por ele, sob os termos de quem o o
   (`~/.fakl/data/embeddings.json`) fica na máquina e é descartado quando o provedor, o modelo
   ou o endpoint mudam.
 
+| O que                                     | Para onde                                                                             | O que vai                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Conferir as versões dos conectores**    | `registry.npmjs.org`                                                                  | O nome dos pacotes                                                                                         |
+| **Procurar atualização da FaKL-Code**     | `raw.githubusercontent.com`                                                           | Um GET sem corpo                                                                                           |
+| **Atualizar o CI agora**                  | `api.github.com`                                                                      | Um pedido de execuções e jobs dos repositórios acompanhados                                                |
+| Atualizar um adaptador ou CLI             | Registro do npm, pelo `npm install -g` que a IDE digita no terminal                   | O que o `npm` envia; o comando vai sem Enter, para você conferir e rodar                                   |
+| Testar o relay (`remote.test`)            | O seu relay                                                                           | Uma conexão e, se houver, a chave do relay                                                                 |
+| Login no GitHub                           | `github.com` (fluxo de dispositivo) e `api.github.com`                                | O client id da aplicação e o código do dispositivo                                                         |
+| Enviar o resultado de uma tarefa          | `origin` (`git push`), nos modos que publicam o branch ou o PR e nos projetos Lovable | O branch da tarefa                                                                                         |
+| Ações do GitHub, da Hostinger e do e-mail | `api.github.com`, `developers.hostinger.com`, o servidor IMAP que você informou       | O que a ação precisa: o token do serviço e os dados do pedido                                              |
+| SSH                                       | O servidor que você escolheu                                                          | A sessão SSH                                                                                               |
+| Encaminhamento de porta no SSH            | O servidor que você escolheu, por um `ssh -N -L` que a IDE mantém aberto              | O tráfego que você mandar pela porta local `127.0.0.1:<porta>` (o encaminhamento não escuta na rede)       |
+| Voz por OpenAI ou Groq                    | `api.openai.com/v1` ou `api.groq.com/openai/v1` (ou o `endpoint` de `voz:`)           | O áudio gravado e a chave do provedor; nos modos "navegador do celular" e "local" não vai a esses serviços |
+| Busca semântica do vault (embeddings)     | O servidor de `vault.semantica` (padrão: Ollama ou LM Studio em `127.0.0.1`)          | Trechos das notas; ficam na máquina se o servidor for local                                                |
+| Agentes locais (Ollama, LM Studio)        | `127.0.0.1` (ou o `endpoint` do perfil)                                               | A conversa; ao listar os provedores, o Core também pergunta quais modelos o servidor local tem             |
+| PWA do celular                            | O seu relay (`vapid.json` e o canal cifrado)                                          | O mesmo do controle remoto                                                                                 |
+
 ## O que não é da FaKL-Code
 
 - **Os agentes.** Claude, Codex e Gemini são programas dos fabricantes, que a IDE inicia
