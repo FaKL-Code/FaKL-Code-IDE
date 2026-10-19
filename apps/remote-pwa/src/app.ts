@@ -34,8 +34,8 @@ export type Route =
 
 export type Conexao = 'conectando' | 'online' | 'offline';
 
-/** Tópicos assinados: tudo dos agentes e das execuções, o gasto e a troca de conta do Claude. */
-const TOPICS = ['agent.*', 'run.*', 'cost.update', 'claude.*'];
+/** Tópicos assinados: agentes, execuções, gasto, troca de conta do Claude e o CI do café (só leitura). */
+const TOPICS = ['agent.*', 'run.*', 'cost.update', 'claude.*', 'ci.*'];
 
 /** Tarefas que ganham os detalhes da execução ao atualizar. */
 const TASK_DETAILS = 12;

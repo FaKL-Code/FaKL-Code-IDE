@@ -2,6 +2,7 @@ export * from './agent-store.js';
 export * from './agent-terminal.js';
 export * from './agents.js';
 export * from './cafe.js';
+export * from './ci.js';
 export * from './claude-accounts.js';
 export * from './config.js';
 export * from './costs.js';

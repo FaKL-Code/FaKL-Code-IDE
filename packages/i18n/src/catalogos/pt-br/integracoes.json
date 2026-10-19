@@ -221,5 +221,14 @@
   "the remote identity cannot be opened: wrong key or altered file; delete {0} and {1} to pair the devices again": "a identidade do controle remoto não abre: chave errada ou arquivo alterado; apague {0} e {1} para parear os aparelhos de novo",
   "remote identity kept in plain text: the IDE has not provided the encryption key (running without the IDE)": "identidade do controle remoto mantida em texto: a IDE não entregou a chave de cifra (execução sem a IDE)",
   "remote identity migrated to an encrypted file": "identidade do controle remoto migrada para arquivo cifrado",
-  "could not encrypt the remote identity: {0}": "não foi possível cifrar a identidade do controle remoto: {0}"
+  "could not encrypt the remote identity: {0}": "não foi possível cifrar a identidade do controle remoto: {0}",
+  "queued": "na fila",
+  "waiting for approval": "esperando aprovação",
+  "cancelled": "cancelada",
+  "{0} of {1} jobs passed": "{0} de {1} jobs passaram",
+  "{0} failing": "{0} falhando",
+  "{0} green in a row": "{0} verdes seguidos",
+  "{0} in {1}: {2}": "{0} em {1}: {2}",
+  "{0} CI runs {1}": "{0} execuções do CI: {1}",
+  "Open this CI run": "Abrir esta execução do CI"
 }

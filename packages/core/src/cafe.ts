@@ -5,6 +5,7 @@ import type {
   AgentToolEventData,
   CafeAgent,
   CafeState,
+  CiStatus,
   FaklEvent,
 } from '@fakl/protocol';
 
@@ -51,6 +52,8 @@ export interface CafeServiceOptions {
   readonly costs: CostTracker;
   readonly intervalMs?: number;
   readonly clock?: () => Date;
+  /** Cozinha do CI (ADR 0051): o retrato, ou nada se não há repositório acompanhado. */
+  readonly ci?: () => CiStatus | undefined;
   /** Linhas mudadas de um arquivo do agente; muda nos testes. */
   readonly diffLines?: (cwd: string, path: string) => Promise<string[]>;
 }
@@ -286,6 +289,7 @@ export class CafeService {
     const runs = orchestrator.runList();
     const endedToday = runs.filter((r) => r.fim && localDay(new Date(r.fim)) === today);
     const startedToday = runs.filter((r) => localDay(new Date(r.inicio)) === today);
+    const ci = this.options.ci?.();
     return {
       agentes: list,
       placar: {
@@ -297,6 +301,7 @@ export class CafeService {
         prsTotal: runs.filter((r) => r.prUrl).length,
       },
       limites: [...this.limits],
+      ...(ci ? { ci } : {}),
     };
   }
 

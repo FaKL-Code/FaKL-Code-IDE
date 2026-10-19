@@ -1531,6 +1531,100 @@ label.opcao small {
   touch-action: manipulation;
 }
 
+/* Cozinha do CI (ADR 0051): só leitura, abaixo da sala. */
+.sala canvas.cozinha {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: #0d1117;
+  image-rendering: pixelated;
+  touch-action: manipulation;
+}
+
+.sala canvas.cozinha[hidden],
+.sala .ci-faixa[hidden] {
+  display: none;
+}
+
+.ci-faixa {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ci-tela {
+  --cor: var(--suave);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--cor);
+  border-radius: 10px;
+  background: var(--superficie);
+}
+
+.ci-tela[data-estado='trabalhando'] {
+  --cor: var(--ativo);
+}
+
+.ci-tela[data-estado='sucesso'] {
+  --cor: var(--bom);
+}
+
+.ci-tela[data-estado='falha'] {
+  --cor: var(--ruim);
+}
+
+.ci-tela[data-estado='aguardando'] {
+  --cor: var(--atencao);
+}
+
+.ci-abrir {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
+.ci-abrir:focus-visible {
+  outline: 2px solid var(--ciano);
+  outline-offset: 2px;
+}
+
+.ci-cabeca {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ci-titulo,
+.ci-duracao {
+  color: var(--suave);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.ci-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9em;
+}
+
+.ci-jobs li[data-estado='falha'] {
+  color: var(--ruim);
+}
+
 /* ------------------------------------------------------------ pareamento */
 
 main.centro {

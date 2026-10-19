@@ -1,6 +1,7 @@
 /** Cyber café (SDD 13): miniaturas sintéticas das telas e o estado da sala. */
 
 import type { AgentState } from './agents.js';
+import type { CiStatus } from './ci.js';
 
 export type ThumbnailKind = 'arquivo' | 'comando' | 'testes' | 'pensando' | 'resposta' | 'ocioso';
 
@@ -46,4 +47,6 @@ export interface CafeState {
   readonly placar: CafeScore;
   /** Execuções com limite estourado agora (relógio vermelho). */
   readonly limites: readonly string[];
+  /** Cozinha do CI (ADR 0051); só quando há repositórios acompanhados. */
+  readonly ci?: CiStatus;
 }
