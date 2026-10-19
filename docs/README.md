@@ -78,3 +78,4 @@
 | [0047](adr/0047-agente-de-terminal-sobre-o-terminal-do-vscode.md)              | Agente de terminal interativo sobre o terminal do VS Code               |
 | [0050](adr/0050-busca-semantica-por-api-de-embeddings.md)                      | Busca semântica por API de embeddings compatível com a da OpenAI        |
 | [0051](adr/0051-cafe-do-ci.md)                                                 | Café do CI: as execuções do GitHub Actions como a cozinha do cyber café |
+| [0052](adr/0052-modo-economico-de-tokens.md)                                   | Modo econômico de tokens                                                |

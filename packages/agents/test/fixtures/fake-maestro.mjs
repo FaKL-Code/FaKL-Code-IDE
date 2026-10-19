@@ -156,6 +156,7 @@ async function prompt(params, cx) {
     }
     if (mode === 'recursos') {
       log.found = await fakl.call('find_resources', { tarefa: 'escrever arquivos de texto' });
+      log.sugestao = await fakl.call('suggest_profile', { instrucoes: 'corrigir typo no README' });
       log.semPerfil = await fakl.call('spawn_agent', { instrucoes: 'x' });
       log.perfilInvalido = await fakl.call('spawn_agent', {
         profileId: 42,

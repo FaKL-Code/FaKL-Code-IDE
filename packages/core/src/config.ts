@@ -28,6 +28,7 @@ import { parse, parseDocument, stringify, type Document } from 'yaml';
 
 import type { EventBus } from './events/bus.js';
 import { parseLimits } from './orchestrator/limits.js';
+import { isModoEconomia, MODOS_ECONOMIA, type ModoEconomia } from './economia/compactar.js';
 import { faklHome } from './paths.js';
 import { objectParams, RpcError, stringParam, type Router } from './rpc/router.js';
 
@@ -58,6 +59,8 @@ export interface FaklConfig {
    * lendo o histórico local delas (ADR 0039). Desligado até o usuário consentir.
    */
   readonly sessoesExternas?: boolean;
+  /** Modo econômico de tokens (ADR 0052); sem a chave, `equilibrado`. */
+  readonly economia?: ModoEconomia;
 }
 
 /** `voz` no config.yaml: o modo escolhido (ver `VOZ_MODOS` no protocolo). */
@@ -208,6 +211,7 @@ export function configHeader(info: FirstRunInfo = { provedores: [], perfis: [] }
 #   endpoint: http://127.0.0.1:8000/v1   # ${l10n.t('openai, groq and local only; optional')}
 #   idioma: pt
 #   limiteMb: 20       # ${l10n.t('the API key goes in the keychain (voz.token), never here')}
+# economia:           ${l10n.t('token saving mode: desligado, equilibrado (default) or agressivo')}
 # sessoesExternas: false  ${l10n.t('true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history')}
 # tetoDiario:          ${l10n.t('maximum spending per provider per day; when reached, agents pause')}
 ${caps.join('\n')}
@@ -403,6 +407,7 @@ export function parseConfig(raw: unknown, where: string): FaklConfig {
     ...parseLovable(raw.lovable, where),
     ...parseVoz(raw.voz, where),
     ...(raw.sessoesExternas === true ? { sessoesExternas: true } : {}),
+    ...parseEconomia(raw.economia, where),
   };
 }
 
@@ -583,6 +588,16 @@ function parseRunDefaults(
     ...(limites ? { limites } : {}),
     ...(entrega ? { entrega: entrega as Delivery } : {}),
   };
+}
+
+function parseEconomia(raw: unknown, where: string): { economia?: ModoEconomia } {
+  if (raw === undefined || raw === null) return {};
+  if (!isModoEconomia(raw)) {
+    throw new ConfigError(
+      l10n.t('{0}: {1} must be {2}', where, 'economia', MODOS_ECONOMIA.join(', ')),
+    );
+  }
+  return { economia: raw };
 }
 
 function parsePostMergeBuild(raw: unknown, where: string): { buildAposMerge?: PostMergeBuild } {
@@ -872,6 +887,11 @@ export class ConfigStore {
     const parsed = parseVoz(raw, 'voz').voz;
     await this.setKey('voz', raw);
     return parsed;
+  }
+
+  /** Grava `economia:` no config.yaml; `equilibrado`, o padrão, apaga a chave. */
+  async setEconomia(modo: ModoEconomia): Promise<void> {
+    await this.setKey('economia', modo === 'equilibrado' ? undefined : modo);
   }
 
   /** Grava `sessoesExternas:` no config.yaml; desligar apaga a chave. */

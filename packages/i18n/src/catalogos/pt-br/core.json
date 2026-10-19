@@ -125,6 +125,14 @@
   "Parameters of {0}: {1}.": "Parâmetros de {0}: {1}.",
   "{0} takes no parameters.": "{0} não recebe parâmetros.",
   "the arguments must be an object.": "os argumentos devem ser um objeto.",
+  "{0} needs endpoint (e.g. https://api.openai.com/v1) for provedor openai": "{0} precisa de endpoint (ex.: https://api.openai.com/v1) com provedor openai",
+  "only the IDE configures semantic search": "só a IDE configura a busca semântica",
+  "embeddings: sending the notes was not confirmed": "embeddings: o envio das notas não foi confirmado",
+  "embeddings: no API key saved; use \"FaKL: Save the embeddings API key\"": "embeddings: nenhuma chave de API guardada; use \"FaKL: Guardar a chave da API de embeddings\"",
+  "embeddings: closed": "embeddings: encerrado",
+  "embeddings: the server refused the API key (HTTP {0})": "embeddings: o servidor recusou a chave de API (HTTP {0})",
+  "embeddings: rate limit (HTTP 429); will try again later": "embeddings: limite de taxa (HTTP 429); tenta de novo mais tarde",
+  "embeddings: malformed response": "embeddings: resposta malformada",
   "missing required arguments: {0}.": "faltam argumentos obrigatórios: {0}.",
   "Unknown arguments: {0}.": "Argumentos desconhecidos: {0}.",
   "Invalid JSON": "JSON inválido",
@@ -249,12 +257,5 @@
   "State: {0} -> {1} ({2})": "Estado: {0} -> {1} ({2})",
   "State: {0} -> {1}": "Estado: {0} -> {1}",
   "Changed file: {0}": "Arquivo alterado: {0}",
-  "{0} needs endpoint (e.g. https://api.openai.com/v1) for provedor openai": "{0} precisa de endpoint (ex.: https://api.openai.com/v1) com provedor openai",
-  "only the IDE configures semantic search": "só a IDE configura a busca semântica",
-  "embeddings: sending the notes was not confirmed": "embeddings: o envio das notas não foi confirmado",
-  "embeddings: no API key saved; use \"FaKL: Save the embeddings API key\"": "embeddings: nenhuma chave de API guardada; use \"FaKL: Guardar a chave da API de embeddings\"",
-  "embeddings: closed": "embeddings: encerrado",
-  "embeddings: the server refused the API key (HTTP {0})": "embeddings: o servidor recusou a chave de API (HTTP {0})",
-  "embeddings: rate limit (HTTP 429); will try again later": "embeddings: limite de taxa (HTTP 429); tenta de novo mais tarde",
-  "embeddings: malformed response": "embeddings: resposta malformada"
+  "token saving mode: desligado, equilibrado (default) or agressivo": "modo de economia de tokens: desligado, equilibrado (padrão) ou agressivo"
 }

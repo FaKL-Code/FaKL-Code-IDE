@@ -317,6 +317,22 @@ export interface MaestroContext {
   readonly extra?: readonly string[];
   /** Agentes, skills e servidores MCP instalados na IDE. */
   readonly resources?: ResourceSummary;
+  /** Modo econômico de tokens ligado (ADR 0052): o prompt pede delegação e relatos enxutos. */
+  readonly economia?: boolean;
+}
+
+/** Orientação de economia para quem delega (ADR 0052). */
+export function economiaMaestro(): string {
+  return l10n.t(
+    'Token saving is on: write precise subagent instructions in few words, omit profileId so spawn_agent picks the cheapest profile that fits (suggest_profile shows the choice), ask for short reports, and do not read again what you already have.',
+  );
+}
+
+/** Orientação de economia para quem executa (ADR 0052). */
+export function economiaExecutor(): string {
+  return l10n.t(
+    'Token saving is on: do not paste whole files or long logs in your replies, quote only the lines that matter, and keep the final summary under 15 lines.',
+  );
 }
 
 /** Instruções do maestro (SDD 9.2). */
@@ -413,6 +429,7 @@ export function maestroPrompt(context: MaestroContext): string {
 export function chatMaestroPrompt(
   resources?: ResourceSummary,
   profiles: readonly AgentProfile[] = [],
+  economia = false,
 ): string {
   return [
     [
@@ -444,6 +461,7 @@ export function chatMaestroPrompt(
     ].join('\n'),
     knowsResources(resources) ? resourceGuide() : '',
     resourcesSection(resources),
+    economia ? economiaMaestro() : '',
     memoryHint(),
   ]
     .filter(Boolean)
@@ -482,6 +500,7 @@ export function workerPrompt(
   papel: string,
   criterio?: string,
   resources: readonly ResourceContent[] = [],
+  economia = false,
 ): string {
   return [
     l10n.t(
@@ -500,6 +519,7 @@ export function workerPrompt(
           'When you finish, reply with a short summary: what you did, files changed and what is still pending.',
         ),
     criterio ? `${l10n.t('Criteria for this subtask:')}\n${criterio}` : '',
+    economia ? economiaExecutor() : '',
     resourcesBriefing(resources),
   ]
     .filter(Boolean)

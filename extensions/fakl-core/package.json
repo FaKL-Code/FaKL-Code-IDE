@@ -360,6 +360,22 @@
         "category": "FaKL"
       },
       {
+        "command": "fakl.economia.show",
+        "title": "%command.economia.show%",
+        "category": "FaKL",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "fakl.economia.setMode",
+        "title": "%command.economia.setMode%",
+        "category": "FaKL"
+      },
+      {
+        "command": "fakl.economia.reset",
+        "title": "%command.economia.reset%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.scorecard.setPeriod",
         "title": "%command.scorecard.setPeriod%",
         "category": "FaKL",
