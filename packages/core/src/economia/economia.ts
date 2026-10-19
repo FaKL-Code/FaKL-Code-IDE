@@ -24,6 +24,9 @@ export interface Contadores {
   roteadas: number;
   /** Das roteadas, as que foram a um perfil mais barato que o de quem pediu. */
   rebaixadas: number;
+  /** Trechos de nota e perguntas da busca semântica que o cache poupou de enviar ao servidor de embeddings. */
+  embeddingsEvitados: number;
+  caracteresEmbeddings: number;
   /** Diferença de custo médio por tarefa (placar) entre quem pediu e quem recebeu; só com dados dos dois. */
   usdEstimado: number;
 }
@@ -35,6 +38,8 @@ const ZERO: Contadores = {
   caracteresRepeticoes: 0,
   roteadas: 0,
   rebaixadas: 0,
+  embeddingsEvitados: 0,
+  caracteresEmbeddings: 0,
   usdEstimado: 0,
 };
 
@@ -48,8 +53,8 @@ interface Documento {
 export interface EconomiaStatus {
   readonly modo: ModoEconomia;
   readonly desde: string;
-  readonly total: Contadores & { tokensEstimados: number };
-  readonly hoje: Contadores & { tokensEstimados: number };
+  readonly total: Contadores & { tokensEstimados: number; tokensEmbeddings: number };
+  readonly hoje: Contadores & { tokensEstimados: number; tokensEmbeddings: number };
   /** Aviso fixo: os tokens são estimados a partir de caracteres. */
   readonly nota: string;
 }
@@ -69,11 +74,19 @@ function somar(alvo: Contadores, parcial: Partial<Contadores>): void {
   }
 }
 
-function comTokens(c: Contadores): Contadores & { tokensEstimados: number } {
+/**
+ * `tokensEstimados` é só o que deixou de voltar ao modelo (respostas compactadas e leituras
+ * repetidas). Os embeddings evitados ficam à parte em `tokensEmbeddings`: são outro tipo de
+ * token, de modelo de embeddings, bem mais barato, e somá-los inflaria o número principal.
+ */
+function comTokens(
+  c: Contadores,
+): Contadores & { tokensEstimados: number; tokensEmbeddings: number } {
   return {
     ...c,
     usdEstimado: Math.round(c.usdEstimado * 100) / 100,
     tokensEstimados: estimarTokens(c.caracteresCompactados + c.caracteresRepeticoes),
+    tokensEmbeddings: estimarTokens(c.caracteresEmbeddings),
   };
 }
 
@@ -117,7 +130,16 @@ export class Economia {
     if (!arquivo) return;
     try {
       const lido = JSON.parse(await readFile(arquivo, 'utf8')) as Documento;
-      if (lido.versao === FILE_VERSION) this.doc = lido;
+      if (lido.versao === FILE_VERSION) {
+        // Arquivos de antes de um contador novo não têm a chave: completa com zero (senão vira NaN).
+        this.doc = {
+          ...lido,
+          total: { ...ZERO, ...lido.total },
+          dias: Object.fromEntries(
+            Object.entries(lido.dias).map(([dia, valores]) => [dia, { ...ZERO, ...valores }]),
+          ),
+        };
+      }
     } catch {
       // Sem arquivo ou ilegível: começa do zero.
     }

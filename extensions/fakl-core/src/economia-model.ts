@@ -15,6 +15,9 @@ export interface EconomiaNumeros {
   readonly rebaixadas: number;
   readonly usdEstimado: number;
   readonly tokensEstimados: number;
+  /** Busca semântica: trechos e perguntas que o cache poupou de enviar, e o tamanho disso em tokens de embeddings. */
+  readonly embeddingsEvitados?: number;
+  readonly tokensEmbeddings?: number;
 }
 
 /** 950 -> "950", 12400 -> "12,4 mil", 1250000 -> "1,25 mi" (no idioma da IDE). */
@@ -78,6 +81,15 @@ export function linhasDoResumo(resumo: EconomiaResumo): string[] {
   ];
   if (total.usdEstimado > 0) {
     linhas.push(l10n.t('Estimated cost difference: ${0}', total.usdEstimado.toFixed(2)));
+  }
+  if ((total.embeddingsEvitados ?? 0) > 0) {
+    linhas.push(
+      l10n.t(
+        'Semantic search cache: {0} snippets and questions not sent again (~{1} embedding tokens, counted apart)',
+        String(total.embeddingsEvitados),
+        tokensCurtos(total.tokensEmbeddings ?? 0),
+      ),
+    );
   }
   linhas.push(l10n.t('Tokens are estimated from characters (4 per token).'));
   return linhas;

@@ -82,6 +82,8 @@ export interface VaultServiceOptions {
   readonly embeddingsKey?: () => string | undefined;
   /** Espera entre tentativas do limite de taxa; só os testes trocam. */
   readonly sleep?: (ms: number) => Promise<void>;
+  /** Avisa o que o cache de embeddings poupou de enviar (livro-caixa da economia, ADR 0052). */
+  readonly economizou?: (poupado: { itens: number; caracteres: number }) => void;
 }
 
 function pad(n: number): string {
@@ -251,6 +253,7 @@ export class VaultService implements Disposable {
         ...(this.options.log ? { log: this.options.log } : {}),
         ...(this.options.embeddingsKey ? { apiKey: this.options.embeddingsKey } : {}),
         ...(this.options.sleep ? { sleep: this.options.sleep } : {}),
+        ...(this.options.economizou ? { economizou: this.options.economizou } : {}),
       });
       this.semantic = semantic;
       await semantic.start(this.index);

@@ -57,6 +57,16 @@ describe('economia de tokens: modelo da barra', () => {
     expect(linhas.at(-1)).toContain('estimados pelos caracteres');
   });
 
+  it('mostra o cache da busca semântica à parte, só quando houve', () => {
+    useLocale('pt-br');
+    expect(linhasDoResumo(resumo()).join(' | ')).not.toContain('Cache da busca semântica');
+    const com = linhasDoResumo(
+      resumo({ total: { ...numeros, embeddingsEvitados: 7, tokensEmbeddings: 1_500 } }),
+    ).join(' | ');
+    expect(com).toContain('Cache da busca semântica: 7 trechos e perguntas');
+    expect(com).toContain('1,5 mil tokens de embeddings');
+  });
+
   it('só mostra a diferença de custo quando há dados do placar', () => {
     useLocale('pt-br');
     const com = linhasDoResumo(resumo({ total: { ...numeros, usdEstimado: 1.234 } })).join('\n');

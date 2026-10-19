@@ -38,6 +38,10 @@ const CHARS_PER_TOKEN = 4;
 const SAVE_DELAY_MS = 2000;
 const REQUEST_TIMEOUT_MS = 60_000;
 const STORE_VERSION = 1;
+/** Vetores de trechos que saíram do índice (nota renomeada, trecho editado e desfeito), por hash do texto. */
+const RESERVE_MAX = 3000;
+/** Perguntas já embutidas nesta sessão; a mesma pergunta não volta à API. */
+const QUERY_CACHE_MAX = 100;
 
 interface Chunk {
   readonly text: string;
@@ -55,6 +59,8 @@ interface StoredFile {
   readonly modelo: string;
   readonly endpoint: string;
   readonly notas: Record<string, { hash: string; trechos: { texto: string; vetor: string }[] }>;
+  /** `{ sha1 do texto: vetor }`; só o hash, o texto do trecho não vai para cá. */
+  readonly reserva?: Record<string, string>;
 }
 
 export interface SemanticStatus {
@@ -158,6 +164,10 @@ function decode(text: string): Float32Array {
   return new Float32Array(copy.buffer);
 }
 
+function textKey(text: string): string {
+  return createHash('sha1').update(text).digest('hex');
+}
+
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -174,6 +184,8 @@ export interface SemanticIndexOptions {
   readonly apiKey?: () => string | undefined;
   /** Espera entre tentativas do 429; injetável para os testes. */
   readonly sleep?: (ms: number) => Promise<void>;
+  /** Avisa o que o cache poupou de enviar ao servidor de embeddings (trechos ou perguntas, e caracteres). */
+  readonly economizou?: (poupado: { itens: number; caracteres: number }) => void;
 }
 
 /**
@@ -186,6 +198,9 @@ export interface SemanticIndexOptions {
  */
 export class SemanticIndex {
   private readonly entries = new Map<string, Entry>();
+  /** Vetores de trechos que saíram do índice, por hash do texto, do mais antigo ao mais novo. */
+  private readonly reserve = new Map<string, Float32Array>();
+  private readonly queryCache = new Map<string, Float32Array>();
   private readonly queue = new Set<string>();
   private working: Promise<void> | undefined;
   private saveTimer: NodeJS.Timeout | undefined;
@@ -230,7 +245,7 @@ export class SemanticIndex {
     const present = new Set<string>();
     for (const note of index.all()) {
       present.add(note.path);
-      if (note.private) this.drop(note.path);
+      if (note.private) this.drop(note.path, false);
       else if (this.entries.get(note.path)?.hash !== hashOf(note)) this.queue.add(note.path);
     }
     for (const path of [...this.entries.keys()]) if (!present.has(path)) this.drop(path);
@@ -297,7 +312,7 @@ export class SemanticIndex {
   async search(query: string, limit = 20): Promise<SearchHit[]> {
     const index = this.index;
     if (!index) return [];
-    const [vector] = await this.embed([query]);
+    const vector = await this.queryVector(query);
     if (!vector) return [];
     const best = new Map<string, { score: number; text: string }>();
     for (const [path, entry] of this.entries) {
@@ -315,6 +330,43 @@ export class SemanticIndex {
       hits.push({ path, title: note.title, tags: note.tags, snippet, score });
     }
     return hits.sort((a, b) => b.score - a.score).slice(0, limit);
+  }
+
+  /** Vetor da pergunta: a mesma pergunta (sem contar espaços) não é embutida duas vezes. */
+  private async queryVector(query: string): Promise<Float32Array | undefined> {
+    const key = query.replace(/\s+/g, ' ').trim();
+    const cached = this.queryCache.get(key);
+    if (cached) {
+      // Reinsere para a pergunta mais usada ser a última a sair.
+      this.queryCache.delete(key);
+      this.queryCache.set(key, cached);
+      this.options.economizou?.({ itens: 1, caracteres: key.length });
+      return cached;
+    }
+    const [vector] = await this.embed([query]);
+    if (!vector) return undefined;
+    this.queryCache.set(key, vector);
+    if (this.queryCache.size > QUERY_CACHE_MAX) {
+      const oldest = this.queryCache.keys().next().value;
+      if (oldest !== undefined) this.queryCache.delete(oldest);
+    }
+    return vector;
+  }
+
+  /** Guarda na reserva os trechos de uma entrada que saiu, menos os que continuam no índice. */
+  private reservar(entry: Entry | undefined, keep: ReadonlySet<string> = new Set()): void {
+    if (!entry) return;
+    for (const chunk of entry.chunks) {
+      if (keep.has(chunk.text) || chunk.vector.length === 0) continue;
+      const key = textKey(chunk.text);
+      this.reserve.delete(key);
+      this.reserve.set(key, chunk.vector);
+    }
+    while (this.reserve.size > RESERVE_MAX) {
+      const oldest = this.reserve.keys().next().value;
+      if (oldest === undefined) break;
+      this.reserve.delete(oldest);
+    }
   }
 
   dispose(): void {
@@ -336,15 +388,20 @@ export class SemanticIndex {
     if (!index) return;
     for (const path of paths) {
       const note = index.get(path);
-      if (!note || note.private) this.drop(path);
+      if (!note || note.private) this.drop(path, note === undefined);
       else if (this.entries.get(path)?.hash !== hashOf(note)) this.queue.add(path);
     }
     this.kick();
   }
 
-  private drop(path: string): void {
+  /** Tira a nota do índice. `reservar`: guarda os vetores (nota apagada ou movida); nota que virou privada não. */
+  private drop(path: string, reservar = true): void {
     this.queue.delete(path);
-    if (this.entries.delete(path)) this.scheduleSave();
+    const entry = this.entries.get(path);
+    if (this.entries.delete(path)) {
+      if (reservar) this.reservar(entry);
+      this.scheduleSave();
+    }
   }
 
   private kick(): void {
@@ -369,7 +426,20 @@ export class SemanticIndex {
       try {
         // Trechos iguais aos já calculados (desta ou de outra nota) não são reenviados.
         const cache = this.vectorCache();
-        const missing = [...new Set(texts.filter((text) => !cache.has(text)))];
+        // Trecho de uma nota renomeada ou editada e desfeita ainda está na reserva.
+        for (const text of texts) {
+          const kept = cache.has(text) ? undefined : this.reserve.get(textKey(text));
+          if (kept) cache.set(text, kept);
+        }
+        const unique = [...new Set(texts)];
+        const missing = unique.filter((text) => !cache.has(text));
+        const reused = unique.filter((text) => !missing.includes(text));
+        if (reused.length > 0) {
+          this.options.economizou?.({
+            itens: reused.length,
+            caracteres: reused.reduce((sum, text) => sum + text.length, 0),
+          });
+        }
         const size = this.remote ? REMOTE_BATCH : BATCH;
         for (let i = 0; i < missing.length; i += size) {
           const part = missing.slice(i, i + size);
@@ -378,10 +448,12 @@ export class SemanticIndex {
         }
         // Fechado durante o pedido: o resultado não vale mais.
         if (this.closed()) return;
+        const previous = this.entries.get(path);
         this.entries.set(path, {
           hash,
           chunks: texts.map((text) => ({ text, vector: cache.get(text) ?? new Float32Array() })),
         });
+        this.reservar(previous, new Set(texts));
         this.scheduleSave();
       } catch (error) {
         this.queue.add(path);
@@ -509,6 +581,9 @@ export class SemanticIndex {
           chunks: entry.trechos.map((t) => ({ text: t.texto, vector: decode(t.vetor) })),
         });
       }
+      for (const [key, vector] of Object.entries(stored.reserva ?? {})) {
+        this.reserve.set(key, decode(vector));
+      }
     } catch {
       // Arquivo corrompido: recomeça do zero.
     }
@@ -541,6 +616,7 @@ export class SemanticIndex {
           },
         ]),
       ),
+      reserva: Object.fromEntries([...this.reserve].map(([key, vector]) => [key, encode(vector)])),
     };
     try {
       await mkdir(dirname(file), { recursive: true });
