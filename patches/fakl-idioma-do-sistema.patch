@@ -1,5 +1,5 @@
 diff --git a/src/mainImpl.ts b/src/mainImpl.ts
-index 3d34aea5..4cc6be7f 100644
+index d1216e09..9d63b7f6 100644
 --- a/src/mainImpl.ts
 +++ b/src/mainImpl.ts
 @@ -6,6 +6,7 @@
@@ -7,10 +7,10 @@ index 3d34aea5..4cc6be7f 100644
  import * as fs from 'original-fs';
  import * as os from 'node:os';
 +import { createHash } from 'node:crypto';
+ import { createRequire } from 'node:module';
  import { performance } from 'node:perf_hooks';
  import { configurePortable } from './bootstrap-node.js';
- import { bootstrapESM } from './bootstrap-esm.js';
-@@ -148,7 +149,7 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
+@@ -151,7 +152,7 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
  perf.mark('code/willGetPreferredSystemLanguages');
  const osLocale = processZhLocale((app.getPreferredSystemLanguages()?.[0] ?? 'en').toLowerCase());
  perf.mark('code/didGetPreferredSystemLanguages');
@@ -19,7 +19,7 @@ index 3d34aea5..4cc6be7f 100644
  if (userLocale) {
  	nlsConfigurationPromise = resolveNLSConfiguration({
  		userLocale,
-@@ -770,4 +771,82 @@ function getUserDefinedLocale(argvConfig: IArgvConfig): string | undefined {
+@@ -787,4 +788,82 @@ function getUserDefinedLocale(argvConfig: IArgvConfig): string | undefined {
  	return typeof argvConfig?.locale === 'string' ? argvConfig.locale.toLowerCase() : undefined;
  }
  
