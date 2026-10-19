@@ -422,6 +422,9 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
       join(library, 'escritor.md'),
       '---\nname: escritor\ndescription: Escreve arquivos de texto.\nfakl:\n  nivel: leve\n  perfil: falso\n---\n\nEscreva com capricho.\n',
     );
+    // Sem economia, spawn_agent sem perfil continua pedindo o profileId (com ela, o roteador escolhe).
+    await mkdir(join(dir, 'home', '.fakl'), { recursive: true });
+    await writeFile(join(dir, 'home', '.fakl', 'config.yaml'), 'economia: desligado\n');
     await startCore('recursos');
     const task = await createTask();
     const started = await client.request<Run>('runs.start', { taskId: task.id });
@@ -441,6 +444,8 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
       perfil: 'falso',
       instalado: true,
     });
+    expect(log.sugestao).toMatchObject({ complexidade: 'baixa' });
+    expect(['falso', 'maestro']).toContain((log.sugestao as { profileId: string }).profileId);
     expect(String((log.semPerfil as { erro?: string }).erro)).toMatch(/passe profileId/);
     expect(String((log.inexistente as { erro?: string }).erro)).toMatch(/nenhum/);
     expect(String((log.perfilInvalido as { erro?: string }).erro)).toMatch(/profileId/);

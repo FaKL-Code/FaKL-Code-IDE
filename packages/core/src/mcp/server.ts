@@ -1,6 +1,8 @@
 import { l10n } from '@fakl/i18n';
 import { JsonRpcErrorCode, type CoreMethod } from '@fakl/protocol';
 
+import { compactarResultado, type ModoEconomia } from '../economia/compactar.js';
+import { DetectorDeRepeticao } from '../economia/repeticao.js';
 import { LineDecoder } from '../rpc/framing.js';
 import { describeParameters, prepareArguments } from './arguments.js';
 import type { McpTool } from './tools.js';
@@ -15,7 +17,20 @@ export interface McpServerOptions {
   /** Chama o Core; um erro vira resultado com `isError`. */
   readonly call: (method: CoreMethod, args: unknown) => Promise<unknown>;
   readonly write: (line: string) => void;
+  /** Modo econômico (ADR 0052); sem ele, as respostas saem como antes. */
+  readonly modo?: () => ModoEconomia;
+  /** Avisa o Core do que a economia fez; só somas. Chamado em lote, sem esperar. */
+  readonly registrar?: (somas: EconomiaSomas) => void;
 }
+
+export interface EconomiaSomas {
+  readonly respostas: number;
+  readonly caracteresCompactados: number;
+  readonly repeticoes: number;
+  readonly caracteresRepeticoes: number;
+}
+
+const REGISTRO_MS = 5_000;
 
 interface Message {
   readonly jsonrpc?: string;
@@ -31,8 +46,43 @@ interface Message {
  */
 export class McpServer {
   private readonly decoder = new LineDecoder();
+  private readonly repeticoes: DetectorDeRepeticao;
+  private somas: { -readonly [K in keyof EconomiaSomas]: number } = {
+    respostas: 0,
+    caracteresCompactados: 0,
+    repeticoes: 0,
+    caracteresRepeticoes: 0,
+  };
+  private registro: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly options: McpServerOptions) {}
+  constructor(private readonly options: McpServerOptions) {
+    this.repeticoes = new DetectorDeRepeticao(() => this.modo());
+  }
+
+  private modo(): ModoEconomia {
+    return this.options.modo?.() ?? 'desligado';
+  }
+
+  /** Soma o que a economia fez e avisa o Core daqui a pouco, de uma vez. */
+  private contar(parcial: Partial<EconomiaSomas>): void {
+    if (!this.options.registrar) return;
+    for (const chave of Object.keys(this.somas) as (keyof EconomiaSomas)[]) {
+      this.somas[chave] += parcial[chave] ?? 0;
+    }
+    if (this.registro) return;
+    this.registro = setTimeout(() => {
+      this.registro = undefined;
+      const somas = this.somas;
+      this.somas = {
+        respostas: 0,
+        caracteresCompactados: 0,
+        repeticoes: 0,
+        caracteresRepeticoes: 0,
+      };
+      this.options.registrar?.(somas);
+    }, REGISTRO_MS);
+    this.registro.unref();
+  }
 
   /** Recebe um pedaço do stdin. */
   push(chunk: string): void {
@@ -97,10 +147,21 @@ export class McpServer {
           return;
         }
         try {
+          const repetida = this.repeticoes.repetida(tool.method, prepared.args);
+          if (repetida) {
+            this.contar({ repeticoes: 1, caracteresRepeticoes: repetida.economizados });
+            this.reply(id, { content: [{ type: 'text', text: repetida.aviso }] });
+            return;
+          }
           const result = await this.options.call(tool.method, prepared.args);
+          const compacto = compactarResultado(result, this.modo());
+          this.repeticoes.lembrar(tool.method, prepared.args, compacto.texto);
+          if (compacto.economizados > 0) {
+            this.contar({ respostas: 1, caracteresCompactados: compacto.economizados });
+          }
           this.reply(id, {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-            structuredContent: { resultado: result },
+            content: [{ type: 'text', text: compacto.texto }],
+            structuredContent: { resultado: compacto.valor },
           });
         } catch (error) {
           let text = error instanceof Error ? error.message : String(error);

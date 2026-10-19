@@ -43,6 +43,15 @@ import type { AgentRuntime } from '../agents.js';
 import type { CostTracker } from '../costs.js';
 import type { Disposable, EventBus } from '../events/bus.js';
 import { git, run as exec, runShell } from '../exec.js';
+import type { Contadores } from '../economia/economia.js';
+import type { ModoEconomia } from '../economia/compactar.js';
+import {
+  classificarComplexidade,
+  escolherPerfil,
+  rebaixou,
+  type Escolha,
+  type PerfilRoteavel,
+} from '../economia/roteador.js';
 import { scanSecrets } from '../security/scan.js';
 import {
   objectParams,
@@ -84,6 +93,11 @@ export interface OrchestratorOptions {
   readonly costs: CostTracker;
   /** Placar por perfil, para o `list_profiles` do maestro (ADR 0043); sem ele, a lista não traz o placar. */
   readonly scorecard?: { summaryFor(profileId: string): ScorecardSummary };
+  /** Modo econômico (ADR 0052): com ele ligado, `spawn_agent` sem perfil escolhe a camada de custo pela tarefa. */
+  readonly economia?: {
+    readonly modo: ModoEconomia;
+    registrar(parcial: Partial<Contadores>): void;
+  };
   readonly profiles: () => readonly AgentProfile[];
   /** Limites, entrega e build pós-merge padrão da configuração global. */
   readonly defaults?: () => {
@@ -624,6 +638,25 @@ export class Orchestrator implements Disposable {
     router.register('maestro.listProfiles', async (_params, context) =>
       this.listProfiles(await this.caller(context.principal)),
     );
+    router.register('maestro.suggestProfile', async (params, context) => {
+      const caller = await this.caller(context.principal);
+      const p = objectParams(params);
+      const escolha = await this.routeProfile(
+        caller.state,
+        stringParam(p, 'instrucoes'),
+        typeof p.criterio === 'string' ? p.criterio : undefined,
+        typeof p.papel === 'string' ? p.papel : 'executor',
+      );
+      if (!escolha) {
+        throw RpcError.notFound(l10n.t('no profile is available; see list_profiles'));
+      }
+      return {
+        profileId: escolha.escolha.id,
+        complexidade: escolha.escolha.nivel,
+        sinais: escolha.sinais,
+        motivo: escolha.escolha.motivo,
+      };
+    });
     router.register('maestro.spawnAgent', async (params, context) =>
       this.spawnAgent(await this.caller(context.principal), objectParams(params)),
     );
@@ -1027,6 +1060,7 @@ export class Orchestrator implements Disposable {
         branch: `fakl/${task.id}/${l10n.t('(your session)')}`,
         base: state.base,
         profiles: this.options.profiles(),
+        economia: this.economico(),
         history: state.run.rodadas,
         ...(previousSummary ? { previousSummary } : {}),
       }),
@@ -1208,6 +1242,57 @@ export class Orchestrator implements Disposable {
       }));
   }
 
+  /** Modo econômico ligado? */
+  private economico(): boolean {
+    return this.options.economia !== undefined && this.options.economia.modo !== 'desligado';
+  }
+
+  /** Classifica a tarefa e escolhe o perfil da camada de custo certa, entre os permitidos e disponíveis. */
+  private async routeProfile(
+    state: RunState,
+    instrucoes: string,
+    criterio: string | undefined,
+    papel: string,
+  ): Promise<{ escolha: Escolha; sinais: readonly string[] } | undefined> {
+    const permitted = state.task.perfisPermitidos;
+    const fixed = state.task.papeisFixados?.[papel];
+    const availability = new Map(
+      (await this.options.agents.detect().catch(() => [])).map((a) => [a.id, a.availability]),
+    );
+    const perfis: PerfilRoteavel[] = this.options
+      .profiles()
+      .filter((profile) => !permitted || permitted.includes(profile.id))
+      .filter((profile) => !fixed || profile.id === fixed)
+      .map((profile) => {
+        const placar = this.options.scorecard?.summaryFor(profile.id);
+        return {
+          id: profile.id,
+          custoRelativo: profile.custoRelativo ?? 'médio',
+          instalado: availability.get(profile.id)?.status !== 'não-instalado',
+          bloqueado: this.options.costs.blockedReason(profile.provedor) !== undefined,
+          podeSerMaestro: profile.podeSerMaestro ?? false,
+          ...(placar?.amostra === 'suficiente' && placar.taxaAprovacao !== undefined
+            ? { taxaAprovacao: placar.taxaAprovacao }
+            : {}),
+        };
+      });
+    const classificacao = classificarComplexidade(instrucoes, {
+      ...(criterio ? { criterio } : {}),
+      papel,
+    });
+    const escolha = escolherPerfil(perfis, classificacao.nivel, { papel });
+    return escolha ? { escolha, sinais: classificacao.sinais } : undefined;
+  }
+
+  /** Diferença de custo médio por tarefa entre quem pediu e o perfil escolhido, quando o placar tem os dois. */
+  private economiaUsd(de: string, para: string): number {
+    const a = this.options.scorecard?.summaryFor(de);
+    const b = this.options.scorecard?.summaryFor(para);
+    if (a?.amostra !== 'suficiente' || b?.amostra !== 'suficiente') return 0;
+    if (a.custoMedioUsd === undefined || b.custoMedioUsd === undefined) return 0;
+    return Math.max(0, a.custoMedioUsd - b.custoMedioUsd);
+  }
+
   private async spawnAgent(
     caller: { state: RunState; agent: RunAgent; sessionId: string },
     p: Record<string, unknown>,
@@ -1216,7 +1301,10 @@ export class Orchestrator implements Disposable {
     const papel = typeof p.papel === 'string' && p.papel ? p.papel : 'executor';
     const instrucoes = stringParam(p, 'instrucoes');
     const resources = await this.spawnResources(p);
-    const profileId = this.spawnProfile(state, p, resources, caller.agent.profileId);
+    const profileId = await this.spawnProfile(state, p, resources, caller.agent.profileId, {
+      instrucoes,
+      papel,
+    });
     const profile = this.options.profiles().find((candidate) => candidate.id === profileId);
     if (!profile) {
       throw RpcError.notFound(l10n.t('profile {0} does not exist; see list_profiles', profileId));
@@ -1281,10 +1369,11 @@ export class Orchestrator implements Disposable {
               branch: '(seu branch)',
               base,
               profiles: this.options.profiles(),
+              economia: this.economico(),
               ...this.resourcesContext(),
               extra: resources.length > 0 ? [resourcesBriefing(resources)] : [],
             })
-          : workerPrompt(state.task, papel, criterio, resources),
+          : workerPrompt(state.task, papel, criterio, resources, this.economico()),
       // Subagente comum só leva as integrações: as ferramentas de orquestração do chat não são dele.
       extraMcp: (id: string, profile: AgentProfile) =>
         papel === 'maestro'
@@ -1338,12 +1427,13 @@ export class Orchestrator implements Disposable {
    * para outra máquina sugere perfis que aqui não existem: aí vale um parente
    * dele (`claude-sonnet` → `claude`) ou o perfil de quem delega.
    */
-  private spawnProfile(
+  private async spawnProfile(
     state: RunState,
     p: Record<string, unknown>,
     resources: readonly ResourceContent[],
     callerProfileId: string,
-  ): string {
+    task: { instrucoes: string; papel: string },
+  ): Promise<string> {
     if (p.profileId !== undefined) return stringParam(p, 'profileId');
     const permitted = state.task.perfisPermitidos;
     const allowed = this.options
@@ -1352,6 +1442,28 @@ export class Orchestrator implements Disposable {
       .filter((id) => !permitted || permitted.includes(id));
     const suggested = resources.map(({ info }) => info.perfil).filter((id): id is string => !!id);
     if (suggested.length === 0) {
+      // Sem perfil pedido e sem sugestão de agente ou skill: o modo econômico escolhe pela tarefa.
+      if (this.options.economia && this.options.economia.modo !== 'desligado') {
+        const roteado = await this.routeProfile(
+          state,
+          task.instrucoes,
+          typeof p.criterio === 'string' ? p.criterio : undefined,
+          task.papel,
+        );
+        if (roteado) {
+          const chamador = this.options.profiles().find((x) => x.id === callerProfileId);
+          this.options.economia.registrar({
+            roteadas: 1,
+            ...(rebaixou(roteado.escolha, chamador?.custoRelativo ?? 'médio')
+              ? {
+                  rebaixadas: 1,
+                  usdEstimado: this.economiaUsd(callerProfileId, roteado.escolha.id),
+                }
+              : {}),
+          });
+          return roteado.escolha.id;
+        }
+      }
       throw RpcError.invalidParams(
         l10n.t('pass profileId (see list_profiles) or an agent/skill with a suggested profile'),
       );

@@ -20,6 +20,7 @@ import { ChatViewProvider } from './chat.js';
 import { OverlayControl } from './overlay.js';
 import { addCliToSystemPath, installCli } from './cli.js';
 import { CostsView } from './costs.js';
+import { EconomiaView } from './economia.js';
 import { ScorecardView } from './scorecard.js';
 import { EmailUi } from './email.js';
 import { GitHubUi } from './github.js';
@@ -102,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   const mcpLibrary = new McpLibraryView(context, resourceSources);
   const costs = new CostsView(agentEvents);
   const scorecard = new ScorecardView(agentEvents, context.globalState);
+  const economia = new EconomiaView(agentEvents);
   const overlay = new OverlayControl(
     async () => (connection ?? (await connect()))?.client,
     agentEvents,
@@ -139,6 +141,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     mcpLibrary,
     costs,
     scorecard,
+    economia,
     tasks,
     vault,
     vaultGraph,
@@ -188,6 +191,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     mcpLibrary,
     costs,
     scorecard,
+    economia,
     overlay,
     tasks,
     vault,

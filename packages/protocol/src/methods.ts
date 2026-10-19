@@ -53,6 +53,8 @@ export const CoreMethods = {
     'stopAgent',
     'askHuman',
     'finish',
+    // Perfil sugerido para uma tarefa, pela camada de custo (ADR 0052).
+    'suggestProfile',
   ],
   vault: [
     'status',
@@ -150,6 +152,8 @@ export const CoreMethods = {
   ],
   /** Placar dos agentes por perfil (ADR 0043). */
   scorecard: ['get', 'reset'],
+  /** Modo econômico de tokens (ADR 0052): modo, livro-caixa e o registro que o servidor MCP do agente envia. */
+  economia: ['status', 'setModo', 'registrar', 'reset'],
   costs: ['summary', 'byTask', 'limits.get', 'limits.set'],
   /** Sessão de 5 h e limite semanal dos planos (ADR 0026). */
   usage: ['windows'],
