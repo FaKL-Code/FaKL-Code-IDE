@@ -16,6 +16,8 @@ inglês.
 Playbooks com critério de pronto (o da nota de origem se soma ao do playbook), vault que não
 versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[nota]]` e
 `![[nota#Título]]` na prévia. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 e 0043).
+Café do CI: as execuções do GitHub Actions de até 5 repositórios viram a cozinha do café, só leitura
+(ADR 0051, [docs/cafe-do-ci.md](docs/cafe-do-ci.md)).
 
 ## Agora
 
@@ -32,7 +34,7 @@ versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[no
 
 - Notarização no macOS (exige a conta paga da Apple; libera o auto-update no Mac e o cask oficial
   do Homebrew **[F]**) e assinatura no Windows (o SignPath Foundation recusou o pedido).
-- Terminal ao vivo por agente: terminal de leitura entregue (ADR 0046); PTY interativo continua pendente, junto com o adaptador para CLIs sem ACP.
+- Terminal ao vivo por agente: terminal de leitura entregue (ADR 0046) e agente de terminal interativo sobre o terminal do VS Code, com "Assumir o agente" e "Continuar no terminal" (ADR 0047). Pendentes: miniaturas por `@xterm/headless` e botão de assumir na Mesa.
 - Medição de desempenho (RNF-02 a RNF-04) rodando de forma agendada.
 - macOS Intel e canal insider.
 - Teste de acessibilidade com leitor de tela real (NVDA, VoiceOver, TalkBack) no grafo do vault, no café

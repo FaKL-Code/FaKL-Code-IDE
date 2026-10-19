@@ -28,6 +28,12 @@ export const CoreMethods = {
     // Terminal de leitura de cada agente (ADR 0046): histórico e linhas novas.
     'terminal.attach',
     'terminal.detach',
+    // Ponte do agente de terminal (ADR 0047): só a extensão da IDE chama.
+    'terminalHost.register',
+    'terminalHost.ready',
+    'terminalHost.output',
+    'terminalHost.state',
+    'terminalHost.exit',
     'diff',
     'fileContent',
     'applyFiles',
@@ -132,6 +138,8 @@ export const CoreMethods = {
   audit: ['list', 'verify'],
   /** Cyber café (SDD 13): liga as miniaturas enquanto a sala está aberta. */
   cafe: ['open', 'close', 'state'],
+  /** Café do CI (ADR 0051): runs do GitHub Actions dos repositórios acompanhados. */
+  ci: ['status', 'watch.set'],
   /** Conversas das extensões do Codex e do Claude Code, só leitura e só com consentimento (ADR 0039). */
   external: ['status', 'setEnabled', 'list'],
   remote: [
@@ -169,6 +177,8 @@ export const CoreNotifications = {
   event: 'events.event',
   /** Linhas novas do terminal de um agente anexado com `agents.terminal.attach`. */
   terminalLines: 'agents.terminal.lines',
+  /** Comando do Core ao terminal hospedado pela extensão (criar, enviar texto, encerrar). */
+  terminalHost: 'agents.terminalHost.command',
 } as const;
 
 /** Nome completo de um método, por exemplo `runs.start` ou `agents.terminal.attach`. */

@@ -63,18 +63,18 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 
 ### 2.2 Agentes
 
-| ID     | Requisito                                                                                                    | Marco | Critério de aceite                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------------------- |
-| RF-101 | O usuário deve criar, editar e apagar perfis de agente                                                       | M2    | Perfil salvo persiste após reiniciar e sincroniza entre máquinas      |
-| RF-102 | A IDE deve executar agentes Claude Code, Codex CLI e Gemini CLI usando o login ou a chave do usuário         | M2    | Uma tarefa simples conclui em cada provedor                           |
-| RF-103 | A IDE deve executar qualquer agente compatível com ACP ou qualquer CLI de terminal por um adaptador genérico | M2    | Um agente ACP de terceiros roda sem código novo                       |
-| RF-104 | A IDE deve suportar modelos locais via Ollama e LM Studio                                                    | M2    | Com Ollama instalado, um perfil local executa uma tarefa              |
-| RF-105 | Cada agente deve trabalhar num git worktree e num terminal próprios                                          | M2    | Dois agentes no mesmo repositório não alteram os arquivos um do outro |
-| RF-106 | A mesa de controle deve mostrar a árvore de agentes ao vivo com status, custo, logs e terminal               | M2    | Estados mudam na tela em menos de 1 s após o evento                   |
-| RF-107 | O usuário deve ver o diff de cada agente e aceitar ou rejeitar por arquivo                                   | M2    | Aceitar aplica no branch da tarefa; rejeitar descarta                 |
-| RF-108 | O usuário deve poder pausar, retomar, parar e mandar mensagem a qualquer agente                              | M2    | A ação tem efeito em até 2 s                                          |
-| RF-109 | A IDE deve notificar pelo sistema quando um agente termina, falha ou pede decisão                            | M2    | Notificação nativa aparece no Windows e no macOS                      |
-| RF-110 | Ao fechar a IDE com agentes ativos, ela deve perguntar: esperar terminar, ou parar agora                     | M2    | Ambas as opções funcionam; nenhum processo sobra após o fechamento    |
+| ID     | Requisito                                                                                                    | Marco | Critério de aceite                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-101 | O usuário deve criar, editar e apagar perfis de agente                                                       | M2    | Perfil salvo persiste após reiniciar e sincroniza entre máquinas                                                                                          |
+| RF-102 | A IDE deve executar agentes Claude Code, Codex CLI e Gemini CLI usando o login ou a chave do usuário         | M2    | Uma tarefa simples conclui em cada provedor                                                                                                               |
+| RF-103 | A IDE deve executar qualquer agente compatível com ACP ou qualquer CLI de terminal por um adaptador genérico | M2    | Um agente ACP de terceiros roda sem código novo; uma CLI interativa roda como agente de terminal, no terminal do VS Code (ADR 0047)                       |
+| RF-104 | A IDE deve suportar modelos locais via Ollama e LM Studio                                                    | M2    | Com Ollama instalado, um perfil local executa uma tarefa                                                                                                  |
+| RF-105 | Cada agente deve trabalhar num git worktree e num terminal próprios                                          | M2    | Dois agentes no mesmo repositório não alteram os arquivos um do outro; o terminal é de leitura (ADR 0046) e, no agente de terminal, interativo (ADR 0047) |
+| RF-106 | A mesa de controle deve mostrar a árvore de agentes ao vivo com status, custo, logs e terminal               | M2    | Estados mudam na tela em menos de 1 s após o evento                                                                                                       |
+| RF-107 | O usuário deve ver o diff de cada agente e aceitar ou rejeitar por arquivo                                   | M2    | Aceitar aplica no branch da tarefa; rejeitar descarta                                                                                                     |
+| RF-108 | O usuário deve poder pausar, retomar, parar e mandar mensagem a qualquer agente                              | M2    | A ação tem efeito em até 2 s                                                                                                                              |
+| RF-109 | A IDE deve notificar pelo sistema quando um agente termina, falha ou pede decisão                            | M2    | Notificação nativa aparece no Windows e no macOS                                                                                                          |
+| RF-110 | Ao fechar a IDE com agentes ativos, ela deve perguntar: esperar terminar, ou parar agora                     | M2    | Ambas as opções funcionam; nenhum processo sobra após o fechamento                                                                                        |
 
 ### 2.3 Orquestração
 
@@ -131,14 +131,15 @@ Cada requisito tem um marco (M1 a M6, seção 16) e um critério de aceite verif
 
 ### 2.7 Cyber café
 
-| ID     | Requisito                                                         | Marco | Critério de aceite                               |
-| ------ | ----------------------------------------------------------------- | ----- | ------------------------------------------------ |
-| RF-601 | Sala isométrica em pixel art com um avatar por agente ativo       | M6    | Avatares surgem e somem com os agentes           |
-| RF-602 | Monitor de cada PC mostra miniatura ao vivo do trabalho do agente | M6    | Miniatura atualiza pelo menos a cada 2 s         |
-| RF-603 | Estados do agente viram animações distintas (tabela da seção 13)  | M6    | Cada estado tem animação própria                 |
-| RF-604 | Ao concluir tarefa, o avatar faz uma atividade de pausa e volta   | M6    | Pausa dura entre 20 e 60 s e não atrasa o agente |
-| RF-605 | Clicar num PC abre a sessão do agente na mesa de controle         | M6    | Abre a sessão certa                              |
-| RF-606 | Placar do dia com tarefas, PRs e custo                            | M6    | Valores batem com a mesa de controle             |
+| ID     | Requisito                                                         | Marco | Critério de aceite                                 |
+| ------ | ----------------------------------------------------------------- | ----- | -------------------------------------------------- |
+| RF-601 | Sala isométrica em pixel art com um avatar por agente ativo       | M6    | Avatares surgem e somem com os agentes             |
+| RF-602 | Monitor de cada PC mostra miniatura ao vivo do trabalho do agente | M6    | Miniatura atualiza pelo menos a cada 2 s           |
+| RF-603 | Estados do agente viram animações distintas (tabela da seção 13)  | M6    | Cada estado tem animação própria                   |
+| RF-604 | Ao concluir tarefa, o avatar faz uma atividade de pausa e volta   | M6    | Pausa dura entre 20 e 60 s e não atrasa o agente   |
+| RF-605 | Clicar num PC abre a sessão do agente na mesa de controle         | M6    | Abre a sessão certa                                |
+| RF-606 | Placar do dia com tarefas, PRs e custo                            | M6    | Valores batem com a mesa de controle               |
+| RF-607 | Cozinha do CI: execuções do GitHub Actions como bancadas do café  | M6    | Estado da bancada bate com o do GitHub; só leitura |
 
 ## 3. Requisitos não funcionais
 
@@ -431,12 +432,12 @@ interface AgentHandle {
 
 ### 8.2 Adaptadores e provedores
 
-| Adaptador    | Provedores                                                                          | Como conecta                                | Observações                                                                    |
-| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| `acp`        | Gemini CLI (nativo), Claude Code e Codex (via adaptadores ACP), qualquer agente ACP | JSON-RPC sobre stdio                        | Preferido: eventos estruturados, pedidos de permissão e diffs vindos do agente |
-| `claude-sdk` | Claude                                                                              | Claude Agent SDK dentro do Core             | Alternativa quando for preciso controle mais fino de ferramentas e custo       |
-| `pty`        | Qualquer CLI de terminal                                                            | Pseudo-terminal com parser de saída         | Fallback; menos estrutura, estados inferidos pela saída                        |
-| `ollama`     | Ollama e LM Studio                                                                  | API HTTP compatível com OpenAI em localhost | O adaptador faz o laço de ferramentas, já que não há CLI de agente (ADR 0012)  |
+| Adaptador    | Provedores                                                                          | Como conecta                                | Observações                                                                           |
+| ------------ | ----------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `acp`        | Gemini CLI (nativo), Claude Code e Codex (via adaptadores ACP), qualquer agente ACP | JSON-RPC sobre stdio                        | Preferido: eventos estruturados, pedidos de permissão e diffs vindos do agente        |
+| `claude-sdk` | Claude                                                                              | Claude Agent SDK dentro do Core             | Alternativa quando for preciso controle mais fino de ferramentas e custo              |
+| `terminal`   | Qualquer CLI de terminal (Aider, Claude Code, Codex...)                             | Terminal integrado do VS Code (ADR 0047)    | Fallback; sem estrutura, estados inferidos pela saída; Core só digita em aprovar tudo |
+| `ollama`     | Ollama e LM Studio                                                                  | API HTTP compatível com OpenAI em localhost | O adaptador faz o laço de ferramentas, já que não há CLI de agente (ADR 0012)         |
 
 Lovable não é um adaptador de execução: entra como conector (seção 11.4), e o maestro pode delegar a ele por meio do repositório sincronizado.
 
@@ -464,7 +465,7 @@ A detecção (`detect`) roda ao abrir a IDE e informa na mesa de controle quais 
 - O maestro integra resultados com merge dos branches dos subagentes no branch da tarefa; conflitos viram subtarefa de resolução.
 - Worktrees de sessões finalizadas são removidos ao fim da execução; os branches ficam até o merge ou descarte.
 - Variáveis de ambiente passam por lista de permissão; nenhuma variável com segredo é herdada do shell do usuário.
-- Cada sessão tem um terminal **de leitura** (ADR 0046): o Core monta, dos eventos da sessão (saída do agente, ferramentas, pedidos de permissão e decisões, estados, erros), linhas de terminal com cores ANSI simples num buffer circular de 10.000 linhas, com segredos removidos. `agents.terminal.attach` entrega o histórico e passa a notificar as linhas novas (`agents.terminal.lines`) até `agents.terminal.detach`; a IDE mostra isso num `Pseudoterminal` por agente, sem entrada de teclado. Não há PTY: os agentes falam ACP, que não é um terminal. O PTY interativo, com a saída bruta dos comandos e miniaturas por `@xterm/headless`, continua pendente e depende de um adaptador para CLIs sem ACP (RF-103).
+- Cada sessão tem um terminal **de leitura** (ADR 0046): o Core monta, dos eventos da sessão (saída do agente, ferramentas, pedidos de permissão e decisões, estados, erros), linhas de terminal com cores ANSI simples num buffer circular de 10.000 linhas, com segredos removidos. `agents.terminal.attach` entrega o histórico e passa a notificar as linhas novas (`agents.terminal.lines`) até `agents.terminal.detach`; a IDE mostra isso num `Pseudoterminal` por agente, sem entrada de teclado. Não há PTY: os agentes falam ACP, que não é um terminal. O PTY interativo existe só para o adaptador `terminal` (ADR 0047, `docs/agente-de-terminal.md`): o PTY é o terminal integrado do VS Code, hospedado pela extensão `fakl-core`, que lê a saída pela integração de shell e a conta ao Core. Miniaturas por `@xterm/headless` continuam pendentes.
 
 ## 9. Orquestração
 
@@ -750,6 +751,25 @@ O Core envia só os dados (texto e cores); o café desenha a miniatura num canva
 - Troféus no placar por conquistas (uma execução com 5 agentes, 100 PRs). Uma semana sem limite estourado e o rádio lo-fi ficam para depois.
 - Abaixo da sala, uma faixa com a tela legível de cada agente; clicar nela, no avatar ou no PC abre a sessão.
 
+### 13.4 Cozinha do CI
+
+As execuções do GitHub Actions dos repositórios acompanhados viram uma cozinha abaixo da sala (ADR 0051, [docs/cafe-do-ci.md](cafe-do-ci.md)). O café continua só consumindo dados do Core: o serviço `ci` consulta a API, e o café recebe o retrato em `cafe.state` (campo `ci`) e as mudanças no evento `ci.run`.
+
+| Estado da execução ou do job | Animação                                              |
+| ---------------------------- | ----------------------------------------------------- |
+| `trabalhando`                | Cozinheiro mexe a colher, vapor, xícara enchendo      |
+| `sucesso`                    | Comemoração, sino, xícara servida                     |
+| `falha`                      | Mãos na cabeça, luz de alarme, fumaça, xícara rachada |
+| `aguardando` (aprovação)     | Senhas na fila                                        |
+| `fila`                       | Cozinheiro parado, xícaras vazias                     |
+| `cancelada`                  | Bancada vazia, avental no gancho                      |
+
+- Um cozinheiro por execução (a mais recente de cada fluxo, no máximo 8) e uma xícara por job. A miniatura de cada execução (workflow, branch, duração, jobs) é um cartão abaixo do canvas, porque a fonte de pixel só tem dígitos.
+- O placar da cozinha traz builds verdes seguidos, fluxos falhando e execuções em andamento.
+- Até 5 repositórios: o da pasta aberta e os de `fakl.ci.repositorios`. Consulta com intervalo adaptativo, só com a conta do GitHub conectada e, sozinha, só com `fakl.rede.consultasAutomaticas` ligada.
+- Somente leitura: não dispara, cancela nem reexecuta workflow. No controle remoto, `ci.status` está em `ver` e `ci.watch.set` fora de todos os escopos.
+- Lista escondida e região `aria-live` do café também cobrem as execuções, com anúncio agrupado; `prefers-reduced-motion` para a animação.
+
 ## 14. Segurança
 
 ### 14.1 Modelo de ameaças
@@ -844,7 +864,7 @@ flowchart LR
 | M3 Controle remoto        | Fase 2        | Relay no VPS, pareamento, PWA, push, editor no navegador                          | RF-301 a RF-306, RNF-08                  | Você acompanha e aprova uma execução inteira pelo celular            |
 | M4 Vault                  | Fase 3        | Vault Obsidian, sincronização git, índice, MCP do vault, notas de sessão          | RF-401 a RF-407                          | Notas fluem entre as máquinas e os agentes usam o vault como memória |
 | M5 Integrações            | Fase 4        | GitHub completo, SSH com políticas, Hostinger, Lovable e email IMAP               | RF-501 a RF-510                          | Deploy num VPS feito por agente, com snapshot e aprovação            |
-| M6 Cyber café             | Fase 5        | Sala, avatares, miniaturas, animações, placar                                     | RF-601 a RF-606                          | Você entende o estado de todos os agentes só olhando a sala          |
+| M6 Cyber café             | Fase 5        | Sala, avatares, miniaturas, animações, placar, cozinha do CI                      | RF-601 a RF-607                          | Você entende o estado de todos os agentes só olhando a sala          |
 
 ### 16.1 Primeiros passos do M1
 

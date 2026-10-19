@@ -8,5 +8,9 @@
   "Pairing was declined in the IDE.": "O pareamento foi recusado na IDE.",
   "Connection closed.": "Conexão encerrada.",
   "The IDE did not respond in time.": "A IDE não respondeu a tempo.",
-  "Invalid pairing QR code": "QR de pareamento inválido"
+  "Invalid pairing QR code": "QR de pareamento inválido",
+  "a terminal agent runs in an IDE terminal, but no IDE window is connected to the Core": "um agente de terminal roda num terminal da IDE, mas nenhuma janela da IDE está conectada ao Core",
+  "the IDE did not open the agent terminal in time": "a IDE não abriu o terminal do agente a tempo",
+  "the agent command exited with code {0}": "o comando do agente terminou com o código {0}",
+  "a terminal agent has no structured permission requests, so the IDE only types into its terminal in the approve-all or autopilot modes; use \"Take over the agent\" to type yourself": "um agente de terminal não tem pedidos de permissão estruturados, então a IDE só digita no terminal dele nos modos aprovar tudo ou autopilot; use \"Assumir o agente\" para digitar você mesmo"
 }
