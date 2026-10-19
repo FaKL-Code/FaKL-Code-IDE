@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   const githubAuth = new GitHubAuth(context);
   const github = new GitHubUi(githubAuth, context.extensionUri);
   const email = new EmailUi(context);
-  const ssh = new SshUi();
+  const ssh = new SshUi(agentEvents);
   const hostinger = new HostingerUi(context, () => void ssh.reload());
   const providers = new ProvidersUi(context);
   const lovable = new LovableUi(github);
@@ -252,6 +252,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
         'config.changed',
         'run.*',
         'vault.*',
+        'ssh.*',
         'remote.*',
         'claude.*',
         'ci.*',

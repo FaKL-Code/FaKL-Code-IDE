@@ -34,6 +34,12 @@ import type { AuditInput } from '../security/audit.js';
 import { readJson, writeJsonAtomic } from '../store.js';
 import { actorOf, isAgent, untrusted, type IntegrationGuards } from './guard.js';
 import {
+  buildForwardArgs,
+  ForwardManager,
+  parseForwardSpec,
+  type ForwardOptions,
+} from './ssh-forward.js';
+import {
   checkPath,
   classifyOperation,
   decodeContent,
@@ -94,6 +100,15 @@ export interface SshServiceOptions extends IntegrationGuards {
   /** Quem roda o `ssh`; muda nos testes, que respondem como um servidor falso. */
   readonly runner?: typeof run;
   readonly log?: (message: string) => void;
+  /** Arquivo dos encaminhamentos favoritos (em ~/.fakl/data). */
+  readonly forwardsFile?: string;
+  /** Mudança de estado de um encaminhamento de porta (evento `ssh.forward`). */
+  readonly onForward?: ForwardOptions['emit'];
+  /** Ajustes e dublês do gerenciador de encaminhamentos; os testes usam. */
+  readonly forward?: Pick<
+    ForwardOptions,
+    'max' | 'spawn' | 'probe' | 'isFree' | 'retryDelayMs' | 'readyTimeoutMs'
+  >;
 }
 
 const DEFAULT_POLICY: SshPolicy = 'confirmar';
@@ -157,14 +172,96 @@ export async function readSshConfig(home: string): Promise<SshConfigHost[]> {
 export class SshService {
   private stored: StoredHost[] = [];
   private readonly home: string;
+  private readonly forwards: ForwardManager;
 
   constructor(private readonly options: SshServiceOptions) {
     this.home = options.home ?? homedir();
+    this.forwards = new ForwardManager({
+      ...options.forward,
+      resolve: async (spec) => ({
+        command: options.sshCommand ?? 'ssh',
+        args: buildForwardArgs(await this.host(spec.host), spec, (path) =>
+          sshPath(this.home, path),
+        ),
+      }),
+      ...(options.onForward ? { emit: options.onForward } : {}),
+      ...(options.forwardsFile ? { file: options.forwardsFile } : {}),
+      ...(options.redact ? { redact: options.redact } : {}),
+      ...(options.log ? { log: options.log } : {}),
+    });
   }
 
   async load(): Promise<void> {
+    await this.forwards.load();
     if (!this.options.file) return;
     this.stored = (await readJson<HostsFile>(this.options.file))?.hosts ?? [];
+  }
+
+  /** Ao fechar o Core: encerra os `ssh -N -L` abertos. */
+  async closeForwards(): Promise<void> {
+    await this.forwards.dispose();
+  }
+
+  /**
+   * Encaminhamento de porta (RF-504). Só a IDE e a CLI: agentes e aparelhos remotos são
+   * recusados e a recusa vai para a auditoria. Abrir uma porta local para um servidor
+   * não é algo que a política do host libere a um agente.
+   */
+  private async forwardGuard(action: string, context: CallContext, alvo: string): Promise<void> {
+    if (context.principal === undefined) return;
+    await this.options.audit.record({
+      acao: `ssh.forward.${action}`,
+      alvo,
+      ator: actorOf(context),
+      resultado: 'recusado',
+    });
+    throw new RpcError(
+      FaklErrorCode.Forbidden,
+      l10n.t('only the IDE manages port forwards; agents cannot'),
+    );
+  }
+
+  async forwardList(context: CallContext): Promise<unknown> {
+    await this.forwardGuard('list', context, '*');
+    return this.forwards.list();
+  }
+
+  async forwardOpen(p: Record<string, unknown>, context: CallContext): Promise<unknown> {
+    await this.forwardGuard('open', context, typeof p.host === 'string' ? p.host : '*');
+    const spec = parseForwardSpec(p);
+    const audit: AuditInput = {
+      acao: 'ssh.forward.open',
+      alvo: spec.host,
+      ator: actorOf(context),
+      resultado: 'ok',
+      detalhes: {
+        portaLocal: spec.portaLocal,
+        destino: spec.destino,
+        portaDestino: spec.portaDestino,
+        reconectar: spec.reconectar,
+      },
+    };
+    try {
+      const info = await this.forwards.open(spec, p.favorito === true);
+      await this.options.audit.record(audit);
+      return info;
+    } catch (error) {
+      await this.options.audit.record({ ...audit, resultado: 'erro' });
+      throw error;
+    }
+  }
+
+  async forwardClose(p: Record<string, unknown>, context: CallContext): Promise<unknown> {
+    const id = stringParam(p, 'id');
+    await this.forwardGuard('close', context, id);
+    const list = await this.forwards.close(id, p.esquecer === true);
+    await this.options.audit.record({
+      acao: 'ssh.forward.close',
+      alvo: id,
+      ator: actorOf(context),
+      resultado: 'ok',
+    });
+    return list;
   }
 
   private async save(): Promise<void> {
@@ -573,5 +670,12 @@ export class SshService {
     router.register('ssh.write', (params, context) => this.write(objectParams(params), context));
     router.register('ssh.list', (params, context) => this.list(objectParams(params), context));
     router.register('ssh.stat', (params, context) => this.stat(objectParams(params), context));
+    router.register('ssh.forward.list', (_params, context) => this.forwardList(context));
+    router.register('ssh.forward.open', (params, context) =>
+      this.forwardOpen(objectParams(params), context),
+    );
+    router.register('ssh.forward.close', (params, context) =>
+      this.forwardClose(objectParams(params), context),
+    );
   }
 }

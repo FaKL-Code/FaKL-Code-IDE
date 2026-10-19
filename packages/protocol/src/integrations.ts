@@ -71,6 +71,34 @@ export interface SshStatResult {
   readonly modificadoEm?: number;
 }
 
+export type SshForwardState = 'abrindo' | 'ativo' | 'reconectando' | 'erro' | 'fechado';
+
+/** Encaminhamento de porta (`ssh.forward.list`, evento `ssh.forward`): RF-504. */
+export interface SshForwardInfo {
+  /** `<host>:<portaLocal>`; a porta local é única entre os encaminhamentos. */
+  readonly id: string;
+  /** Alias do host do inventário. */
+  readonly host: string;
+  /** Sempre um endereço de loopback: o encaminhamento não fica visível na rede. */
+  readonly bind: string;
+  readonly portaLocal: number;
+  /** Endereço do destino, visto do servidor (padrão `127.0.0.1`). */
+  readonly destino: string;
+  readonly portaDestino: number;
+  readonly estado: SshForwardState;
+  readonly erro?: string;
+  /** Reabre sozinho se a conexão cair. */
+  readonly reconectar: boolean;
+  /** Guardado nos favoritos (sobrevive ao Core, mas nunca reabre sozinho). */
+  readonly favorito: boolean;
+  /** Quando ficou ativo (ISO 8601). */
+  readonly desde?: string;
+  /** Reconexões desde o último estado ativo. */
+  readonly tentativas: number;
+  /** Endereço para abrir no navegador. */
+  readonly url: string;
+}
+
 /** `hostinger.status` */
 export interface HostingerStatus {
   readonly conectado: boolean;

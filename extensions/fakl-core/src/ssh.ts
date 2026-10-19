@@ -6,7 +6,9 @@ import { l10n } from '@fakl/i18n';
 import type { SshExecResult, SshHostInfo, SshPolicyName } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
+import type { AgentEventRouter } from './agents.js';
 import { SSH_SCHEME, SshFileSystem } from './ssh-fs.js';
+import { SshForwardsUi } from './ssh-forward.js';
 import { multiplexArgs, quote } from './ssh-shell.js';
 import {
   addRemoteFolder,
@@ -91,14 +93,17 @@ export class SshUi implements vscode.TreeDataProvider<Node>, vscode.Disposable {
   private readonly fs = new SshFileSystem((alias) => this.targetFor(alias));
   /** Um terminal por raiz remota (ou por host, sem raiz), para focar em vez de duplicar. */
   private readonly terminals = new Map<string, vscode.Terminal>();
+  private readonly forwards: SshForwardsUi;
   readonly onDidChangeTreeData = this.changed.event;
 
-  constructor() {
+  constructor(router: AgentEventRouter) {
     this.loaded = new Promise((resolve) => {
       this.markLoaded = resolve;
     });
+    this.forwards = new SshForwardsUi(router, (node) => this.pickHost(node as Node | undefined));
     this.disposables.push(
       this.fs,
+      this.forwards,
       vscode.workspace.registerFileSystemProvider(SSH_SCHEME, this.fs, { isCaseSensitive: true }),
       this.changed,
       this.output,
@@ -144,6 +149,7 @@ export class SshUi implements vscode.TreeDataProvider<Node>, vscode.Disposable {
 
   connected(client: CoreClient): void {
     this.client = client;
+    this.forwards.connected(client);
     void this.reload().finally(() => this.markLoaded?.());
   }
 
@@ -262,6 +268,7 @@ export class SshUi implements vscode.TreeDataProvider<Node>, vscode.Disposable {
 
   disconnected(): void {
     this.client = undefined;
+    this.forwards.disconnected();
     this.hosts = [];
     this.changed.fire(undefined);
   }
