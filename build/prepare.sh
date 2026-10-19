@@ -59,6 +59,7 @@ echo "==> Sem os binários musl do @parcel/watcher"
 # O `npm install` sobre node_modules em cache (FAKL_NPM_CI) pode trazer as variantes musl
 # do @parcel/watcher, e o dpkg-shlibdeps do .deb não resolve libc.musl. Sem efeito fora do
 # Linux. O awk, e não o sed, porque o `\n` do sed do macOS não é o do GNU.
+# shellcheck disable=SC2016 # padrão literal do prepare_vscode.sh, sem expansão aqui
 grep -q 'sleep \$(( 15 \* (i + 1)))' "${DEST}/prepare_vscode.sh"
 awk '{ print } /sleep \$\(\( 15 \* \(i \+ 1\)\)\)/ { achou = 1; next } achou && /^done$/ { print "rm -rf node_modules/@parcel/watcher-linux-*-musl"; achou = 0 }'   "${DEST}/prepare_vscode.sh" > "${DEST}/prepare_vscode.sh.novo"
 mv "${DEST}/prepare_vscode.sh.novo" "${DEST}/prepare_vscode.sh"
