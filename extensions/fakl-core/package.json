@@ -480,6 +480,18 @@
         "icon": "$(eye)"
       },
       {
+        "command": "fakl.agents.takeOver",
+        "title": "%command.agents.takeOver%",
+        "category": "FaKL",
+        "icon": "$(debug-console)"
+      },
+      {
+        "command": "fakl.agents.continueInTerminal",
+        "title": "%command.agents.continueInTerminal%",
+        "category": "FaKL",
+        "icon": "$(terminal-cmd)"
+      },
+      {
         "command": "fakl.vault.menu",
         "title": "%command.vault.menu%",
         "category": "FaKL",
@@ -1835,6 +1847,16 @@
           "group": "navigation@2"
         },
         {
+          "command": "fakl.agents.takeOver",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado|pausado)$/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fakl.agents.continueInTerminal",
+          "when": "view == fakl.agents && viewItem =~ /^fakl\\.agent\\.(ativo|ocupado|pausado)$/",
+          "group": "navigation@4"
+        },
+        {
           "command": "fakl.github.pr.review",
           "when": "view =~ /^fakl\\.github\\./ && viewItem == pr",
           "group": "inline@1"
@@ -2696,6 +2718,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p src/webview/tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@fakl/agents": "workspace:*",
     "@fakl/cafe": "workspace:*",
     "@fakl/cli": "workspace:*",
     "@fakl/conversa": "workspace:*",

@@ -8,3 +8,4 @@ export * from './types.js';
 export * from './which.js';
 export * from './worktree.js';
 export * from './mcp-servers.js';
+export * from './terminal/index.js';
