@@ -8,6 +8,7 @@ import {
 
 import { AcpAdapter, type AcpCommand } from './acp.js';
 import { LocalAdapter } from './local.js';
+import { TerminalAdapter, type TerminalHostLink } from './terminal/adapter.js';
 import type { AgentAdapter, AgentProfile } from './types.js';
 
 /**
@@ -262,12 +263,16 @@ export function localProfile(provedor: LocalProvider, modelo: string): AgentProf
 /**
  * Adaptador de um perfil. Um perfil `ollama` fala com o modelo local (RF-104);
  * um com `comando` roda qualquer agente ACP (RF-103); sem ele, vale o agente
- * padrão do provedor.
+ * padrão do provedor. Um perfil `terminal` roda a CLI num terminal da IDE
+ * (ADR 0047) e precisa da ponte `terminalLink`; sem ela só dá para detectar.
  */
 export function adapterForProfile(
   profile: AgentProfile,
   hostEnv: NodeJS.ProcessEnv = process.env,
+  terminalLink?: TerminalHostLink,
 ): AgentAdapter {
+  if (profile.adaptador === 'terminal')
+    return new TerminalAdapter(profile, terminalLink, { hostEnv });
   if (profile.adaptador === 'ollama') return new LocalAdapter(profile, { hostEnv });
   return new AcpAdapter(commandForProfile(profile), hostEnv);
 }
