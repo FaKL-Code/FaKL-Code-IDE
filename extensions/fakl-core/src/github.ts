@@ -893,6 +893,17 @@ export class GitHubUi implements vscode.Disposable {
       vscode.commands.registerCommand('fakl.github.openFull', (node?: Node) => {
         this.full.open(routeOf(node));
       }),
+      // Usado pelo café do CI: abre uma execução no painel de Actions (ou no navegador, sem login).
+      vscode.commands.registerCommand(
+        'fakl.github.openRun',
+        (target?: { owner?: string; name?: string; id?: number; url?: string }) => {
+          if (target?.owner && target.name && typeof target.id === 'number' && this.auth.signedIn) {
+            this.full.open({ view: 'run', owner: target.owner, name: target.name, id: target.id });
+          } else if (target?.url?.startsWith('https://github.com/')) {
+            void vscode.env.openExternal(vscode.Uri.parse(target.url));
+          }
+        },
+      ),
       vscode.commands.registerCommand('fakl.github.account.search', () => this.searchRepos()),
       vscode.commands.registerCommand('fakl.github.account.clearSearch', () => {
         this.state.repoFilter = '';

@@ -28,6 +28,7 @@ export const EVENT_TOPICS = [
   'remote.device',
   'remote.status',
   'claude.account',
+  'ci.run',
   'ui.reveal',
 ] as const;
 

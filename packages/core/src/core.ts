@@ -44,6 +44,7 @@ import { registerUi } from './ui.js';
 import { REMOTE_IDENTITY_SECRET, SecretVault } from './secrets.js';
 import { Approvals } from './security/approvals.js';
 import { CafeService } from './cafe.js';
+import { CiService } from './ci.js';
 import { ExternalSessionsService } from './external-sessions.js';
 import { AuditLog } from './security/audit.js';
 import { redactSecrets } from './security/scan.js';
@@ -114,6 +115,8 @@ export interface Core {
   readonly ssh: SshService;
   readonly hostinger: HostingerService;
   readonly cafe: CafeService;
+  /** Café do CI (ADR 0051). */
+  readonly ci: CiService;
   /** Agentes e skills instalados na IDE; só com `configHome`. */
   readonly resources?: ResourceLibrary;
   /** Fontes de recursos cadastradas (repositórios git e pastas); só com `configHome`. */
@@ -511,7 +514,15 @@ export function createCore(options: CoreOptions): Core {
     ...(options.log ? { log: options.log } : {}),
   });
   orchestrator.register(router);
-  const cafe = new CafeService({ bus, agents, orchestrator, costs: tracker });
+  // O café mostra a cozinha do CI; o serviço nasce depois do GitHub e entra por esta ponte.
+  const ciBridge: { service?: CiService } = {};
+  const cafe = new CafeService({
+    bus,
+    agents,
+    orchestrator,
+    costs: tracker,
+    ci: () => (ciBridge.service?.active ? ciBridge.service.status() : undefined),
+  });
   cafe.register(router);
   new ExternalSessionsService({
     home: options.configHome ?? homedir(),
@@ -540,6 +551,25 @@ export function createCore(options: CoreOptions): Core {
     ...(options.log ? { log: options.log } : {}),
   });
   github.register(router);
+  const ci = new CiService({
+    bus,
+    source: {
+      get connected() {
+        return github.connected;
+      },
+      runs: (repo, perPage) => github.client.runs(repo, undefined, perPage),
+      jobs: (repo, runId) => github.client.jobs(repo, runId),
+      repoOf: (path) => github.repoOf(path),
+      limitedUntil: () => github.client.limitedUntil(),
+    },
+    ...(options.log ? { log: options.log } : {}),
+  });
+  ciBridge.service = ci;
+  ci.register(router);
+  // Conectar ou sair da conta do GitHub liga ou desliga a consulta do CI.
+  secrets.onChange((name) => {
+    if (name === 'github.token') ci.reconnected();
+  });
   email.register(router);
   new VozService({
     config: () => config?.config.voz,
@@ -707,6 +737,7 @@ export function createCore(options: CoreOptions): Core {
     ssh,
     hostinger,
     cafe,
+    ci,
     ...(resources ? { resources } : {}),
     ...(sources ? { sources } : {}),
     router,
@@ -755,6 +786,7 @@ export function createCore(options: CoreOptions): Core {
       config?.dispose();
       vaultWatch.dispose();
       cafe.dispose();
+      ci.dispose();
       orchestrator.dispose();
       approvals.dispose();
       await agents.stopAll();

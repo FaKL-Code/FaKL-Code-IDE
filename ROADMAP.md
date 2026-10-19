@@ -16,6 +16,8 @@ inglês.
 Playbooks com critério de pronto (o da nota de origem se soma ao do playbook), vault que não
 versiona o estado do Obsidian (`workspace*.json`, cache) e embed de notas `![[nota]]` e
 `![[nota#Título]]` na prévia. Em revisão: placar de agentes e varredura de skills e MCPs (ADRs 0042 e 0043).
+Café do CI: as execuções do GitHub Actions de até 5 repositórios viram a cozinha do café, só leitura
+(ADR 0051, [docs/cafe-do-ci.md](docs/cafe-do-ci.md)).
 
 ## Agora
 

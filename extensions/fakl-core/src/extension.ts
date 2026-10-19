@@ -16,6 +16,7 @@ import { AiResourcesView } from './ai-resources.js';
 import { ResourceSourcesView } from './resource-sources.js';
 import { registerAudit } from './audit.js';
 import { CafeUi } from './cafe.js';
+import { CiUi } from './ci.js';
 import { ExternalSessionsFeed } from './externas.js';
 import { ChatViewProvider } from './chat.js';
 import { OverlayControl } from './overlay.js';
@@ -113,6 +114,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
   const remote = new RemoteUi(context, agentEvents);
   const externas = new ExternalSessionsFeed();
   const cafe = new CafeUi(context.extensionUri, agentEvents, agents, externas);
+  const ci = new CiUi(agentEvents);
   const mesa = new MesaUi(context, agents, agentEvents, voz, externas);
   const githubAuth = new GitHubAuth(context);
   const github = new GitHubUi(githubAuth, context.extensionUri);
@@ -145,6 +147,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     vaultGraph,
     remote,
     cafe,
+    ci,
     mesa,
     externas,
     chat,
@@ -169,6 +172,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
     voz,
     mesa,
     cafe,
+    ci,
     externas,
     vaultGraph,
     githubAuth,
@@ -246,6 +250,7 @@ export function activate(context: vscode.ExtensionContext): FaklCoreApi {
         'vault.*',
         'remote.*',
         'claude.*',
+        'ci.*',
         'ui.reveal',
       ],
     });
