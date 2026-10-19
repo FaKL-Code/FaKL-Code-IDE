@@ -1,7 +1,7 @@
-diff --git a/src/main.ts b/src/main.ts
-index 9a154bb..dc41523 100644
---- a/src/main.ts
-+++ b/src/main.ts
+diff --git a/src/mainImpl.ts b/src/mainImpl.ts
+index d1216e09..9d63b7f6 100644
+--- a/src/mainImpl.ts
++++ b/src/mainImpl.ts
 @@ -6,6 +6,7 @@
  import * as path from 'node:path';
  import * as fs from 'original-fs';
@@ -10,16 +10,16 @@ index 9a154bb..dc41523 100644
  import { createRequire } from 'node:module';
  import { performance } from 'node:perf_hooks';
  import { configurePortable } from './bootstrap-node.js';
-@@ -142,7 +143,7 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
- // the 'C' locale is the user's only configured locale.
- // No matter the OS, if the array is empty, default back to 'en'.
+@@ -151,7 +152,7 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
+ perf.mark('code/willGetPreferredSystemLanguages');
  const osLocale = processZhLocale((app.getPreferredSystemLanguages()?.[0] ?? 'en').toLowerCase());
+ perf.mark('code/didGetPreferredSystemLanguages');
 -const userLocale = getUserDefinedLocale(argvConfig);
 +const userLocale = getUserDefinedLocale(argvConfig) ?? getFaklSystemLocale(osLocale);
  if (userLocale) {
  	nlsConfigurationPromise = resolveNLSConfiguration({
  		userLocale,
-@@ -751,4 +752,82 @@ function getUserDefinedLocale(argvConfig: IArgvConfig): string | undefined {
+@@ -787,4 +788,82 @@ function getUserDefinedLocale(argvConfig: IArgvConfig): string | undefined {
  	return typeof argvConfig?.locale === 'string' ? argvConfig.locale.toLowerCase() : undefined;
  }
  

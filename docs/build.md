@@ -146,7 +146,7 @@ pacote `MS-CEINTL.vscode-language-pack-pt-BR` na versão de
 não estiver na árvore, e o `build.sh` falha se ele não entrar no app compilado.
 
 Sozinho, o VS Code abriria em inglês mesmo com o pacote embutido. O patch
-`fakl-idioma-do-sistema.patch` faz o `src/main.ts` escolher o pacote pelo
+`fakl-idioma-do-sistema.patch` faz o `src/mainImpl.ts` escolher o pacote pelo
 idioma do sistema quando não há `locale` no `argv.json`. **Configure Display
 Language** grava esse `locale` e continua tendo prioridade.
 
