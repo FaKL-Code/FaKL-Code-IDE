@@ -60,7 +60,7 @@ describe('Core: agente de terminal (ponte com a extensão)', { timeout: 20_000 }
       },
     });
     await core.start();
-    core.secrets.set('teste.chave', SEGREDO);
+    core.secrets.set('apikey.teste', SEGREDO);
     user = await CoreClient.connect(socket.path, token, 'test');
     host = await CoreClient.connect(socket.path, token, 'extension');
     events.length = 0;
@@ -97,7 +97,7 @@ describe('Core: agente de terminal (ponte com a extensão)', { timeout: 20_000 }
   };
 
   it('recusa iniciar enquanto nenhuma IDE hospeda terminais', async () => {
-    await expect(start('aprovar-tudo')).rejects.toThrow(/no IDE window/);
+    await expect(start('aprovar-tudo')).rejects.toThrow(/nenhuma janela da IDE/);
   });
 
   it('registra a sessão, pede o terminal com o comando do perfil e acompanha os estados', async () => {
@@ -177,7 +177,7 @@ describe('Core: agente de terminal (ponte com a extensão)', { timeout: 20_000 }
         (e) =>
           e.topic === 'agent.output' &&
           (e.data as AgentOutputEventData).kind === 'error' &&
-          (e.data as AgentOutputEventData).text.includes('Take over the agent'),
+          (e.data as AgentOutputEventData).text.includes('Assumir o agente'),
       ),
     );
     expect(commands.some((c) => c.type === 'input')).toBe(false);

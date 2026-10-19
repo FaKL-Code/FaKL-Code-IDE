@@ -66,7 +66,7 @@ describe('parseProfile', () => {
     });
     expect(() => parseProfile({ ...raw, comando: undefined }, 'a')).toThrow(/comando/);
     expect(() => parseProfile({ ...raw, terminal: { prompt: '(' } }, 'a')).toThrow(
-      /regular expression/,
+      /expressão regular/,
     );
     expect(() => parseProfile({ ...raw, terminal: { silencioSegundos: 0 } }, 'a')).toThrow(
       /silencioSegundos/,
