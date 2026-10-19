@@ -195,8 +195,9 @@ jobs:
       tag: ${{ inputs.tag }}
 
   # Publica os manifestos do Scoop e do Homebrew nos repositórios próprios (docs/distribuicao.md).
-  # Só age se o repositório definir o secret EMPACOTAMENTO_TOKEN; sem ele, só avisa. O winget
-  # segue por PR ao microsoft/winget-pkgs.
+  # Usa uma chave de deploy por repositório (secrets EMPACOTAMENTO_CHAVE_SCOOP e
+  # EMPACOTAMENTO_CHAVE_TAP): cada uma só escreve no repositório dela, ao contrário de um token
+  # da conta. Sem as chaves, o job só avisa. O winget segue por PR ao microsoft/winget-pkgs.
   empacotar:
     needs: publish
     if: ${{ !cancelled() && needs.publish.result == 'success' && !contains(inputs.tag, '-') }}
@@ -206,13 +207,14 @@ jobs:
       contents: read
     env:
       TAG: ${{ inputs.tag }}
-      TOKEN: ${{ secrets.EMPACOTAMENTO_TOKEN }}
+      CHAVE_SCOOP: ${{ secrets.EMPACOTAMENTO_CHAVE_SCOOP }}
+      CHAVE_TAP: ${{ secrets.EMPACOTAMENTO_CHAVE_TAP }}
     steps:
       - id: ativo
         run: |
-          if [[ -z "${TOKEN}" ]]; then
+          if [[ -z "${CHAVE_SCOOP}" || -z "${CHAVE_TAP}" ]]; then
             echo "sim=nao" >> "${GITHUB_OUTPUT}"
-            echo "::notice::EMPACOTAMENTO_TOKEN não definido: Scoop e Homebrew não foram atualizados (docs/distribuicao.md)"
+            echo "::notice::chaves de empacotamento ausentes: Scoop e Homebrew não foram atualizados (docs/distribuicao.md)"
           else
             echo "sim=sim" >> "${GITHUB_OUTPUT}"
           fi
@@ -234,9 +236,16 @@ jobs:
       - name: Scoop e Homebrew
         if: steps.ativo.outputs.sim == 'sim'
         run: |
+          mkdir -p ~/.ssh
+          # As chaves de host do GitHub, pela API (HTTPS), em vez de confiar no primeiro contato.
+          curl -fsSL https://api.github.com/meta | jq -r '.ssh_keys[] | "github.com " + .' > ~/.ssh/known_hosts
+          printf '%s\n' "${CHAVE_SCOOP}" > ~/.ssh/chave-scoop
+          printf '%s\n' "${CHAVE_TAP}" > ~/.ssh/chave-tap
+          chmod 600 ~/.ssh/chave-scoop ~/.ssh/chave-tap
           publicar() {
-            local repo="$1" origem="$2" destino="$3"
-            git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/FaKL-Code/${repo}.git" "${repo}"
+            local repo="$1" chave="$2" origem="$3" destino="$4"
+            export GIT_SSH_COMMAND="ssh -i ${HOME}/.ssh/${chave} -o IdentitiesOnly=yes"
+            git clone --depth 1 "git@github.com:FaKL-Code/${repo}.git" "${repo}"
             mkdir -p "${repo}/$(dirname "${destino}")"
             cp "${origem}" "${repo}/${destino}"
             git -C "${repo}" config user.name "github-actions[bot]"
@@ -249,5 +258,5 @@ jobs:
               git -C "${repo}" push -q origin HEAD
             fi
           }
-          publicar scoop-bucket saida/scoop/bucket/fakl-code.json bucket/fakl-code.json
-          publicar homebrew-tap saida/homebrew/Casks/fakl-code.rb Casks/fakl-code.rb
+          publicar scoop-bucket chave-scoop saida/scoop/bucket/fakl-code.json bucket/fakl-code.json
+          publicar homebrew-tap chave-tap saida/homebrew/Casks/fakl-code.rb Casks/fakl-code.rb

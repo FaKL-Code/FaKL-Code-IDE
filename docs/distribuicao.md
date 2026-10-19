@@ -33,12 +33,15 @@ node build/empacotar.mjs v0.1.6 saida
 winget validate --manifest saida/winget/manifests/f/FaKLCode/FaKLCode/0.1.6
 ```
 
-Automático: se o repositório definir o secret `EMPACOTAMENTO_TOKEN` (um token fine-grained com
-escrita de conteúdo em `FaKL-Code/scoop-bucket` e `FaKL-Code/homebrew-tap`), o job `empacotar` do
-`release.yml` publica o Scoop e o Homebrew sozinho depois de cada release. Sem o secret, o job é
-pulado. O winget segue por PR ao `microsoft/winget-pkgs`, que o token acima não alcança; depois do
-primeiro pacote aceito, a ação [winget-releaser](https://github.com/vedantmgoyal9/winget-releaser)
-(com um token que possa abrir PR no winget-pkgs) pode abrir os PRs seguintes.
+Automático: o job `empacotar` do `release.yml` publica o Scoop e o Homebrew sozinho depois de cada
+release, com uma chave de deploy por repositório (secrets `EMPACOTAMENTO_CHAVE_SCOOP` e
+`EMPACOTAMENTO_CHAVE_TAP`; cada chave só escreve no repositório dela, ao contrário de um token da
+conta). Sem os secrets, o job é pulado. Para recriar as chaves: `ssh-keygen -t ed25519`, adicionar a
+pública como chave de deploy com escrita em `FaKL-Code/scoop-bucket` e em `FaKL-Code/homebrew-tap`
+(`gh repo deploy-key add`) e guardar as privadas com `gh secret set`. O winget segue por PR ao
+`microsoft/winget-pkgs`, que essas chaves não alcançam; depois do primeiro pacote aceito, a ação
+[winget-releaser](https://github.com/vedantmgoyal9/winget-releaser) (com um token que possa abrir PR
+no winget-pkgs) pode abrir os PRs seguintes.
 
 ## Linux (experimental)
 
