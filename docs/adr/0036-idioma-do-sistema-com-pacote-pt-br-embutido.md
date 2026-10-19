@@ -31,7 +31,7 @@ A IDE segue o idioma do sistema: português do Brasil quando o sistema está em
 qualquer português, inglês nos outros casos. O pacote de idioma pt-BR do Open
 VSX entra no build como extensão nativa, com versão e SHA-256 fixados em
 `upstream/language-pack-pt-br.json`. O patch `fakl-idioma-do-sistema.patch`
-faz o `src/main.ts`, quando não há `--locale` nem `locale` no `argv.json`,
+faz o `src/mainImpl.ts`, quando não há `--locale` nem `locale` no `argv.json`,
 procurar entre as extensões embutidas um pacote de idioma para o idioma do
 sistema e, se achar, registrá-lo no `languagepacks.json` antes de resolver as
 traduções.

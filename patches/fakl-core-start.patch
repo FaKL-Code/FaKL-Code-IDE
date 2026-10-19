@@ -1,5 +1,5 @@
 diff --git a/src/vs/code/electron-main/app.ts b/src/vs/code/electron-main/app.ts
-index 8176a5b..13cce31 100644
+index 8901db30..3c7ce8fe 100644
 --- a/src/vs/code/electron-main/app.ts
 +++ b/src/vs/code/electron-main/app.ts
 @@ -16,6 +16,7 @@ import { getPathLabel } from '../../base/common/labels.js';
@@ -7,10 +7,10 @@ index 8176a5b..13cce31 100644
  import { Schemas, VSCODE_AUTHORITY } from '../../base/common/network.js';
  import { join, posix } from '../../base/common/path.js';
 +import { startFaklCore } from './faklCore.js';
+ import { mark } from '../../base/common/performance.js';
  import { IProcessEnvironment, isLinux, isLinuxSnap, isMacintosh, isWindows, OS } from '../../base/common/platform.js';
  import { assertType } from '../../base/common/types.js';
- import { URI } from '../../base/common/uri.js';
-@@ -729,6 +730,9 @@ export class CodeApplication extends Disposable {
+@@ -756,6 +757,9 @@ export class CodeApplication extends Disposable {
  		// Error telemetry
  		appInstantiationService.invokeFunction(accessor => this._register(new ErrorTelemetry(accessor.get(ILogService), accessor.get(ITelemetryService))));
  
