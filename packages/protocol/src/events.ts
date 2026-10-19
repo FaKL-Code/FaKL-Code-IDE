@@ -29,6 +29,7 @@ export const EVENT_TOPICS = [
   'remote.status',
   'ssh.forward',
   'claude.account',
+  'ci.run',
   'ui.reveal',
 ] as const;
 

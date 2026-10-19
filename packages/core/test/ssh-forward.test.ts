@@ -292,7 +292,7 @@ describe('ciclo de vida dos encaminhamentos', () => {
     await again.open({ ...spec, reconectar: true }, false);
     children[0]?.crash(255);
     expect(again.list()[0]).toMatchObject({ estado: 'reconectando', tentativas: 1 });
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await eventually(() => Promise.resolve(again.list()[0]?.estado === 'ativo'));
     expect(spawned).toHaveLength(2);
     expect(again.list()[0]).toMatchObject({ estado: 'ativo', tentativas: 0 });
     await again.dispose();
@@ -302,12 +302,12 @@ describe('ciclo de vida dos encaminhamentos', () => {
     const forwards = manager();
     await forwards.open({ ...spec, reconectar: true }, false);
     probeUp = false;
-    for (let i = 0; i < 6; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 30));
-      children.at(-1)?.crash(255, 'sem rota');
+    for (let i = 1; i <= 6; i++) {
+      // Espera a reconexão anterior subir o processo seguinte antes de derrubá-lo.
+      await eventually(() => Promise.resolve(spawned.length === i));
+      children[i - 1]?.crash(255, 'sem rota');
     }
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(forwards.list()[0]).toMatchObject({ estado: 'erro' });
+    await eventually(() => Promise.resolve(forwards.list()[0]?.estado === 'erro'));
     expect(spawned.length).toBe(6);
     await forwards.dispose();
   });

@@ -1,4 +1,4 @@
-import type { AgentThumbnailEventData, FaklEvent } from '@fakl/protocol';
+import type { AgentThumbnailEventData, CiStatus, FaklEvent } from '@fakl/protocol';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -13,7 +13,7 @@ import {
 
 const NOW = new Date(2026, 9, 12, 15, 0, 0);
 
-function setup() {
+function setup(ci?: () => CiStatus | undefined) {
   const bus = new EventBus();
   const agents = {
     stateOf: (id: string) => (id === 's1' || id === 's2' ? 'trabalhando' : undefined),
@@ -50,6 +50,7 @@ function setup() {
     costs,
     intervalMs: 60_000,
     clock: () => NOW,
+    ...(ci ? { ci } : {}),
     diffLines: (_cwd, path) => {
       diffs.push(path);
       return Promise.resolve(['+ nova linha', '- velha']);
@@ -144,5 +145,27 @@ describe('CafeService', () => {
     await router.dispatch('cafe.close', {}, context('c2'));
     expect(cafe.open).toBe(false);
     cafe.dispose();
+  });
+
+  it('leva a cozinha do CI no retrato só quando há repositório acompanhado', () => {
+    const status: CiStatus = {
+      conectado: true,
+      automatico: true,
+      repos: [{ repo: 'acme/app', origem: 'aberto', runs: [] }],
+      descartados: [],
+      falhando: 1,
+      trabalhando: 0,
+      verdesSeguidos: 3,
+    };
+    const holder: { current?: CiStatus } = {};
+    const { cafe } = setup(() => holder.current);
+    expect(cafe.state().ci).toBeUndefined();
+    holder.current = status;
+    expect(cafe.state().ci).toEqual(status);
+    cafe.dispose();
+    // Sem o serviço ligado o campo nem existe.
+    const plain = setup();
+    expect('ci' in plain.cafe.state()).toBe(false);
+    plain.cafe.dispose();
   });
 });

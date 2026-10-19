@@ -99,6 +99,18 @@
         "icon": "$(coffee)"
       },
       {
+        "command": "fakl.ci.acompanhar",
+        "title": "%command.ci.acompanhar%",
+        "category": "FaKL",
+        "icon": "$(github-action)"
+      },
+      {
+        "command": "fakl.ci.atualizar",
+        "title": "%command.ci.atualizar%",
+        "category": "FaKL",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "fakl.externas.ativar",
         "title": "%command.externas.ativar%",
         "category": "FaKL"
@@ -2349,6 +2361,16 @@
           "type": "boolean",
           "default": true,
           "description": "%config.mesa.abrirAoIniciar%"
+        },
+        "fakl.ci.repositorios": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+$"
+          },
+          "maxItems": 5,
+          "default": [],
+          "description": "%config.ci.repositorios%"
         },
         "fakl.rede.consultasAutomaticas": {
           "type": "boolean",

@@ -1,13 +1,20 @@
 import {
   Announcer,
+  AnnouncerGroup,
+  describeKitchen,
   describeRoom,
   describeSeat,
   mountCafe,
+  mountKitchen,
+  renderKitchenCards,
+  renderKitchenList,
+  RunAnnouncer,
   type CafeRoom,
+  type Kitchen,
   type SeatInfo,
 } from '@fakl/cafe';
 import { l10n } from '@fakl/i18n';
-import type { CafeState } from '@fakl/protocol';
+import type { CafeState, CiRun } from '@fakl/protocol';
 
 import { app } from '../app.js';
 import { h } from '../dom.js';
@@ -20,11 +27,21 @@ canvas.className = 'cafe';
 const present = h('ul', { class: 'so-leitor' });
 const live = h('div', { class: 'so-leitor', role: 'status', 'aria-live': 'polite' });
 let announcer = new Announcer({ minIntervalMs: 5_000 });
+/** Resultados do CI entram na mesma região de anúncios, agrupados com os dos agentes. */
+let runAnnouncer = new RunAnnouncer({ minIntervalMs: 5_000 });
+let speech = new AnnouncerGroup(announcer, runAnnouncer);
 let announceTimer: number | undefined;
 /** Só depois do primeiro retrato há o que comparar. */
 let loaded = false;
 let presentSignature = '';
 let room: CafeRoom | undefined;
+/** Cozinha do CI (ADR 0051): o celular só lê; clicar abre a execução no navegador. */
+const kitchenCanvas = document.createElement('canvas');
+kitchenCanvas.className = 'cozinha';
+kitchenCanvas.hidden = true;
+const kitchenList = h('ul', { class: 'so-leitor' });
+const kitchenCards = h('div', { class: 'ci-faixa', role: 'list', hidden: true });
+let kitchen: Kitchen | undefined;
 let open = false;
 /** Muda a cada fechamento: um `cafe.open` que volta depois de fechar não reabre a sala. */
 let generation = 0;
@@ -44,11 +61,11 @@ function seatInfos(): SeatInfo[] {
 
 function scheduleAnnouncement(): void {
   if (announceTimer !== undefined) return;
-  const wait = announcer.waitMs(Date.now());
+  const wait = speech.waitMs(Date.now());
   if (wait === undefined) return;
   announceTimer = window.setTimeout(() => {
     announceTimer = undefined;
-    const text = announcer.take(Date.now());
+    const text = speech.take(Date.now());
     if (text) live.textContent = text;
     scheduleAnnouncement();
   }, wait);
@@ -90,6 +107,40 @@ function renderAccessible(): void {
   }
 }
 
+/** O celular não abre o painel de Actions da IDE: leva ao GitHub, no navegador. */
+function openRun(run: CiRun): void {
+  if (run.url.startsWith('https://github.com/')) window.open(run.url, '_blank', 'noopener');
+}
+
+/** Mostra a cozinha só com repositórios acompanhados; lista, cartões e anúncios seguem a bancada. */
+function renderKitchen(): void {
+  const status = kitchen?.status;
+  const runs = kitchen?.runs() ?? [];
+  const visible = status !== undefined && status.repos.length > 0;
+  kitchenCanvas.hidden = !visible;
+  kitchenCanvas.setAttribute(
+    'aria-label',
+    [
+      describeKitchen(status) || l10n.t('CI kitchen'),
+      runs.length === 0 ? l10n.t('No runs yet.') : '',
+    ]
+      .filter(Boolean)
+      .join('. '),
+  );
+  renderKitchenList(kitchenList, runs, { onOpen: openRun });
+  renderKitchenCards(kitchenCards, runs, { onOpen: openRun });
+  if (visible) {
+    // A primeira leitura fixa o ponto de partida; só o que muda depois é anunciado.
+    runAnnouncer.observe(runs);
+    if (loaded) scheduleAnnouncement();
+  }
+}
+
+function applyCafeState(cafe: CafeState): void {
+  room?.applyState(cafe);
+  kitchen?.apply(cafe.ci);
+}
+
 async function openRoom(): Promise<void> {
   const session = app.session;
   room ??= mountCafe({
@@ -101,16 +152,21 @@ async function openRoom(): Promise<void> {
     onRefresh: () => {
       void app.session
         ?.request<CafeState>('cafe.state')
-        .then((cafe) => room?.applyState(cafe))
+        .then((cafe) => {
+          applyCafeState(cafe);
+        })
         .catch(() => undefined);
     },
   });
+  kitchen ??= mountKitchen({ canvas: kitchenCanvas, onOpen: openRun, onChange: renderKitchen });
   if (!session) {
     room.setOffline(true);
+    kitchen.setOffline(true);
     return;
   }
   const mine = generation;
   room.resume();
+  kitchen.resume();
   // Conta como aberta desde já: um fechamento no meio manda o `cafe.close`
   // depois do `cafe.open`, na mesma ordem do canal.
   open = true;
@@ -118,15 +174,19 @@ async function openRoom(): Promise<void> {
     const cafe = await session.request<CafeState>('cafe.open');
     if (mine !== generation) return;
     room.setOffline(false);
+    kitchen.setOffline(false);
     loaded = false;
     announcer = new Announcer({ minIntervalMs: 5_000 });
-    room.applyState(cafe);
+    runAnnouncer = new RunAnnouncer({ minIntervalMs: 5_000 });
+    speech = new AnnouncerGroup(announcer, runAnnouncer);
+    applyCafeState(cafe);
     // O retrato inicial é o ponto de partida; só o que muda depois é anunciado.
     loaded = true;
     renderAccessible();
   } catch {
     open = false;
     room.setOffline(true);
+    kitchen.setOffline(true);
   }
 }
 
@@ -134,6 +194,7 @@ async function closeRoom(): Promise<void> {
   generation++;
   loaded = false;
   room?.pause();
+  kitchen?.pause();
   if (!open) return;
   open = false;
   await app.session?.request('cafe.close').catch(() => undefined);
@@ -146,12 +207,18 @@ export function cafeView(): View {
     'div',
     { class: 'tela sala' },
     canvas,
+    kitchenCanvas,
+    kitchenCards,
     present,
+    kitchenList,
     live,
     h('p', { class: 'meta' }, l10n.t('Tap an agent to open its conversation.')),
   );
   const stop = app.onEvent((event) => {
-    if (open) room?.onEvent(event);
+    if (!open) return;
+    // Execuções do CI vão para a cozinha; o resto, para a sala.
+    if (event.topic === 'ci.run') kitchen?.onRun(event.data as CiRun);
+    else room?.onEvent(event);
   });
   let online = false;
   const update = (): void => {

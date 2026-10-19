@@ -1050,5 +1050,21 @@
   "Open which port forward?": "Abrir qual encaminhamento?",
   "New port forward": "Novo encaminhamento",
   "Port forwards": "Encaminhamentos de porta",
-  "Close the port forward": "Fechar o encaminhamento"
+  "Close the port forward": "Fechar o encaminhamento",
+  "CI kitchen": "Cozinha do CI",
+  "CI runs in the kitchen": "Execuções do CI na cozinha",
+  "CI runs": "Execuções do CI",
+  "CI: nothing failing": "CI: nada falhando",
+  "CI: {0} failing": "CI: {0} falhando",
+  "{0} running, {1} green in a row": "{0} rodando, {1} verdes seguidos",
+  "Sign in to GitHub to follow the CI.": "Entre no GitHub para acompanhar o CI.",
+  "Automatic queries are off: use \"Refresh CI now\".": "As consultas automáticas estão desligadas: use \"Atualizar o CI agora\".",
+  "CI of the followed repositories": "CI dos repositórios acompanhados",
+  "The café follows at most {0} repositories; not followed now: {1}": "O café acompanha no máximo {0} repositórios; sem acompanhar agora: {1}",
+  "Type a repository (owner/name)...": "Digitar um repositório (dono/nome)...",
+  "Follow the CI of repositories": "Acompanhar o CI dos repositórios",
+  "Up to {0} repositories, counting the one open in the IDE. The café shows their runs.": "Até {0} repositórios, contando o aberto na IDE. O café mostra as execuções deles.",
+  "Repository to follow, as owner/name or a github.com address": "Repositório a acompanhar, como dono/nome ou um endereço do github.com",
+  "Use the form owner/name": "Use a forma dono/nome",
+  "No runs yet.": "Nenhuma execução ainda."
 }

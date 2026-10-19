@@ -66,6 +66,7 @@ body {
 /* Foco do teclado sempre visível, na cor de foco do tema. */
 #acoes button:focus-visible,
 .tela-abrir:focus-visible,
+.ci-abrir:focus-visible,
 .externa-abrir:focus-visible,
 .atividade select:focus-visible,
 .atividade input:focus-visible,
@@ -126,6 +127,31 @@ body {
   cursor: pointer;
 }
 
+/* Cozinha do CI (ADR 0051): o canvas com as bancadas e os cartões das execuções. */
+#cozinha-bloco {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 6px 8px 0;
+  background: #0d1117;
+  border-top: 1px solid var(--vscode-panel-border, transparent);
+}
+
+#cozinha {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 34vh;
+  image-rendering: pixelated;
+}
+
+#cozinha:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+#ci-telas,
 #telas {
   display: flex;
   gap: 8px;
@@ -135,7 +161,8 @@ body {
   border-top: 1px solid var(--vscode-panel-border, transparent);
 }
 
-.tela {
+.tela,
+.ci-tela {
   flex: 0 0 220px;
   display: flex;
   flex-direction: column;
@@ -152,7 +179,9 @@ body {
 }
 
 .tela:hover,
-.tela:focus-within {
+.tela:focus-within,
+.ci-tela:hover,
+.ci-tela:focus-within {
   background: var(--vscode-list-hoverBackground);
 }
 
@@ -190,7 +219,8 @@ body {
   background: var(--vscode-editor-background);
 }
 
-.tela-abrir {
+.tela-abrir,
+.ci-abrir {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -241,18 +271,72 @@ body {
   border-color: var(--vscode-editorWarning-foreground);
 }
 
+#ci-telas {
+  padding-bottom: 0;
+}
+
 .tela[data-estado='falhou'] {
   border-color: var(--vscode-errorForeground);
 }
 
-.cabeca {
+.ci-tela {
+  --cor: var(--vscode-descriptionForeground);
+}
+
+.ci-tela[data-estado='trabalhando'] {
+  --cor: var(--vscode-charts-blue, #2563eb);
+}
+
+.ci-tela[data-estado='sucesso'] {
+  --cor: var(--vscode-charts-green, #3fbf6f);
+}
+
+.ci-tela[data-estado='falha'] {
+  --cor: var(--vscode-errorForeground);
+  border-color: var(--vscode-errorForeground);
+}
+
+.ci-tela[data-estado='aguardando'] {
+  --cor: var(--vscode-editorWarning-foreground);
+  border-color: var(--vscode-editorWarning-foreground);
+}
+
+.ci-duracao {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.ci-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9em;
+}
+
+.ci-jobs li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ci-jobs li[data-estado='falha'] {
+  color: var(--vscode-errorForeground);
+}
+
+.cabeca,
+.ci-cabeca {
   display: flex;
   justify-content: space-between;
   gap: 8px;
 }
 
 .cabeca span,
-.titulo {
+.ci-cabeca span,
+.titulo,
+.ci-titulo {
   color: var(--vscode-descriptionForeground);
   overflow: hidden;
   white-space: nowrap;
