@@ -89,12 +89,21 @@ function gitBuffer(args: readonly string[], cwd: string): Promise<Buffer | undef
 }
 
 /**
+ * O worktree ainda está de pé: a pasta existe e tem o `.git`. Depois que o Core
+ * o remove, algo (um servidor de desenvolvimento, por exemplo) pode recriar a
+ * pasta com lixo; nesse caso vale o branch, como se ela não existisse.
+ */
+function alive(worktree: Worktree): boolean {
+  return existsSync(join(worktree.path, '.git'));
+}
+
+/**
  * Commit com o estado atual do trabalho do agente. Com o worktree vivo, usa um
  * índice temporário para não mexer no que o agente deixou preparado; sem ele,
  * é a ponta do branch, onde o trabalho foi guardado ao terminar.
  */
 export async function snapshot(worktree: Worktree): Promise<string> {
-  if (!existsSync(worktree.path)) {
+  if (!alive(worktree)) {
     return (
       await git(['rev-parse', `${worktree.branch}^{commit}`], { cwd: worktree.repoRoot })
     ).trim();
@@ -283,7 +292,7 @@ async function mergeText(
  * dele fica como está e a recusa vale para a aplicação.
  */
 export async function rejectFiles(worktree: Worktree, paths: readonly string[]): Promise<void> {
-  if (paths.length === 0 || !existsSync(worktree.path)) return;
+  if (paths.length === 0 || !alive(worktree)) return;
   const cwd = worktree.path;
   for (const path of paths.map(checkPath)) {
     const inBase = await gitBuffer(['cat-file', '-e', `${worktree.base}:${path}`], cwd);
