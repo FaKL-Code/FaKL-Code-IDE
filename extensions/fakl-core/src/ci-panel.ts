@@ -138,7 +138,7 @@ export class CiKitchenUi implements vscode.Disposable {
   }
 
   private postConfig(): void {
-    const minutes = vscode.workspace.getConfiguration('fakl').get<number>(SAEM_APOS_SETTING, 15);
+    const minutes = vscode.workspace.getConfiguration('fakl').get<number>(SAEM_APOS_SETTING, 60);
     this.post({
       type: 'config',
       saemAposMin: Number.isFinite(minutes) && minutes > 0 ? minutes : 0,
@@ -173,15 +173,25 @@ export class CiKitchenUi implements vscode.Disposable {
 <header id="barra">
 <h1>${escapeAttr(l10n.t('CI kitchen'))}</h1>
 <div id="barra-acoes">
-<button id="limpar" type="button" title="${escapeAttr(l10n.t('Remove the finished runs from the kitchen'))}">${escapeAttr(l10n.t('Clear finished'))}</button>
-<button id="restaurar" type="button" title="${escapeAttr(l10n.t('Bring back the runs you removed'))}" hidden>${escapeAttr(l10n.t('Show removed'))}</button>
+<button id="limpar" type="button" title="${escapeAttr(l10n.t('Remove the finished runs from the screen'))}">${escapeAttr(l10n.t('Clear finished runs'))}</button>
+<button id="restaurar" type="button" title="${escapeAttr(l10n.t('Bring back the runs that were removed or left on their own'))}" hidden>${escapeAttr(l10n.t('Show removed'))}</button>
 <button id="atualizar" type="button" title="${escapeAttr(l10n.t('Ask GitHub for the runs now'))}">${escapeAttr(l10n.t('Refresh now'))}</button>
 </div>
 </header>
 <p id="aviso" role="status" hidden></p>
-<div id="cozinha-bloco"><canvas id="cozinha" role="img" aria-label="${escapeAttr(l10n.t('CI kitchen'))}"></canvas><ul id="ci-presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('CI runs in the kitchen'))}"></ul></div>
-<div id="ci-telas" role="list" aria-label="${escapeAttr(l10n.t('CI runs'))}" hidden></div>
+<main id="conteudo">
+<section id="resumo" aria-label="${escapeAttr(l10n.t('Summary of the CI'))}" hidden>
+<div class="tile" id="t-verdes"><strong>0</strong><span>${escapeAttr(l10n.t('green in a row'))}</span></div>
+<div class="tile" id="t-falhando"><strong>0</strong><span>${escapeAttr(l10n.t('workflows failing'))}</span></div>
+<div class="tile" id="t-andamento"><strong>0</strong><span>${escapeAttr(l10n.t('running now'))}</span></div>
+<p id="repos"></p>
+</section>
+<section id="cozinha-bloco" hidden><canvas id="cozinha" role="img" aria-label="${escapeAttr(l10n.t('CI kitchen'))}"></canvas><ul id="ci-presentes" class="so-leitor" aria-label="${escapeAttr(l10n.t('CI runs in the kitchen'))}"></ul></section>
+<section id="sec-atencao" hidden><h2>${escapeAttr(l10n.t('Needs attention'))} <small id="n-atencao"></small></h2><div id="ci-atencao" class="ci-grade" role="list" aria-label="${escapeAttr(l10n.t('Runs that need attention'))}"></div></section>
+<section id="sec-andamento" hidden><h2>${escapeAttr(l10n.t('Running'))} <small id="n-andamento"></small></h2><div id="ci-andamento" class="ci-grade" role="list" aria-label="${escapeAttr(l10n.t('Runs in progress'))}"></div></section>
+<section id="sec-concluidas" hidden><h2>${escapeAttr(l10n.t('Finished'))} <small id="n-concluidas"></small></h2><div id="ci-concluidas" class="ci-grade" role="list" aria-label="${escapeAttr(l10n.t('Finished runs'))}"></div></section>
 <div id="vazio" hidden><p id="vazio-texto"></p><button id="acompanhar" type="button">${escapeAttr(l10n.t('Follow a repository'))}</button></div>
+</main>
 <div id="anuncio" class="so-leitor" role="status" aria-live="polite"></div>
 <script nonce="${nonce}" src="${script.toString()}"></script>
 </body>

@@ -2450,7 +2450,7 @@
         "fakl.ci.concluidasSaemApos": {
           "type": "number",
           "minimum": 0,
-          "default": 15,
+          "default": 60,
           "description": "%config.ci.concluidasSaemApos%"
         },
         "fakl.rede.consultasAutomaticas": {

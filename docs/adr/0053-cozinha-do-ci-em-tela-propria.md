@@ -19,7 +19,7 @@ mais de 6 horas, e não havia como tirar uma à mão.
   status abre essa tela. O café perde a cozinha e ganha o botão **Cozinha do CI**.
 - **Mesmas saídas do café e da Mesa.** Dispensar uma execução (x no cartão), **Limpar concluídas**
   (tudo o que terminou), **Mostrar as removidas** e saída automática: sucesso e cancelada saem
-  sozinhas depois de `fakl.ci.concluidasSaemApos` minutos (padrão 15; 0 desliga). Falha não sai
+  sozinhas depois de `fakl.ci.concluidasSaemApos` minutos (padrão 60; 0 desliga). Falha não sai
   sozinha, porque é o que pede atenção; some ao ser dispensada ou quando chega uma execução mais
   nova do mesmo fluxo (regra que já existia).
 - **Onde mora o estado.** A regra é `Descarte` (`packages/cafe/src/cozinha-descarte.ts`, só
