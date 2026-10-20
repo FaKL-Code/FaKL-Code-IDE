@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -108,5 +108,14 @@ describe('diff do agente', () => {
     expect((await fileContent(wt, 'novo.txt', 'agente'))?.toString()).toBe('novo\n');
     await applyFiles(wt, ['novo.txt']);
     expect(await readFile(join(repo, 'novo.txt'), 'utf8')).toBe('novo\n');
+  });
+
+  it('uma pasta que sobrou sem o .git não atrapalha: vale o branch', async () => {
+    await removeWorktree(wt, 'trabalho');
+    await mkdir(join(wt.path, '.next'), { recursive: true });
+    expect((await changedFiles(wt)).map((f) => f.path)).toEqual(['a.txt', 'b.txt', 'novo.txt']);
+    const result = await applyFiles(wt, ['novo.txt']);
+    expect(result.applied).toEqual(['novo.txt']);
+    await expect(rejectFiles(wt, ['b.txt'])).resolves.toBeUndefined();
   });
 });
