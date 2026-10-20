@@ -69,8 +69,10 @@ describe('busca semântica: caches', () => {
 
   afterEach(async () => {
     semantic.dispose();
-    await rm(root, { recursive: true, force: true });
-    await rm(data, { recursive: true, force: true });
+    // No Windows o arquivo de embeddings pode ser gravado no instante da limpeza.
+    const limpar = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 };
+    await rm(root, limpar);
+    await rm(data, limpar);
   });
 
   /** O índice do vault relê o disco e o índice semântico confere o que mudou. */
