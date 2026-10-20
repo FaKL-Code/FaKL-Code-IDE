@@ -6,6 +6,7 @@ import type { CostSummary, Run, Task } from '@fakl/protocol';
 import * as vscode from 'vscode';
 
 import type { AgentControl, AgentEventRouter } from './agents.js';
+import { naPasta, pastasLocais } from './escopo.js';
 import type { ExternalSessionsFeed } from './externas.js';
 import { MESA_COMMANDS, type FromMesa, type ToMesa } from './mesa-protocol.js';
 import { moveToNewWindow } from './janelas.js';
@@ -332,7 +333,10 @@ export class MesaUi implements vscode.Disposable {
     const client = this.client;
     if (!client) return;
     try {
-      const tasks = await client.request<Task[]>('tasks.list');
+      const folders = pastasLocais(vscode.workspace.workspaceFolders);
+      const tasks = (await client.request<Task[]>('tasks.list')).filter((task) =>
+        naPasta(task.repoPath, folders),
+      );
       const details = await Promise.all(
         tasks
           .filter((task) => task.runs.length > 0)

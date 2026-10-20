@@ -4,6 +4,7 @@ import type { AgentProfileEntry, Decision, Run, RunStatus, Task, TaskStatus } fr
 import * as vscode from 'vscode';
 
 import type { AgentEventRouter } from './agents.js';
+import { naPasta, pastasLocais } from './escopo.js';
 import { recoveryTime } from './recovery-ui.js';
 import {
   canOpenMaestro,
@@ -193,7 +194,10 @@ export class TasksView implements vscode.TreeDataProvider<Node>, vscode.Disposab
     const client = this.client;
     if (!client) return;
     try {
-      this.tasks = await client.request<Task[]>('tasks.list');
+      const folders = pastasLocais(vscode.workspace.workspaceFolders);
+      this.tasks = (await client.request<Task[]>('tasks.list')).filter((task) =>
+        naPasta(task.repoPath, folders),
+      );
       const details = await Promise.all(
         this.tasks
           .filter((task) => task.runs.length > 0)

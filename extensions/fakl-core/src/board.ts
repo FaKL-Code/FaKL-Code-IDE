@@ -95,6 +95,12 @@ export class AgentBoard {
   private readonly sessions = new Map<string, AgentSessionInfo>();
   private readonly hidden = new Set<string>();
 
+  /**
+   * `inScope` recorta o que esta janela mostra (as sessões de outros projetos
+   * ficam guardadas, para os eventos delas não pedirem recarga, mas não aparecem).
+   */
+  constructor(private readonly inScope: (session: AgentSessionInfo) => boolean = () => true) {}
+
   /** Troca tudo pelo resultado de `agents.list`. */
   load(list: readonly AgentSessionInfo[]): void {
     this.sessions.clear();
@@ -149,7 +155,7 @@ export class AgentBoard {
   /** Sessões visíveis, as que ainda rodam primeiro, depois as mais novas. */
   list(): AgentSessionInfo[] {
     return [...this.sessions.values()]
-      .filter((s) => !this.hidden.has(s.sessionId))
+      .filter((s) => !this.hidden.has(s.sessionId) && this.inScope(s))
       .sort((a, b) => {
         const finalA = isFinalAgentState(a.state) ? 1 : 0;
         const finalB = isFinalAgentState(b.state) ? 1 : 0;
@@ -162,7 +168,11 @@ export class AgentBoard {
   clearFinished(): number {
     let count = 0;
     for (const session of this.sessions.values()) {
-      if (isFinalAgentState(session.state) && !this.hidden.has(session.sessionId)) {
+      if (
+        this.inScope(session) &&
+        isFinalAgentState(session.state) &&
+        !this.hidden.has(session.sessionId)
+      ) {
         this.hidden.add(session.sessionId);
         count++;
       }
@@ -175,6 +185,7 @@ export class AgentBoard {
     let active = 0;
     const cost = new Map<string, number>();
     for (const session of this.sessions.values()) {
+      if (!this.inScope(session)) continue;
       if (!isFinalAgentState(session.state)) active++;
       if (session.usage.cost) {
         const { amount, currency } = session.usage.cost;

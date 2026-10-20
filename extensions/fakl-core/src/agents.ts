@@ -36,6 +36,7 @@ import {
   stateLabel,
 } from './board.js';
 import { AgentLiveTerminals } from './agent-terminal.js';
+import { naPasta, pastasLocais } from './escopo.js';
 import { TerminalAgentHost } from './terminal-agent-host.js';
 import { firstLocalFolder, remoteRoots } from './ssh-workspace.js';
 import { permissionLine } from './webview/chat-model.js';
@@ -211,7 +212,9 @@ export interface TranscriptPatch {
  * mesma classe.
  */
 export class AgentControl implements vscode.Disposable {
-  private readonly board = new AgentBoard();
+  private readonly board = new AgentBoard((session) =>
+    naPasta(session.pastaOrigem ?? session.cwd, pastasLocais(vscode.workspace.workspaceFolders)),
+  );
   private readonly logs = new SessionLogs(this.board);
   private readonly liveTerminals = new AgentLiveTerminals();
   /** Terminais reais dos agentes de terminal (ADR 0047). */
