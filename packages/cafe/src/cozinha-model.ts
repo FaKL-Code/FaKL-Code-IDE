@@ -163,6 +163,19 @@ export function formatSeconds(total: number | undefined): string {
   return `${String(Math.floor(minutes / 60))}h ${String(minutes % 60).padStart(2, '0')}m`;
 }
 
+/** Há quanto tempo a execução terminou (ou começou, se ainda roda): "agora há pouco", "há 5 min", "há 3 h". */
+export function runAgo(run: Pick<CiRun, 'inicio' | 'fim' | 'estado'>, now: number): string {
+  const live = run.estado === 'trabalhando' || run.estado === 'fila' || run.estado === 'aguardando';
+  const at = Date.parse(live ? run.inicio : (run.fim ?? run.inicio));
+  if (!Number.isFinite(at)) return '';
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 1) return l10n.t('just now');
+  if (minutes < 60) return l10n.t('{0} min ago', String(minutes));
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return l10n.t('{0} h ago', String(hours));
+  return l10n.t('{0} d ago', String(Math.floor(hours / 24)));
+}
+
 /**
  * Duração na fonte de pixel, que só tem dígitos, ":" e "H": "1:05" (min:s),
  * "12:30" ou "1H03" para uma hora ou mais.

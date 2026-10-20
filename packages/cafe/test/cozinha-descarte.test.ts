@@ -1,7 +1,7 @@
 import type { CiRun } from '@fakl/protocol';
 import { describe, expect, it } from 'vitest';
 
-import { Descarte, terminou } from '../src/index.js';
+import { Descarte, runAgo, terminou } from '../src/index.js';
 
 const NOW = Date.UTC(2026, 9, 19, 12, 0, 0);
 const minAgo = (n: number): string => new Date(NOW - n * 60_000).toISOString();
@@ -73,6 +73,23 @@ describe('cozinha do CI: o que sai da tela', () => {
   it('prazo 0 desliga a saída automática', () => {
     const descarte = new Descarte({ saemAposMs: 0 });
     expect(descarte.visiveis([run(1, 'sucesso', 600)], NOW)).toHaveLength(1);
+  });
+
+  it('conta o que está fora da tela por dispensa ou por prazo, e mostrar as removidas ignora o prazo', () => {
+    const descarte = new Descarte({ saemAposMs: 10 * 60_000 });
+    const runs = [run(1, 'sucesso', 30), run(2, 'falha', 30), run(3, 'sucesso', 2)];
+    descarte.dispensar(run(2, 'falha'));
+    expect(descarte.quantasForaDaTela(runs, NOW)).toBe(2);
+    descarte.restaurar();
+    expect(descarte.quantasForaDaTela(runs, NOW)).toBe(0);
+    expect(descarte.visiveis(runs, NOW)).toHaveLength(3);
+  });
+
+  it('diz há quanto tempo a execução terminou', () => {
+    expect(runAgo(run(1, 'sucesso', 0), NOW)).toBe('just now');
+    expect(runAgo(run(1, 'sucesso', 5), NOW)).toBe('5 min ago');
+    expect(runAgo(run(1, 'sucesso', 180), NOW)).toBe('3 h ago');
+    expect(runAgo(run(1, 'sucesso', 3 * 24 * 60), NOW)).toBe('3 d ago');
   });
 
   it('guarda e recupera o que foi dispensado, e poda o que não existe mais', () => {

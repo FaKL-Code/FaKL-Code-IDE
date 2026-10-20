@@ -232,5 +232,7 @@
   "{0} CI runs {1}": "{0} execuções do CI: {1}",
   "Open this CI run": "Abrir esta execução do CI",
   "Remove this run from the kitchen": "Tirar esta execução da cozinha",
-  "Remove the run {0} from the kitchen": "Tirar da cozinha a execução {0}"
+  "Remove the run {0} from the kitchen": "Tirar da cozinha a execução {0}",
+  "just now": "agora há pouco",
+  "{0} d ago": "há {0} d"
 }

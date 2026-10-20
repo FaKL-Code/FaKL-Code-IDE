@@ -32,6 +32,8 @@ export interface DescarteOptions {
 export class Descarte {
   private readonly dispensadas = new Map<string, CiState>();
   saemAposMs: number;
+  /** Mostrar também as que passaram do prazo (quem pediu "mostrar as removidas"). */
+  ignorarPrazo = false;
 
   constructor(options: DescarteOptions, salvas: DispensadasSalvas = {}) {
     this.saemAposMs = options.saemAposMs;
@@ -55,9 +57,10 @@ export class Descarte {
     return count;
   }
 
-  /** Traz de volta tudo o que foi dispensado. */
+  /** Traz de volta tudo o que foi dispensado e as que passaram do prazo. */
   restaurar(): void {
     this.dispensadas.clear();
+    this.ignorarPrazo = true;
   }
 
   /** Foi dispensada (e continua no estado de quando foi). */
@@ -75,9 +78,14 @@ export class Descarte {
     return runs.filter((run) => !this.escondida(run) && !this.expirou(run, now));
   }
 
+  /** Quantas das execuções dadas estão fora da tela, por dispensa ou por prazo. */
+  quantasForaDaTela(runs: readonly CiRun[], now: number): number {
+    return runs.length - this.visiveis(runs, now).length;
+  }
+
   /** Sucesso ou cancelada há mais de `saemAposMs`. */
   expirou(run: CiRun, now: number): boolean {
-    if (this.saemAposMs <= 0 || !SAEM_SOZINHAS.has(run.estado)) return false;
+    if (this.ignorarPrazo || this.saemAposMs <= 0 || !SAEM_SOZINHAS.has(run.estado)) return false;
     const fim = Date.parse(run.fim ?? run.inicio);
     return Number.isFinite(fim) && now - fim >= this.saemAposMs;
   }

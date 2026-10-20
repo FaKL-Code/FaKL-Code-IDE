@@ -41,6 +41,13 @@ duração e os jobs. Clicar na bancada ou no cartão abre a execução no painel
 (ou no navegador, sem login); no celular, abre o GitHub no navegador do aparelho. A barra de
 status da IDE mostra o número de fluxos falhando; clicar abre o café.
 
+## A tela
+
+De cima para baixo: o placar (verdes seguidos, fluxos falhando, rodando agora e os repositórios
+acompanhados), a cozinha em pixel art ampliada para a largura da tela e os cartões em três grupos:
+**Precisa de atenção** (falha e aguardando aprovação), **Rodando** e **Concluídas**. Cada cartão traz
+o nome do workflow, o repositório e o branch, a duração, há quanto tempo terminou e os jobs.
+
 ## Tirar o que já passou
 
 Como o agente que termina e sai do café, e como o **Limpar encerrados** da Mesa:
@@ -50,7 +57,7 @@ Como o agente que termina e sai do café, e como o **Limpar encerrados** da Mesa
 - **Limpar concluídas** tira de uma vez tudo o que já terminou (sucesso, falha e cancelada). O
   que está em andamento, na fila ou esperando aprovação fica.
 - **Mostrar as removidas** traz tudo de volta.
-- Execuções com **sucesso ou canceladas saem sozinhas** depois de 15 minutos
+- Execuções com **sucesso ou canceladas saem sozinhas** depois de 60 minutos
   (`fakl.ci.concluidasSaemApos`, em minutos; `0` desliga). **Falha não sai sozinha**: ela pede
   atenção, então fica até você tirar ou até chegar uma execução mais nova do mesmo fluxo.
 

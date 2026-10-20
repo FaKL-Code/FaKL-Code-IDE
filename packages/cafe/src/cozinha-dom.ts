@@ -1,7 +1,14 @@
 import { l10n } from '@fakl/i18n';
 import type { CiRun } from '@fakl/protocol';
 
-import { ciStateText, describeRun, formatSeconds, runKey, runSeconds } from './cozinha-model.js';
+import {
+  ciStateText,
+  describeRun,
+  formatSeconds,
+  runAgo,
+  runKey,
+  runSeconds,
+} from './cozinha-model.js';
 
 /*
  * DOM da cozinha do CI, comum ao painel da IDE e ao app do celular: a faixa de
@@ -25,7 +32,9 @@ function keepFocus(container: HTMLElement, rebuild: () => void): void {
 }
 
 function signature(runs: readonly CiRun[], now: number): string {
-  return runs.map((run) => `${runKey(run)}|${describeRun(run, now)}`).join('||');
+  return runs
+    .map((run) => `${runKey(run)}|${describeRun(run, now)}|${runAgo(run, now)}`)
+    .join('||');
 }
 
 /** Símbolo curto de um job; o estado também vai por extenso no `title`. */
@@ -67,7 +76,9 @@ export function renderKitchenCards(
         title.textContent = run.branch ? `${run.repo} - ${run.branch}` : run.repo;
         const time = document.createElement('div');
         time.className = 'ci-duracao';
-        time.textContent = formatSeconds(runSeconds(run, now));
+        time.textContent = [formatSeconds(runSeconds(run, now)), runAgo(run, now)]
+          .filter(Boolean)
+          .join(' - ');
         const jobs = document.createElement('ul');
         jobs.className = 'ci-jobs';
         for (const job of run.jobs) {
