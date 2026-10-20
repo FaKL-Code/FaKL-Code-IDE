@@ -290,8 +290,8 @@ importers:
         specifier: workspace:*
         version: link:../i18n
       imapflow:
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: ^2.5.2
+        version: 2.5.2
       mailparser:
         specifier: ^3.9.40
         version: 3.9.40
@@ -1609,9 +1609,6 @@ packages:
   '@vscode/l10n@0.0.18':
     resolution: {integrity: sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ==}
 
-  '@zone-eu/mailsplit@5.4.20':
-    resolution: {integrity: sha512-6B2w0zRBWOwbO5h7SL5N/2z1AuNchTP3OT33MObUr4/cz9bWPrZ6KadLKxnSrOZG0AGu7Q03p4X7eQhZHc1u/A==}
-
   '@zone-eu/mailsplit@5.4.23':
     resolution: {integrity: sha512-2skZfQY5iOAIFwVO4jZzqtMPJyxFpCKemQGVT7O8QxUjHAK+W7LQY/UbK9BWrxeS0wZ64rKZaATY+T9BsF4JSw==}
 
@@ -2410,8 +2407,8 @@ packages:
     resolution: {integrity: sha512-/8UvqAPU9DGTI9k4mxtf49U37Isfwr8Uts96+SBHIkFxPJnHS0Ew4f00sM4Scd8V8EjM0jUNtVDdv1kPdt35lg==}
     engines: {node: '>= 4'}
 
-  imapflow@2.4.0:
-    resolution: {integrity: sha512-42quCGcSiPFH2ho+/n89lXwR2JA0iuYcE+pe3BvezF24tXgSOrvB/KsJr0i45lCpLSAMZdE+iSFLCokXUGo2sA==}
+  imapflow@2.5.2:
+    resolution: {integrity: sha512-lo+Lww4XlD0FgSFuTwxPFaffCUui5RbUjQzWAx80H9HMVYLWLd5sPkwy48s5u+L32ch+anwPrr8avrztfkKBrw==}
     engines: {node: '>=20.0.0'}
 
   import-fresh@3.3.1:
@@ -2607,20 +2604,11 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
-  libbase64@1.3.2:
-    resolution: {integrity: sha512-fFCoI0ceXhTu/0QiJ6Uf6BV9k7X/8QW2/D4BR1vw3BPrHcIjLbGLH+U7inQ4SeWrfNCOmpGE09Qt4XjSFfus0g==}
-
   libbase64@1.3.3:
     resolution: {integrity: sha512-6n4p3TUeQPimN4ANBTYQ5P4IpFx8p6cdanknnOBfw05XGtaG/k1LAtTSu79w7S07D1esy4qUfM8G4qvQncDWcw==}
 
-  libmime@5.4.7:
-    resolution: {integrity: sha512-r1ENu4wMVSB52AAORwaW4L/MeQJr9rryzHLRpcjud3zcUPWXh1Xkgn+tAqL8oTnRO/LW7y5xxPBE20ta5amtMA==}
-
   libmime@5.4.9:
     resolution: {integrity: sha512-HKKUqLVU/ndBsAn9nBx6oykz5Tt7QzWkJG86cYvm3ekt5A/LuMR+5AjIr7fKnUg3Y2d8JQhMtQnBLYbh59/bEw==}
-
-  libqp@2.1.2:
-    resolution: {integrity: sha512-rp+U80tl9Os4K7GnVbPzPRmghPu6eqB8rcF+ontvNAnoga0JhMFG/bkTD/reC8yoznKMgOc5/ttZHJasiWeFPw==}
 
   libqp@2.1.3:
     resolution: {integrity: sha512-2tRtFndHYRyc6pAuExPbiZbzgwdWp8HIMTE1fLycMwv13YZlN5+DKvgR5WsP1W6vSpGXFuGvV49gteKetlMwLw==}
@@ -4783,12 +4771,6 @@ snapshots:
 
   '@vscode/l10n@0.0.18': {}
 
-  '@zone-eu/mailsplit@5.4.20':
-    dependencies:
-      libbase64: 1.3.2
-      libmime: 5.4.7
-      libqp: 2.1.2
-
   '@zone-eu/mailsplit@5.4.23':
     dependencies:
       libbase64: 1.3.3
@@ -5698,14 +5680,14 @@ snapshots:
 
   ignore@7.0.12: {}
 
-  imapflow@2.4.0:
+  imapflow@2.5.2:
     dependencies:
-      '@zone-eu/mailsplit': 5.4.20
+      '@zone-eu/mailsplit': 5.4.23
       encoding-japanese: 2.4.0
       iconv-lite: 0.7.3
-      libbase64: 1.3.2
-      libmime: 5.4.7
-      libqp: 2.1.2
+      libbase64: 1.3.3
+      libmime: 5.4.9
+      libqp: 2.1.3
       pino: 10.3.1
       socks: 2.8.10
 
@@ -5853,16 +5835,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libbase64@1.3.2: {}
-
   libbase64@1.3.3: {}
-
-  libmime@5.4.7:
-    dependencies:
-      encoding-japanese: 2.4.0
-      iconv-lite: 0.7.3
-      libbase64: 1.3.2
-      libqp: 2.1.2
 
   libmime@5.4.9:
     dependencies:
@@ -5870,8 +5843,6 @@ snapshots:
       iconv-lite: 0.7.3
       libbase64: 1.3.3
       libqp: 2.1.3
-
-  libqp@2.1.2: {}
 
   libqp@2.1.3: {}
 
