@@ -721,6 +721,8 @@ export class ConfigStore {
    */
   async load(): Promise<void> {
     await this.seed();
+    // O retrato vem antes da leitura: o que mudar durante ela aparece na próxima conferência.
+    const before = await this.fileSignature();
     const problems: string[] = [];
     const entries: AgentProfileEntry[] = [];
     const names = (await readdir(this.profilesDir).catch(() => []))
@@ -752,6 +754,7 @@ export class ConfigStore {
     this.entries = entries;
     this.current = config;
     this.problems = problems;
+    this.signature = before;
     for (const problem of problems) this.options.log?.(l10n.t('configuration: {0}', problem));
   }
 
@@ -802,9 +805,6 @@ export class ConfigStore {
         this.options.log?.(l10n.t('could not watch {0}: {1}', dir, String(error)));
       }
     }
-    void this.fileSignature().then((sig) => {
-      this.signature ??= sig;
-    });
     this.pollTimer = setInterval(() => {
       void this.fileSignature().then((sig) => {
         if (this.signature !== undefined && sig !== this.signature) schedule();
@@ -829,10 +829,7 @@ export class ConfigStore {
   }
 
   async reload(): Promise<void> {
-    // O retrato vem antes da leitura: o que mudar durante ela aparece na próxima conferência.
-    const before = await this.fileSignature();
     await this.load();
-    this.signature = before;
     this.options.bus?.publish('config.changed', 'config', {
       profiles: this.entries.map((entry) => entry.profile.id),
       errors: this.problems,
