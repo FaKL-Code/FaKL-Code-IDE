@@ -112,6 +112,8 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
     // O guia da IDE inteiro vai no prompt de sistema, junto da mensagem: 2 blocos.
     const output = events.find((e) => e.topic === 'agent.output');
     expect((output?.data as AgentOutputEventData).text).toBe('oi (2 blocos)');
+    const lista = await client.request<AgentSessionInfo[]>('agents.list');
+    expect(lista.find((s) => s.sessionId === sessionId)?.conversa).toBe(true);
   });
 
   it('lista os perfis e se estão instalados', async () => {

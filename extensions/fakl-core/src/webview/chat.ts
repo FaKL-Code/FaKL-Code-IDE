@@ -77,6 +77,8 @@ const FINAL = new Set(['concluído', 'falhou', 'parado']);
 interface Saved {
   profileId?: string;
   worktree?: boolean;
+  /** A próxima conversa é simples, sem ferramentas. */
+  conversa?: boolean;
   /** Modo escolhido para conversas novas; ausente, vale o do perfil ou do config.yaml. */
   mode?: PermissionPolicyName;
   draft?: string;
@@ -125,14 +127,16 @@ function modes(): readonly ModeInfo[] {
   ];
 }
 
+type Place = 'worktree' | 'folder' | 'conversa';
+
 interface PlaceInfo {
-  readonly id: 'worktree' | 'folder';
+  readonly id: Place;
   readonly label: string;
   readonly description: string;
   readonly icon: IconName;
 }
 
-function places(): readonly [PlaceInfo, PlaceInfo] {
+function places(): readonly [PlaceInfo, ...PlaceInfo[]] {
   return [
     {
       id: 'worktree',
@@ -145,6 +149,12 @@ function places(): readonly [PlaceInfo, PlaceInfo] {
       label: l10n.t('Current folder'),
       description: l10n.t('Changes go straight to your files'),
       icon: 'folder',
+    },
+    {
+      id: 'conversa',
+      label: l10n.t('Conversation'),
+      description: l10n.t("Only answers: no tools, doesn't see your project, costs less"),
+      icon: 'message',
     },
   ];
 }
@@ -187,7 +197,11 @@ let sending = false;
 let changes: readonly AgentChangedFile[] = [];
 let usage: CostSummary | undefined;
 let chosenProfile = saved.profileId ?? '';
-let chosenPlace: 'worktree' | 'folder' = saved.worktree === false ? 'folder' : 'worktree';
+let chosenPlace: Place = saved.conversa
+  ? 'conversa'
+  : saved.worktree === false
+    ? 'folder'
+    : 'worktree';
 let chosenMode: PermissionPolicyName | '' = saved.mode ?? '';
 let knownOptions: Record<string, readonly AgentOptionInfo[]> = saved.known ?? {};
 const choices: Record<string, OptionChoices> = saved.choices ?? {};
@@ -370,6 +384,7 @@ function pill(
 function persist(): void {
   const state: Saved = {
     worktree: chosenPlace === 'worktree',
+    conversa: chosenPlace === 'conversa',
     draft: input.value,
     ...(chosenMode ? { mode: chosenMode } : {}),
     ...(chosenProfile ? { profileId: chosenProfile } : {}),
@@ -421,7 +436,11 @@ function renderHeader(): void {
   sessionName.textContent = session ? session.nome : l10n.t('New conversation');
   dot.className = `dot ${session ? toneOf(session.state) : 'idle'}`;
   dot.dataset.tip = session ? agentStateLabel(session.state) : '';
-  const where = session?.worktree ? l10n.t('Branch {0}', session.worktree.branch) : session?.cwd;
+  const where = session?.conversa
+    ? l10n.t('Conversation (no tools)')
+    : session?.worktree
+      ? l10n.t('Branch {0}', session.worktree.branch)
+      : session?.cwd;
   sessionButton.dataset.tip = session
     ? `${agentStateLabel(session.state)}${where ? ` · ${where}` : ''}`
     : l10n.t('Conversations');
@@ -1144,7 +1163,8 @@ placePill.button.addEventListener('click', () => {
       label: l10n.t('Where the agent works'),
       placement: 'up',
       onPick(item) {
-        chosenPlace = item.id === 'folder' ? 'folder' : 'worktree';
+        chosenPlace =
+          item.id === 'folder' ? 'folder' : item.id === 'conversa' ? 'conversa' : 'worktree';
         persist();
         renderComposer();
         input.focus();
@@ -1855,6 +1875,7 @@ function send(): void {
         text,
         profileId: chosenProfile,
         worktree: chosenPlace === 'worktree',
+        ...(chosenPlace === 'conversa' ? { conversa: true } : {}),
         ...(chosenMode ? { permissions: chosenMode } : {}),
       };
   post(message);

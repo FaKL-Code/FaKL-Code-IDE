@@ -61,6 +61,8 @@ export type FromChat =
       readonly sessionId?: string;
       readonly profileId?: string;
       readonly worktree?: boolean;
+      /** Conversa simples: sem ferramentas da IDE nem acesso ao projeto; só vale com agente novo. */
+      readonly conversa?: boolean;
       /** Modo da conversa nova; ausente, vale o do perfil ou do config.yaml. */
       readonly permissions?: PermissionPolicyName;
     }

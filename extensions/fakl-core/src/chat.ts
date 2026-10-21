@@ -219,8 +219,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider, vscode.Disp
             if (!message.profileId) throw new Error(l10n.t('Choose an agent.'));
             sessionId = await this.agents.start(
               message.profileId,
-              message.worktree === true,
+              message.conversa !== true && message.worktree === true,
               message.permissions,
+              undefined,
+              message.conversa === true,
             );
             this.select(sessionId);
           }
