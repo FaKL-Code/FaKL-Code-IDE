@@ -232,6 +232,8 @@ export function isLimitText(text: string): boolean {
 
 export interface AgentSessionInfo {
   readonly sessionId: string;
+  /** Conversa simples: sem as ferramentas da IDE e fora do projeto. */
+  readonly conversa?: boolean;
   readonly profileId: string;
   readonly nome: string;
   /** Provedor do perfil, para a marca e a cor do agente; ausente em Cores antigos. */

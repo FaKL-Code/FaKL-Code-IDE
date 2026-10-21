@@ -561,5 +561,7 @@
   "external": "externa",
   "Open this conversation in its own extension; the Desk cannot send messages to it": "Abre esta conversa na própria extensão; a Mesa não envia mensagens para ela",
   "Live terminal (read-only)": "Terminal ao vivo (somente leitura)",
-  "Terminal": "Terminal"
+  "Terminal": "Terminal",
+  "Only answers: no tools, doesn't see your project, costs less": "Só responde: sem ferramentas, não enxerga o projeto e custa menos",
+  "Conversation (no tools)": "Conversa (sem ferramentas)"
 }
