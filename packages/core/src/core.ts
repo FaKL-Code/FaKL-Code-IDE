@@ -33,6 +33,7 @@ import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
 import { Economia } from './economia/economia.js';
 import { FREIO_PADRAO } from './freio.js';
+import { ajudaDaIde, guiaIndice, pesoDasFerramentas, promptDeConversa } from './guia.js';
 import { Scorecard } from './scorecard.js';
 import { UsageWindows } from './windows.js';
 import { McpLibrary } from './mcp-library.js';
@@ -206,6 +207,7 @@ export function createCore(options: CoreOptions): Core {
     ...(github.connected ? (['github'] as const) : []),
     ...(email.accountRefs().length > 0 ? (['email'] as const) : []),
     'ssh',
+    'ide',
     ...(secrets.has('hostinger.token') ? (['hostinger'] as const) : []),
   ];
   // Servidor MCP `fakl` de uma sessão: um token que só abre os métodos das ferramentas pedidas.
@@ -244,6 +246,18 @@ export function createCore(options: CoreOptions): Core {
   });
   const router = new Router();
   registerEvents(router, bus);
+  router.register('guia.tema', (params) => ({
+    texto: ajudaDaIde((params as { tema?: unknown } | undefined)?.tema),
+  }));
+  // Quanto as definições de ferramentas pesam em toda requisição de um agente do chat.
+  router.register('guia.peso', async () => {
+    const sets = options.mcp ? [...new Set<ToolSetName>(['orquestrar', ...integrationSets()])] : [];
+    const servidores = mcps ? (await mcps.list()).servers.length : 0;
+    return {
+      ...pesoDasFerramentas(sets.flatMap((set) => TOOL_SETS[set])),
+      servidoresMcp: servidores,
+    };
+  });
   const config: ConfigStore | undefined = options.configHome
     ? new ConfigStore({
         home: options.configHome,
@@ -436,9 +450,15 @@ export function createCore(options: CoreOptions): Core {
       mcpFor(sessionId, ['orquestrar', ...integrationSets()]),
     freio: () => ({ ...FREIO_PADRAO, ...config?.config.freio }),
     sessionPrompt: () =>
-      options.mcp
-        ? chatMaestroPrompt(resourceSummary, agents.profileList(), economia.modo !== 'desligado')
-        : undefined,
+      [
+        options.mcp ? guiaIndice() : '',
+        options.mcp
+          ? chatMaestroPrompt(resourceSummary, agents.profileList(), economia.modo !== 'desligado')
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n') || undefined,
+    conversaPrompt: () => promptDeConversa(),
     ...(resources
       ? {
           beforeStart: async (profile: AgentProfile, env: Readonly<Record<string, string>>) => {

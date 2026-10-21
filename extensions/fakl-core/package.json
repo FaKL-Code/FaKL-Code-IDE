@@ -82,6 +82,11 @@
         "icon": "$(add)"
       },
       {
+        "command": "fakl.agents.newConversation",
+        "title": "%command.agents.newConversation%",
+        "category": "FaKL"
+      },
+      {
         "command": "fakl.mesa.open",
         "title": "%command.mesa.open%",
         "category": "FaKL",

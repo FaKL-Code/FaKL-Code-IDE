@@ -284,6 +284,8 @@ export interface AgentRuntimeOptions {
   readonly freio?: () => FreioConfig;
   /** Instruções a mais das sessões iniciadas pela IDE (`agents.start`), como a orquestração no chat. */
   readonly sessionPrompt?: () => string | undefined;
+  /** Instruções das conversas simples (`agents.start` com `conversa`), no lugar das de `sessionPrompt`. */
+  readonly conversaPrompt?: () => string | undefined;
   /** Pedidos de aprovação do próprio Core, respondidos pelo mesmo `agents.permission`. */
   readonly approvals?: { respond(sessionId: string, id: string, allow: boolean): boolean };
   /** Tira segredos do texto antes de ele virar evento (SDD 14.1). */
@@ -337,6 +339,8 @@ export interface LaunchOptions {
   readonly claudeAccount?: ClaudeAccountSlot;
   /** Servidores MCP só desta sessão, como o `fakl` do maestro, que leva o token dela. */
   readonly extraMcp?: (sessionId: string, profile: AgentProfile) => readonly McpServerRef[];
+  /** Conversa simples: sem nenhum servidor MCP, para o agente só responder. */
+  readonly conversa?: boolean;
 }
 
 interface Session {
@@ -383,6 +387,8 @@ interface Session {
   turnOutput: string;
   /** Conta passos e tokens da rodada e manda pausar quando passam do limite. */
   readonly freio: FreioDaRodada;
+  /** Conversa simples, sem servidores MCP (também ao reabrir a sessão). */
+  readonly conversa?: boolean;
 }
 
 /** Como reabrir uma sessão: depois de encerrar (revive) ou com outra conta. */
@@ -755,9 +761,10 @@ export class AgentRuntime {
       throw RpcError.invalidParams(l10n.t('contaClaude must be 1, 2 or 3'));
     }
     const remote = remoteContext(parseRemoteRoots(p.remotas));
+    const conversa = p.conversa === true;
     const extra = [
-      this.options.sessionPrompt?.() ?? '',
-      remote,
+      (conversa ? this.options.conversaPrompt?.() : this.options.sessionPrompt?.()) ?? '',
+      conversa ? '' : remote,
       typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
     ]
       .filter(Boolean)
@@ -766,6 +773,7 @@ export class AgentRuntime {
       profileId: stringParam(p, 'profileId'),
       cwd,
       worktree,
+      ...(conversa ? { conversa } : {}),
       ...(permissions ? { permissions } : {}),
       ...(isClaudeAccountSlot(p.contaClaude) ? { claudeAccount: p.contaClaude } : {}),
       ...(extra ? { systemPrompt: extra } : {}),
@@ -802,10 +810,12 @@ export class AgentRuntime {
     const account = slot ? this.options.claudeAccounts?.ref(slot) : undefined;
 
     const id = ulid();
-    const mcpServers = [
-      ...(this.options.mcpServers?.() ?? []).map(mcpRef),
-      ...((options.extraMcp ?? this.options.sessionMcp)?.(id, profile) ?? []),
-    ];
+    const mcpServers = options.conversa
+      ? []
+      : [
+          ...(this.options.mcpServers?.() ?? []).map(mcpRef),
+          ...((options.extraMcp ?? this.options.sessionMcp)?.(id, profile) ?? []),
+        ];
     let worktree: Worktree | undefined;
     if (options.worktree) {
       try {
@@ -864,6 +874,7 @@ export class AgentRuntime {
       autoResume: false,
       turnOutput: '',
       freio: new FreioDaRodada(() => this.options.freio?.() ?? FREIO_PADRAO),
+      ...(options.conversa ? { conversa: true } : {}),
     };
     this.sessions.set(id, session);
     this.attach(session);
@@ -1465,6 +1476,7 @@ export class AgentRuntime {
       ...(session.stopReason ? { motivo: session.stopReason } : {}),
       ...(remoteId ? { acpSessionId: remoteId } : {}),
       ...(prompt ? { systemPrompt: prompt } : {}),
+      ...(session.conversa ? { conversa: true } : {}),
       ...(session.account ? { contaClaude: session.account.slot } : {}),
       usage: handle.usage(),
       criadoEm: session.createdAt,
@@ -1616,10 +1628,12 @@ export class AgentRuntime {
   private async reopen(options: ReopenOptions): Promise<Session> {
     const { id, record, profile, worktree, slot, previous } = options;
     const history = historyContext(options.entries);
-    const mcpServers = [
-      ...(this.options.mcpServers?.() ?? []).map(mcpRef),
-      ...((previous?.extraMcp ?? this.options.sessionMcp)?.(id, profile) ?? []),
-    ];
+    const mcpServers = record.conversa
+      ? []
+      : [
+          ...(this.options.mcpServers?.() ?? []).map(mcpRef),
+          ...((previous?.extraMcp ?? this.options.sessionMcp)?.(id, profile) ?? []),
+        ];
     const accounts = this.options.claudeAccounts;
     const env = { FAKL_AGENT_SESSION: id, ...(slot ? accounts?.env(slot) : {}) };
     await this.prepare(profile, env);
@@ -1644,6 +1658,7 @@ export class AgentRuntime {
       autoResume: record.retomadaAutomatica ?? record.retomada?.automatica ?? false,
       turnOutput: '',
       freio: new FreioDaRodada(() => this.options.freio?.() ?? FREIO_PADRAO),
+      ...(record.conversa ? { conversa: true } : {}),
       cwd: record.cwd,
       handle,
       ...(record.systemPrompt ? { systemPrompt: record.systemPrompt } : {}),

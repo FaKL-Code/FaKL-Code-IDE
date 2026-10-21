@@ -65,6 +65,23 @@ freio:
 Cada limite que faltar fica no padrão acima; `0` desliga aquele limite. Os tokens são a soma do
 contexto que o agente informa a cada requisição, então só valem para agentes que informam isso.
 
+## Guia da IDE para os agentes
+
+Todo agente do chat recebe, no prompt, um índice de duas linhas dizendo que ele roda dentro da
+FaKL-Code, e a ferramenta `ajuda_ide` entrega o texto de cada tema (mesa, agentes, chaves, economia,
+vault, café, config) só quando ele pergunta. Assim o agente não sai procurando na web ou nos arquivos
+como limpar a Mesa, e o prompt continua curto.
+
+## Conversa sem ferramentas
+
+`FaKL: Nova conversa (sem ferramentas, mais barata)` abre um agente sem nenhum servidor MCP, na pasta
+padrão `~/FaKL/agentes`, com o guia inteiro no prompt e a ordem de responder direto. Serve para
+perguntas e bate-papo. Não impede as ferramentas próprias do agente (como o shell do Gemini CLI); só
+tira as da IDE e pede que ele não as use.
+
+O `FaKL: Doctor` avisa quando as definições de ferramentas carregadas (as da IDE mais os servidores
+MCP instalados, estimados em ~1.500 tokens cada) passam de ~10 mil tokens por requisição.
+
 ## Limites que vale conhecer
 
 - O número é uma estimativa do que saiu das respostas de ferramentas `fakl`. Não inclui o que o

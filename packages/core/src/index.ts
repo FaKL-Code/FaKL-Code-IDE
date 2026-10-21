@@ -52,3 +52,4 @@ export * from './economia/economia.js';
 export * from './economia/repeticao.js';
 export * from './economia/roteador.js';
 export * from './freio.js';
+export * from './guia.js';
