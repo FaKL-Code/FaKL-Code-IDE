@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   actionOf,
+  contextItem,
   diagnose,
   doctorSummary,
   firstConcern,
@@ -379,5 +380,30 @@ describe('renderDoctor', () => {
     const html = renderDoctor([], { ...options, loading: true });
     expect(html).toContain('Checking this computer');
     expect(html).not.toContain('class="item');
+  });
+});
+
+describe('peso das ferramentas no diagnóstico', () => {
+  const contexto = (servidoresMcp: number): NonNullable<DoctorSnapshot['contexto']> => ({
+    ferramentas: 40,
+    tokens: 6_000,
+    servidoresMcp,
+  });
+
+  it('não avisa com poucos servidores MCP', () => {
+    expect(contextItem(contexto(1))).toBeUndefined();
+    expect(diagnose({ ...snap(), contexto: contexto(1) }).map((i) => i.id)).not.toContain(
+      'contexto-ferramentas',
+    );
+  });
+
+  it('avisa, com a estimativa e a saída, quando o peso fixo passa do limite', () => {
+    const item = contextItem(contexto(4));
+    expect(item?.severidade).toBe('aviso');
+    expect(item?.detalhe).toContain('12');
+    expect(item?.acoes[0]).toMatchObject({ comando: 'fakl.agents.newConversation' });
+    expect(diagnose({ ...snap(), contexto: contexto(4) }).map((i) => i.id)).toContain(
+      'contexto-ferramentas',
+    );
   });
 });

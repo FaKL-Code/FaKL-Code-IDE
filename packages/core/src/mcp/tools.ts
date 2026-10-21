@@ -465,6 +465,25 @@ export const GITHUB_ACCOUNT_TOOLS: readonly McpTool[] = [
   },
 ];
 
+/** Guia da própria IDE: o agente consulta aqui em vez de procurar na web ou nos arquivos. */
+export const IDE_TOOLS: readonly McpTool[] = [
+  {
+    name: 'ajuda_ide',
+    method: 'guia.tema',
+    description:
+      'How the FaKL-Code IDE itself works: the Desk, agents, API keys, token saving, vault, cafe, settings. Use it before searching anywhere else when the user asks about the interface. Without a topic it lists the topics.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tema: {
+          type: 'string',
+          description: 'mesa, agentes, chaves, economia, vault, cafe or config',
+        },
+      },
+    },
+  },
+];
+
 /** SSH (SDD 11.2): a política de cada host decide se executa, pede aprovação ou recusa. */
 export const SSH_TOOLS: readonly McpTool[] = [
   {
@@ -717,6 +736,7 @@ export const TOOL_SETS = {
   github: [...GITHUB_TOOLS, ...GITHUB_ACCOUNT_TOOLS],
   ssh: SSH_TOOLS,
   hostinger: HOSTINGER_TOOLS,
+  ide: IDE_TOOLS,
 } as const;
 
 export type ToolSetName = keyof typeof TOOL_SETS;

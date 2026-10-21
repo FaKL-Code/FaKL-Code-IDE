@@ -101,6 +101,19 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
     expect(info?.usage.turno?.passos).toBe(5);
   });
 
+  it('a conversa simples sobe sem servidores MCP e responde', async () => {
+    const { sessionId } = await client.request<AgentStartResult>('agents.start', {
+      profileId: 'falso',
+      cwd,
+      conversa: true,
+    });
+    await client.request('agents.send', { sessionId, message: 'olá' });
+    await waitFor(() => events.some((e) => e.topic === 'agent.output'), 5_000);
+    // O guia da IDE inteiro vai no prompt de sistema, junto da mensagem: 2 blocos.
+    const output = events.find((e) => e.topic === 'agent.output');
+    expect((output?.data as AgentOutputEventData).text).toBe('oi (2 blocos)');
+  });
+
   it('lista os perfis e se estão instalados', async () => {
     const result = await client.request<AgentProfileAvailability[]>('agents.detect');
     expect(result.map((p) => [p.id, p.availability.status])).toEqual([

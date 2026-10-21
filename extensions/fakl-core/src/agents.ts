@@ -394,11 +394,13 @@ export class AgentControl implements vscode.Disposable {
     worktree: boolean,
     permissions?: PermissionPolicyName,
     pasta?: string,
+    conversa = false,
   ): Promise<string> {
     const folders = vscode.workspace.workspaceFolders;
     // A pasta local do agente (e do worktree) é a primeira `file://`, não só a [0]:
     // com um servidor SSH na frente, o projeto local continua sendo o dele.
-    const opened = pasta ?? firstLocalFolder(folders)?.uri.fsPath;
+    // Conversa simples não enxerga o projeto: roda na pasta padrão, sem ferramentas.
+    const opened = conversa ? undefined : (pasta ?? firstLocalFolder(folders)?.uri.fsPath);
     // Raízes remotas (`fakl-ssh://`) vão no prompt; o agente chega nelas pelas ferramentas ssh_*.
     const remotas = remoteRoots(folders);
     // Sem pasta local aberta, o agente trabalha numa pasta padrão (dito no aviso abaixo).
@@ -413,7 +415,8 @@ export class AgentControl implements vscode.Disposable {
         ...(contaClaude ? { contaClaude } : {}),
         ...(permissions ? { permissions } : {}),
         worktree,
-        ...(remotas.length > 0 ? { remotas } : {}),
+        ...(remotas.length > 0 && !conversa ? { remotas } : {}),
+        ...(conversa ? { conversa } : {}),
       })
       .catch((error: unknown) => {
         this.onStartFailure?.(profileId, error);
@@ -773,7 +776,7 @@ export class AgentControl implements vscode.Disposable {
   }
 
   /** Escolhe um agente instalado e o põe para trabalhar, com aviso enquanto sobe. */
-  private async pickAndStart(): Promise<void> {
+  private async pickAndStart(conversa = false): Promise<void> {
     const profiles = await this.detect();
     const ready = profiles.filter((p) => p.availability.status === 'pronto');
     if (ready.length === 0) {
@@ -788,7 +791,10 @@ export class AgentControl implements vscode.Disposable {
         : (
             await vscode.window.showQuickPick(
               ready.map((p) => ({ label: p.nome, description: p.id, profile: p })),
-              { title: l10n.t('New agent'), placeHolder: l10n.t('Which agent?') },
+              {
+                title: conversa ? l10n.t('New conversation') : l10n.t('New agent'),
+                placeHolder: l10n.t('Which agent?'),
+              },
             )
           )?.profile;
     if (!picked) return;
@@ -798,7 +804,10 @@ export class AgentControl implements vscode.Disposable {
           location: vscode.ProgressLocation.Notification,
           title: l10n.t('Opening {0}…', picked.nome),
         },
-        () => this.start(picked.id, true),
+        () =>
+          conversa
+            ? this.start(picked.id, false, undefined, undefined, true)
+            : this.start(picked.id, true),
       );
       await vscode.commands.executeCommand('fakl.chat.open', { sessionId });
     } catch (error) {
@@ -833,6 +842,7 @@ export class AgentControl implements vscode.Disposable {
         vscode.commands.executeCommand('fakl.chat.open'),
       ),
       vscode.commands.registerCommand('fakl.agents.new', () => this.pickAndStart()),
+      vscode.commands.registerCommand('fakl.agents.newConversation', () => this.pickAndStart(true)),
       vscode.commands.registerCommand('fakl.agents.send', async (arg?: unknown) => {
         // Encerrada mas guardada também serve: a mensagem nova a retoma.
         const session = await this.pickSession(arg, (s) => notFinal(s) || s.retomavel === true);

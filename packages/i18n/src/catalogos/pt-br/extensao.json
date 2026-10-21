@@ -1142,5 +1142,8 @@
   "Finished runs": "Execuções concluídas",
   "Following: {0}": "Acompanhando: {0}",
   "No recent runs on the screen. {0} left on their own or were removed; use \"Show removed\" to see them.": "Nenhuma execução recente na tela. {0} saíram sozinhas ou foram removidas; use \"Mostrar as removidas\" para ver.",
-  "This turn: {0} tool calls, about {1} input tokens": "Nesta rodada: {0} chamadas de ferramenta, cerca de {1} tokens de entrada"
+  "This turn: {0} tool calls, about {1} input tokens": "Nesta rodada: {0} chamadas de ferramenta, cerca de {1} tokens de entrada",
+  "Every agent request carries many tool definitions": "Toda requisição do agente carrega muitas definições de ferramentas",
+  "The chat agents load {0} IDE tools and {1} MCP servers, about {2} tokens sent again on every request. For simple questions, a conversation without tools costs much less.": "Os agentes do chat carregam {0} ferramentas da IDE e {1} servidores MCP, cerca de {2} tokens reenviados a cada requisição. Para perguntas simples, uma conversa sem ferramentas custa bem menos.",
+  "New conversation (no tools)": "Nova conversa (sem ferramentas)"
 }

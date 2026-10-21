@@ -85,11 +85,14 @@ export class DoctorUi implements vscode.Disposable {
     if (!client) return diagnose({ conectado: false });
     const network = readNetworkSettings();
     const checkUpdates = mayQueryAdapterVersions(network, manual);
-    const [detected, ambiente] = await Promise.all([
+    const [detected, ambiente, contexto] = await Promise.all([
       withTimeout(
         client.request<ProvidersDetectResult>('providers.detect', { atualizacoes: checkUpdates }),
       ).catch(() => undefined),
       withTimeout(client.request<ProvidersEnvironment>('providers.environment')).catch(
+        () => undefined,
+      ),
+      withTimeout(client.request<NonNullable<DoctorSnapshot['contexto']>>('guia.peso')).catch(
         () => undefined,
       ),
     ]);
@@ -97,6 +100,7 @@ export class DoctorUi implements vscode.Disposable {
       conectado: true,
       ...(ambiente ? { ambiente } : {}),
       ...(detected ? { provedores: detected.provedores } : {}),
+      ...(contexto ? { contexto } : {}),
       rede: {
         consultasAutomaticas: network.automatic,
         ...(network.updateMode ? { modoAtualizacao: network.updateMode } : {}),

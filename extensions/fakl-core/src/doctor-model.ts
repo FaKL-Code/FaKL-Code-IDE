@@ -115,6 +115,44 @@ export interface DoctorSnapshot {
     /** Valor de `update.mode` do VS Code, quando definido. */
     readonly modoAtualizacao?: string;
   };
+  /** O que as ferramentas carregadas em cada agente do chat pesam em toda requisição. */
+  readonly contexto?: {
+    readonly ferramentas: number;
+    /** Tokens estimados das definições das ferramentas da IDE. */
+    readonly tokens: number;
+    /** Servidores MCP instalados; as ferramentas de cada um só se conhecem em execução. */
+    readonly servidoresMcp: number;
+  };
+}
+
+/** Palpite do peso de um servidor MCP de terceiros, que a IDE não consegue medir. */
+export const TOKENS_POR_SERVIDOR_MCP = 1_500;
+/** A partir daqui o peso fixo de cada requisição merece um aviso. */
+export const TOKENS_FIXOS_AVISO = 10_000;
+
+export function contextItem(
+  contexto: NonNullable<DoctorSnapshot['contexto']>,
+): DoctorItem | undefined {
+  const total = contexto.tokens + contexto.servidoresMcp * TOKENS_POR_SERVIDOR_MCP;
+  if (total < TOKENS_FIXOS_AVISO) return undefined;
+  return {
+    id: 'contexto-ferramentas',
+    severidade: 'aviso',
+    titulo: l10n.t('Every agent request carries many tool definitions'),
+    detalhe: l10n.t(
+      'The chat agents load {0} IDE tools and {1} MCP servers, about {2} tokens sent again on every request. For simple questions, a conversation without tools costs much less.',
+      String(contexto.ferramentas),
+      String(contexto.servidoresMcp),
+      total.toLocaleString(),
+    ),
+    acoes: [
+      {
+        tipo: 'comando',
+        rotulo: l10n.t('New conversation (no tools)'),
+        comando: 'fakl.agents.newConversation',
+      },
+    ],
+  };
 }
 
 /** "22.13.0" de "v22.13.0"; o major, ou `undefined` se o texto não é uma versão. */
@@ -459,6 +497,8 @@ export function diagnose(snapshot: DoctorSnapshot): DoctorItem[] {
     }
   }
 
+  const pesado = snapshot.contexto ? contextItem(snapshot.contexto) : undefined;
+  if (pesado) items.push(pesado);
   if (snapshot.rede) items.push(networkItem(snapshot.rede));
   items.push(docker);
   return items;

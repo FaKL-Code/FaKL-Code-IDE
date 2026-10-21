@@ -61,6 +61,8 @@ export interface StoredSession {
   readonly acpSessionId?: string;
   /** Regras e contexto do início da conversa, para recriar a sessão. */
   readonly systemPrompt?: string;
+  /** Conversa simples, sem servidores MCP; a retomada também abre sem eles. */
+  readonly conversa?: boolean;
   /** Conta do Claude da sessão (ADR 0027); sem ela, a retomada usa a conta ativa. */
   readonly contaClaude?: ClaudeAccountSlot;
   readonly usage: AgentUsageInfo;

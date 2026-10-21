@@ -173,6 +173,8 @@ export const CoreMethods = {
   ],
   /** Placar dos agentes por perfil (ADR 0043). */
   scorecard: ['get', 'reset'],
+  /** Guia da IDE para os agentes e o peso das ferramentas que cada sessão carrega. */
+  guia: ['tema', 'peso'],
   /** Modo econômico de tokens (ADR 0052): modo, livro-caixa e o registro que o servidor MCP do agente envia. */
   economia: ['status', 'setModo', 'registrar', 'reset'],
   costs: ['summary', 'byTask', 'limits.get', 'limits.set'],

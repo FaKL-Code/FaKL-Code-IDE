@@ -35,6 +35,7 @@
   "command.agents.status": "Available agents",
   "command.agents.chat": "Open agents chat",
   "command.agents.new": "New agent",
+  "command.agents.newConversation": "New conversation (no tools, cheaper)",
   "command.mesa.open": "Open the Desk",
   "command.mesa.focus": "Desk in focus (hides the bars)",
   "command.cafe.open": "Open the cyber café",
