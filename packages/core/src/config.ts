@@ -29,6 +29,7 @@ import { parse, parseDocument, stringify, type Document } from 'yaml';
 import type { EventBus } from './events/bus.js';
 import { parseLimits } from './orchestrator/limits.js';
 import { isModoEconomia, MODOS_ECONOMIA, type ModoEconomia } from './economia/compactar.js';
+import type { FreioConfig } from './freio.js';
 import { faklHome } from './paths.js';
 import { objectParams, RpcError, stringParam, type Router } from './rpc/router.js';
 
@@ -61,6 +62,8 @@ export interface FaklConfig {
   readonly sessoesExternas?: boolean;
   /** Modo econômico de tokens (ADR 0052); sem a chave, `equilibrado`. */
   readonly economia?: ModoEconomia;
+  /** Limites de uma rodada do agente (`freio:`); cada um que faltar fica no padrão, 0 desliga. */
+  readonly freio?: Partial<FreioConfig>;
 }
 
 /** `voz` no config.yaml: o modo escolhido (ver `VOZ_MODOS` no protocolo). */
@@ -214,6 +217,10 @@ export function configHeader(info: FirstRunInfo = { provedores: [], perfis: [] }
 #   idioma: pt
 #   limiteMb: 20       # ${l10n.t('the API key goes in the keychain (voz.token), never here')}
 # economia:           ${l10n.t('token saving mode: desligado, equilibrado (default) or agressivo')}
+# freio:              ${l10n.t('limits per agent turn before it pauses to ask (0 turns one off)')}
+#   tokens: 1500000    # ${l10n.t('estimated input tokens sent to the model')}
+#   passos: 60         # ${l10n.t('tool calls')}
+#   repeticoes: 5      # ${l10n.t('the same tool call in a row')}
 # sessoesExternas: false  ${l10n.t('true shows, read-only, the conversations of the Codex and Claude Code extensions by reading their local history')}
 # tetoDiario:          ${l10n.t('maximum spending per provider per day; when reached, agents pause')}
 ${caps.join('\n')}
@@ -410,6 +417,7 @@ export function parseConfig(raw: unknown, where: string): FaklConfig {
     ...parseVoz(raw.voz, where),
     ...(raw.sessoesExternas === true ? { sessoesExternas: true } : {}),
     ...parseEconomia(raw.economia, where),
+    ...parseFreio(raw.freio, where),
   };
 }
 
@@ -600,6 +608,23 @@ function parseEconomia(raw: unknown, where: string): { economia?: ModoEconomia }
     );
   }
   return { economia: raw };
+}
+
+function parseFreio(raw: unknown, where: string): { freio?: Partial<FreioConfig> } {
+  if (raw === undefined || raw === null) return {};
+  if (!isObject(raw)) throw new ConfigError(l10n.t('{0}: {1} must be an object', where, 'freio'));
+  const freio: { -readonly [K in keyof FreioConfig]?: number } = {};
+  for (const chave of ['tokens', 'passos', 'repeticoes'] as const) {
+    const valor = raw[chave];
+    if (valor === undefined || valor === null) continue;
+    if (typeof valor !== 'number' || !Number.isInteger(valor) || valor < 0) {
+      throw new ConfigError(
+        l10n.t('{0}: {1} must be a whole number, 0 or more', where, `freio.${chave}`),
+      );
+    }
+    freio[chave] = valor;
+  }
+  return Object.keys(freio).length > 0 ? { freio } : {};
 }
 
 function parsePostMergeBuild(raw: unknown, where: string): { buildAposMerge?: PostMergeBuild } {

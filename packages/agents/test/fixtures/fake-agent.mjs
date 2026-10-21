@@ -120,6 +120,22 @@ async function prompt(params, cx) {
     });
     await say(cx, sessionId, 'doze caracteres');
     return { stopReason: 'end_turn' };
+  } else if (last === 'girar') {
+    // Um agente preso: chama a mesma ferramenta sem parar, até a rodada ser cancelada.
+    for (let i = 0; i < 200 && !controller.signal.aborted; i++) {
+      await cx.notify(acp.methods.client.session.update, {
+        sessionId,
+        update: {
+          sessionUpdate: 'tool_call',
+          toolCallId: `g${i}`,
+          title: 'Ler docs.md',
+          kind: 'read',
+          status: 'in_progress',
+        },
+      });
+      await sleep(20, controller.signal).catch(() => undefined);
+    }
+    return { stopReason: 'cancelled' };
   } else if (last === 'segredo') {
     await say(cx, sessionId, process.env.FAKL_TEST_SECRET ?? 'sem segredo');
   } else if (last === 'sair') {

@@ -83,6 +83,7 @@ import {
   stringParam,
   type Router,
 } from './rpc/router.js';
+import { FREIO_PADRAO, FreioDaRodada, type FreioConfig, type Parada } from './freio.js';
 import { ulid } from './ulid.js';
 import { MIN_RESUME_DELAY_MS, UNKNOWN_RESET_MS, parseSessionLimit } from './session-limit.js';
 
@@ -279,6 +280,8 @@ export interface AgentRuntimeOptions {
   readonly guard?: (profile: AgentProfile) => string | undefined;
   /** Servidores MCP de cada sessão quando quem inicia não escolhe (o `fakl` com o vault). */
   readonly sessionMcp?: (sessionId: string, profile: AgentProfile) => readonly McpServerRef[];
+  /** Limites de uma rodada do agente (passos, tokens, repetição); sem isto, os padrões. */
+  readonly freio?: () => FreioConfig;
   /** Instruções a mais das sessões iniciadas pela IDE (`agents.start`), como a orquestração no chat. */
   readonly sessionPrompt?: () => string | undefined;
   /** Pedidos de aprovação do próprio Core, respondidos pelo mesmo `agents.permission`. */
@@ -378,6 +381,8 @@ interface Session {
   autoResume: boolean;
   /** Resposta da vez atual; avaliada inteira para não confundir código com um aviso. */
   turnOutput: string;
+  /** Conta passos e tokens da rodada e manda pausar quando passam do limite. */
+  readonly freio: FreioDaRodada;
 }
 
 /** Como reabrir uma sessão: depois de encerrar (revive) ou com outra conta. */
@@ -858,6 +863,7 @@ export class AgentRuntime {
       activityAt: new Date().toISOString(),
       autoResume: false,
       turnOutput: '',
+      freio: new FreioDaRodada(() => this.options.freio?.() ?? FREIO_PADRAO),
     };
     this.sessions.set(id, session);
     this.attach(session);
@@ -1147,7 +1153,7 @@ export class AgentRuntime {
         cwd: s.cwd,
         ...(s.worktree ? { pastaOrigem: s.worktree.repoRoot } : {}),
         state,
-        usage: s.handle.usage(),
+        usage: { ...s.handle.usage(), turno: s.freio.gasto() },
         ...(s.worktree ? { worktree: { path: s.worktree.path, branch: s.worktree.branch } } : {}),
         permissoes: s.mode,
         ...(s.account ? { contaClaude: s.account } : {}),
@@ -1349,7 +1355,9 @@ export class AgentRuntime {
       // O id ACP pode chegar só depois do início; uso e fala mantêm a atribuição viva.
       this.recordAccount(session, event.type === 'usage' || event.type === 'output');
       if (event.type === 'state') session.stopReason = event.reason;
+      const parada = this.contar(session, event);
       this.publish(id, event);
+      if (parada) this.frear(session, parada);
       if (event.type === 'state' || event.type === 'options' || event.type === 'usage') {
         this.scheduleSave(session);
       }
@@ -1357,6 +1365,29 @@ export class AgentRuntime {
         session.released ??= this.release(id, profile, worktree);
       }
     });
+  }
+
+  /** Alimenta o freio com o evento; devolve a parada, se a rodada passou do limite. */
+  private contar(session: Session, event: AgentEvent): Parada | undefined {
+    if (this.closing) return undefined;
+    switch (event.type) {
+      case 'state':
+        if (event.state === 'pensando' && IDLE.has(event.previous)) session.freio.iniciar();
+        return undefined;
+      case 'tool':
+        return session.freio.ferramenta(event.toolCallId, event.title);
+      case 'usage':
+        return event.usage.context ? session.freio.contexto(event.usage.context.used) : undefined;
+      default:
+        return undefined;
+    }
+  }
+
+  /** Pausa o agente e conta à pessoa por quê; continuar dá uma rodada nova com o limite zerado. */
+  private frear(session: Session, parada: Parada): void {
+    this.options.log?.(l10n.t('agent {0} paused by the brake: {1}', session.id, parada.mensagem));
+    this.publish(session.id, { type: 'error', message: parada.mensagem });
+    void session.handle.pause().catch(() => undefined);
   }
 
   private waitForLimit(session: Session, recovery: AgentRecoveryInfo): void {
@@ -1612,6 +1643,7 @@ export class AgentRuntime {
       ...(record.retomada ? { recovery: record.retomada } : {}),
       autoResume: record.retomadaAutomatica ?? record.retomada?.automatica ?? false,
       turnOutput: '',
+      freio: new FreioDaRodada(() => this.options.freio?.() ?? FREIO_PADRAO),
       cwd: record.cwd,
       handle,
       ...(record.systemPrompt ? { systemPrompt: record.systemPrompt } : {}),
@@ -1955,9 +1987,11 @@ export class AgentRuntime {
       case 'file':
         this.bus.publish('agent.file', id, { path: event.path });
         break;
-      case 'usage':
-        this.bus.publish('cost.update', id, event.usage);
+      case 'usage': {
+        const turno = this.sessions.get(id)?.freio.gasto();
+        this.bus.publish('cost.update', id, turno ? { ...event.usage, turno } : event.usage);
         break;
+      }
       case 'options':
         this.bus.publish<AgentOptionsEventData>('agent.options', id, { opcoes: event.options });
         break;

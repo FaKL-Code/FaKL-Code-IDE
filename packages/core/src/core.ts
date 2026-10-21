@@ -32,6 +32,7 @@ import { chatMaestroPrompt, type ResourceSummary } from './orchestrator/prompts.
 import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './providers.js';
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
 import { Economia } from './economia/economia.js';
+import { FREIO_PADRAO } from './freio.js';
 import { Scorecard } from './scorecard.js';
 import { UsageWindows } from './windows.js';
 import { McpLibrary } from './mcp-library.js';
@@ -433,6 +434,7 @@ export function createCore(options: CoreOptions): Core {
     sessionMcp: (sessionId: string, profile: AgentProfile) =>
       orchestrator.sessionMcp(sessionId, profile) ??
       mcpFor(sessionId, ['orquestrar', ...integrationSets()]),
+    freio: () => ({ ...FREIO_PADRAO, ...config?.config.freio }),
     sessionPrompt: () =>
       options.mcp
         ? chatMaestroPrompt(resourceSummary, agents.profileList(), economia.modo !== 'desligado')
