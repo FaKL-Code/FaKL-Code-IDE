@@ -82,6 +82,25 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
     await rm(cwd, { recursive: true, force: true });
   });
 
+  it('pausa o agente que repete a mesma ferramenta e avisa a pessoa', async () => {
+    const { sessionId } = await client.request<AgentStartResult>('agents.start', {
+      profileId: 'falso',
+      cwd,
+    });
+    void client.request('agents.send', { sessionId, message: 'girar' }).catch(() => undefined);
+    await waitFor(
+      () =>
+        events.some(
+          (e) => e.topic === 'agent.state' && (e.data as { state: string }).state === 'pausado',
+        ),
+      8_000,
+    );
+    const sessions = await client.request<AgentSessionInfo[]>('agents.list');
+    const info = sessions.find((s) => s.sessionId === sessionId);
+    expect(info?.state).toBe('pausado');
+    expect(info?.usage.turno?.passos).toBe(5);
+  });
+
   it('lista os perfis e se estão instalados', async () => {
     const result = await client.request<AgentProfileAvailability[]>('agents.detect');
     expect(result.map((p) => [p.id, p.availability.status])).toEqual([

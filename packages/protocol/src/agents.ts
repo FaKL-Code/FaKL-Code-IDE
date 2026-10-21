@@ -188,6 +188,11 @@ export interface AgentUsageInfo {
   readonly cost?: { readonly amount: number; readonly currency: string };
   /** Janela de contexto, quando o agente informa (ACP `usage_update`). */
   readonly context?: { readonly used: number; readonly size: number };
+  /**
+   * O que a rodada atual gastou: chamadas de ferramenta e tokens de entrada
+   * estimados (soma do contexto reenviado a cada requisição).
+   */
+  readonly turno?: { readonly passos: number; readonly entrada: number };
 }
 
 /** Espera por renovação da cota do provedor; automatização exige escolha explícita. */

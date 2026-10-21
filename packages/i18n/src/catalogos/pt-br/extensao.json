@@ -1141,5 +1141,6 @@
   "Runs in progress": "Execuções em andamento",
   "Finished runs": "Execuções concluídas",
   "Following: {0}": "Acompanhando: {0}",
-  "No recent runs on the screen. {0} left on their own or were removed; use \"Show removed\" to see them.": "Nenhuma execução recente na tela. {0} saíram sozinhas ou foram removidas; use \"Mostrar as removidas\" para ver."
+  "No recent runs on the screen. {0} left on their own or were removed; use \"Show removed\" to see them.": "Nenhuma execução recente na tela. {0} saíram sozinhas ou foram removidas; use \"Mostrar as removidas\" para ver.",
+  "This turn: {0} tool calls, about {1} input tokens": "Nesta rodada: {0} chamadas de ferramenta, cerca de {1} tokens de entrada"
 }

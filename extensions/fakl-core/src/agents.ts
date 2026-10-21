@@ -190,6 +190,17 @@ class AgentTreeProvider implements vscode.TreeDataProvider<AgentSessionInfo> {
       tooltip.appendMarkdown(`${l10n.t('Branch: {0}', `\`${session.worktree.branch}\``)}\n\n`);
     }
     tooltip.appendMarkdown(l10n.t('Usage: {0}', formatUsage(session.usage)));
+    const turno = session.usage.turno;
+    if (turno && turno.passos > 0) {
+      const gasto = l10n.t(
+        'This turn: {0} tool calls, about {1} input tokens',
+        String(turno.passos),
+        turno.entrada.toLocaleString(),
+      );
+      tooltip.appendMarkdown(`
+
+${gasto}`);
+    }
     item.tooltip = tooltip;
     item.command = {
       command: 'fakl.chat.open',

@@ -48,6 +48,23 @@ economia: agressivo # desligado | equilibrado (padrão) | agressivo
 
 A troca vale para os agentes que você iniciar depois dela.
 
+## Freio do agente
+
+Um agente que não acha a resposta pode ficar chamando ferramentas sem parar, e cada passo reenvia o
+contexto inteiro ao modelo. A IDE conta o que cada rodada faz e pausa o agente quando ela passa do
+limite, avisando no chat por quê. Retomar dá uma rodada nova, com a conta zerada. O tooltip da sessão
+mostra quantas chamadas e quantos tokens de entrada (estimados) a rodada já gastou.
+
+```yaml
+freio:
+  tokens: 1500000 # tokens de entrada estimados na rodada
+  passos: 60 # chamadas de ferramenta
+  repeticoes: 5 # a mesma chamada, uma atrás da outra
+```
+
+Cada limite que faltar fica no padrão acima; `0` desliga aquele limite. Os tokens são a soma do
+contexto que o agente informa a cada requisição, então só valem para agentes que informam isso.
+
 ## Limites que vale conhecer
 
 - O número é uma estimativa do que saiu das respostas de ferramentas `fakl`. Não inclui o que o

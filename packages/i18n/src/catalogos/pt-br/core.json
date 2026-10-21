@@ -276,5 +276,14 @@
   "State: {0} -> {1} ({2})": "Estado: {0} -> {1} ({2})",
   "State: {0} -> {1}": "Estado: {0} -> {1}",
   "Changed file: {0}": "Arquivo alterado: {0}",
-  "token saving mode: desligado, equilibrado (default) or agressivo": "modo de economia de tokens: desligado, equilibrado (padrão) ou agressivo"
+  "token saving mode: desligado, equilibrado (default) or agressivo": "modo de economia de tokens: desligado, equilibrado (padrão) ou agressivo",
+  "agent {0} paused by the brake: {1}": "agente {0} pausado pelo freio: {1}",
+  "limits per agent turn before it pauses to ask (0 turns one off)": "limites por rodada do agente antes de ele pausar e perguntar (0 desliga um deles)",
+  "estimated input tokens sent to the model": "tokens de entrada estimados enviados ao modelo",
+  "tool calls": "chamadas de ferramenta",
+  "the same tool call in a row": "a mesma chamada de ferramenta, uma atrás da outra",
+  "{0}: {1} must be a whole number, 0 or more": "{0}: {1} precisa ser um número inteiro, 0 ou mais",
+  "Paused: the agent called the same tool {0} times in a row ({1}). It may be stuck in a loop.": "Pausado: o agente chamou a mesma ferramenta {0} vezes seguidas ({1}). Ele pode estar preso num loop. Retome para dar mais uma rodada.",
+  "Paused: the agent has made {0} tool calls in this turn without finishing.": "Pausado: o agente fez {0} chamadas de ferramenta nesta rodada sem terminar. Retome para dar mais uma rodada.",
+  "Paused: this turn has already sent about {0} input tokens to the model.": "Pausado: esta rodada já enviou cerca de {0} tokens de entrada ao modelo. Retome para dar mais uma rodada."
 }
