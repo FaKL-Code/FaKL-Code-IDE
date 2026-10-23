@@ -48,6 +48,7 @@ import type { ModoEconomia } from '../economia/compactar.js';
 import {
   classificarComplexidade,
   escolherPerfil,
+  nivelDelegado,
   rebaixou,
   type Escolha,
   type PerfilRoteavel,
@@ -1076,6 +1077,11 @@ export class Orchestrator implements Disposable {
     const extra = await (
       this.options.maestroContext?.(state.repoRoot) ?? Promise.resolve([])
     ).catch(() => []);
+    const executor = await this.executorEconomico(
+      task,
+      `${task.titulo}\n${task.descricao ?? ''}`,
+      profileId,
+    );
     const started = await this.options.agents.launch({
       profileId,
       cwd: state.repoRoot,
@@ -1092,6 +1098,7 @@ export class Orchestrator implements Disposable {
         base: state.base,
         profiles: this.options.profiles(),
         economia: this.economico(),
+        ...(executor ? { executor } : {}),
         history: state.run.rodadas,
         ...(previousSummary ? { previousSummary } : {}),
       }),
@@ -1289,6 +1296,8 @@ export class Orchestrator implements Disposable {
     papel: string,
     topo = false,
   ): Promise<{ escolha: Escolha; sinais: readonly string[] } | undefined> {
+    // Quem executa uma parte delegada desce um nível; revisor e sub-maestro, não.
+    const delegado = this.economico() && !topo && papel !== 'revisor' && papel !== 'maestro';
     const permitted = task.perfisPermitidos;
     const fixed = task.papeisFixados?.[papel];
     const availability = new Map(
@@ -1322,8 +1331,26 @@ export class Orchestrator implements Disposable {
       ...(criterio ? { criterio } : {}),
       ...(topo ? {} : { papel }),
     });
-    const escolha = escolherPerfil(perfis, classificacao.nivel, { papel });
+    const nivel = delegado ? nivelDelegado(classificacao.nivel) : classificacao.nivel;
+    const escolha = escolherPerfil(perfis, nivel, { papel });
     return escolha ? { escolha, sinais: classificacao.sinais } : undefined;
+  }
+
+  /**
+   * No modo econômico, o perfil que executaria uma parte desta tarefa, quando é
+   * mais barato que o maestro: o prompt dele diz para quem vai a implementação, em
+   * vez de deixar a decisão para uma consulta que ele quase nunca faz.
+   */
+  private async executorEconomico(
+    task: Task,
+    instrucoes: string,
+    maestroId: string,
+  ): Promise<string | undefined> {
+    if (!this.economico()) return undefined;
+    const roteado = await this.routeProfile(task, instrucoes, undefined, 'executor');
+    const maestro = this.options.profiles().find((profile) => profile.id === maestroId);
+    if (!roteado || !rebaixou(roteado.escolha, maestro?.custoRelativo ?? 'médio')) return undefined;
+    return roteado.escolha.id;
   }
 
   /** Diferença de custo médio por tarefa entre quem pediu e o perfil escolhido, quando o placar tem os dois. */

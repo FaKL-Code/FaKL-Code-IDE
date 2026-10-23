@@ -1,6 +1,7 @@
 // Maestro ACP falso: abre o servidor MCP `fakl` que recebeu no session/new e
 // segue um roteiro de ferramentas. FAKE_MAESTRO define o roteiro:
 // "completo" (padrão), "falha", "parado" (termina a vez sem finish),
+// "eco" (como "parado", mas responde com o prompt inteiro que recebeu),
 // "dupla" (delega a dois subagentes em paralelo, cada um num arquivo),
 // "rodadas" (roda run_checks até estourar o limite de rodadas) ou
 // "recursos" (acha um agente com find_resources e delega com ele, sem profileId),
@@ -145,8 +146,9 @@ async function prompt(params, cx) {
     return { stopReason: cancelado ? 'cancelled' : 'end_turn' };
   }
   const recomeca = mode === 'freio' && /change the approach|mude a abordagem/.test(last);
-  if ((last !== 'Comece a tarefa.' && !recomeca) || mode === 'parado') {
-    await say(cx, sessionId, 'ok');
+  if ((last !== 'Comece a tarefa.' && !recomeca) || mode === 'parado' || mode === 'eco') {
+    const eco = mode === 'eco' && last === 'Comece a tarefa.';
+    await say(cx, sessionId, eco ? params.prompt.map((block) => block.text).join('\n') : 'ok');
     return { stopReason: 'end_turn' };
   }
   const fakl = mcpClient(mcpConfig.find((server) => server.name === 'fakl'));

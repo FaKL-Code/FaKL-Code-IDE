@@ -403,6 +403,7 @@ class AcpSession implements AgentHandle {
           });
         }
       }
+      const meta = this.options.sessionMeta ? { _meta: { ...this.options.sessionMeta } } : {};
       const resumeId = this.options.resume?.sessionId;
       let reopened = false;
       if (resumeId) {
@@ -417,7 +418,7 @@ class AcpSession implements AgentHandle {
           this.replaying = true;
           try {
             const response = (await Promise.race([
-              agent.request(method, { sessionId: resumeId, cwd: this.cwd, mcpServers }),
+              agent.request(method, { sessionId: resumeId, cwd: this.cwd, mcpServers, ...meta }),
               exited,
               timedOut,
             ])) as { configOptions?: acp.SessionConfigOption[] | null } | null | undefined;
@@ -435,7 +436,7 @@ class AcpSession implements AgentHandle {
         }
       }
       if (!reopened) {
-        const request: acp.NewSessionRequest = { cwd: this.cwd, mcpServers };
+        const request: acp.NewSessionRequest = { cwd: this.cwd, mcpServers, ...meta };
         const created = await Promise.race([
           agent.request(acp.methods.agent.session.new, request),
           exited,

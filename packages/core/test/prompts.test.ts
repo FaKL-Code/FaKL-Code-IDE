@@ -100,6 +100,14 @@ describe('prompts do maestro', () => {
     expect(economico).toContain('um perfil mais barato que o seu');
     expect(economico).toContain('só os comandos que importam');
     expect(maestroPrompt(context)).not.toContain('Economia de tokens ligada');
+    // Com um executor mais barato calculado, o maestro recebe o nome dele, sem condição.
+    const comExecutor = maestroPrompt({ ...context, economia: true, executor: 'claude-haiku' });
+    expect(comExecutor).toContain('a implementação desta tarefa vai para claude-haiku');
+    expect(comExecutor).toContain('spawn_agent (profileId claude-haiku)');
+    expect(comExecutor).not.toContain('um perfil mais barato que o seu');
+    expect(comExecutor).toContain('subagente `explorador`');
+    expect(chatMaestroPrompt(undefined, [], true)).toContain('subagente `explorador`');
+    expect(chatMaestroPrompt(undefined, [], false)).not.toContain('explorador');
     // A parte das rodadas é da tarefa: o chat não tem run_checks.
     expect(chatMaestroPrompt(undefined, [], true)).toContain('Economia de tokens ligada');
     expect(chatMaestroPrompt(undefined, [], true)).not.toContain('run_checks');

@@ -32,6 +32,8 @@ import { chatMaestroPrompt, type ResourceSummary } from './orchestrator/prompts.
 import { clearCodexKey, codexKeyHome, providerKeyEnv, ProviderService } from './providers.js';
 import { providerSyncTarget, ResourceSync, type SyncTarget } from './resource-sync.js';
 import { Economia } from './economia/economia.js';
+import { EXPLORADOR, exploradorDe, exploradorPrompt } from './economia/explorador.js';
+import { aspasSh, ganchosDaEconomia } from './economia/gancho.js';
 import { FREIO_PADRAO } from './freio.js';
 import { ajudaDaIde, guiaIndice, pesoDasFerramentas, promptDeConversa } from './guia.js';
 import { Scorecard } from './scorecard.js';
@@ -236,6 +238,56 @@ export function createCore(options: CoreOptions): Core {
         },
       },
     ];
+  };
+  // Economia nas ferramentas do próprio Claude Code (ADR 0052): ganchos da sessão e
+  // um explorador num modelo mais barato que o da conversa.
+  const claudeMeta = (
+    sessionId: string,
+    profile: AgentProfile,
+  ): Record<string, unknown> | undefined => {
+    const launcher = options.mcp;
+    const modo = economia.modo;
+    if (!launcher || modo === 'desligado') return undefined;
+    if (profile.provedor !== 'anthropic' || profile.adaptador !== 'acp') return undefined;
+    const explorador = exploradorDe(profile, agents.profileList());
+    const env: Record<string, string> = {
+      ...launcher.env,
+      FAKL_ECONOMIA: modo,
+      FAKL_LOCALE: currentLocale(),
+      FAKL_CORE_SOCKET: options.socketPath,
+      FAKL_AGENT_TOKEN: tokens.issue(sessionId, ['economia.registrar']),
+      ...(explorador ? { FAKL_EXPLORADOR: EXPLORADOR } : {}),
+    };
+    // O Claude Code roda o gancho pelo sh (Git Bash no Windows), que aceita barras normais.
+    const caminho = (valor: string): string =>
+      aspasSh(process.platform === 'win32' ? valor.replace(/\\/g, '/') : valor);
+    const comando = [
+      ...Object.entries(env).map(([name, value]) => `${name}=${aspasSh(value)}`),
+      caminho(launcher.command),
+      ...launcher.args.map(caminho),
+      '--gancho',
+    ].join(' ');
+    return {
+      claudeCode: {
+        options: {
+          settings: { hooks: ganchosDaEconomia(comando) },
+          ...(explorador
+            ? {
+                agents: {
+                  [EXPLORADOR]: {
+                    description: l10n.t(
+                      'Reads and searches the code to answer a question about it, on a cheaper model. Use it for exploration (where something is, how it works, what uses it) instead of reading many files yourself.',
+                    ),
+                    prompt: exploradorPrompt(),
+                    tools: ['Read', 'Grep', 'Glob', 'Bash'],
+                    model: explorador,
+                  },
+                },
+              }
+            : {}),
+        },
+      },
+    };
   };
   const tokenCleanup = bus.subscribe(['agent.state'], (event) => {
     const state = (event.data as { state?: string }).state;
@@ -459,6 +511,7 @@ export function createCore(options: CoreOptions): Core {
         .filter(Boolean)
         .join('\n\n') || undefined,
     conversaPrompt: () => promptDeConversa(),
+    sessionMeta: claudeMeta,
     ...(resources
       ? {
           beforeStart: async (profile: AgentProfile, env: Readonly<Record<string, string>>) => {

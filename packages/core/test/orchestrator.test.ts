@@ -20,6 +20,7 @@ import type {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  classificarComplexidade,
   CoreClient,
   CoreRpcError,
   createCore,
@@ -494,6 +495,62 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     ]);
   }, 60_000);
 
+  it('uma sessão do Claude recebe os ganchos da economia e o explorador mais barato', async () => {
+    await startCore('completo', false, undefined, [
+      {
+        id: 'claude-caro',
+        nome: 'Caro',
+        provedor: 'anthropic',
+        adaptador: 'acp',
+        modelo: 'caro-1',
+      },
+      {
+        id: 'claude-leve',
+        nome: 'Leve',
+        provedor: 'anthropic',
+        adaptador: 'acp',
+        modelo: 'leve-1',
+        custoRelativo: 'baixo',
+      },
+    ]);
+    const metaDe = async (profileId: string): Promise<unknown> => {
+      const { sessionId } = await client.request<{ sessionId: string }>('agents.start', {
+        profileId,
+        cwd: repo,
+      });
+      await client.request('agents.send', { sessionId, message: 'meta' });
+      let text: string | undefined;
+      await waitFor(() => {
+        text = events
+          .filter((e) => e.topic === 'agent.output' && e.subject === sessionId)
+          .map((e) => (e.data as AgentOutputEventData).text)
+          .find((t) => t.startsWith('{') || t === 'null');
+        return text !== undefined;
+      }, 20_000);
+      await client.request('agents.stop', { sessionId });
+      return JSON.parse(text ?? 'null');
+    };
+    const options = (
+      (await metaDe('claude-caro')) as {
+        claudeCode: {
+          options: {
+            settings: { hooks: Record<string, { hooks: { command: string }[] }[]> };
+            agents?: Record<string, { model: string }>;
+          };
+        };
+      }
+    ).claudeCode.options;
+    const comando = options.settings.hooks.PostToolUse?.[0]?.hooks[0]?.command ?? '';
+    expect(comando).toContain('--gancho');
+    expect(comando).toContain("FAKL_ECONOMIA='equilibrado'");
+    expect(options.agents?.explorador?.model).toBe('leve-1');
+    // O mais barato não tem para quem descer; outro provedor não recebe nada.
+    expect(
+      (await metaDe('claude-leve')) as { claudeCode: { options: { agents?: unknown } } },
+    ).not.toHaveProperty('claudeCode.options.agents');
+    expect(await metaDe('falso')).toBeNull();
+  }, 60_000);
+
   it('uma sessão do chat chama outro agente sem tarefa (Maestro Mode)', async () => {
     await startCore();
     const started = await client.request<{ sessionId: string; worktree?: { branch: string } }>(
@@ -782,6 +839,35 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
           'Refatoração ampla da autenticação, com revisão de segurança em vários arquivos.',
       }),
     ).toBe('maestro-caro');
+  }, 60_000);
+
+  it('no modo econômico, o maestro recebe o executor mais barato da parte delegada', async () => {
+    await startCore('eco', false, undefined, [
+      { id: 'barato', nome: 'Barato', provedor: 'teste', adaptador: 'acp', custoRelativo: 'baixo' },
+    ]);
+    // Tarefa de nível médio: sozinha iria ao perfil médio; delegada, desce ao barato.
+    const titulo = 'Implementar a paginação da listagem de pedidos';
+    const descricao =
+      'A listagem de pedidos carrega tudo de uma vez. Paginar no servidor com limite e deslocamento, ' +
+      'mostrar a navegação entre páginas na tela e manter o filtro de status ao trocar de página.';
+    expect(classificarComplexidade(`${titulo}\n${descricao}`).nivel).toBe('media');
+    const task = await createTask({ titulo, descricao, entrega: 'branch' });
+    const run = await client.request<Run>('runs.start', { taskId: task.id });
+    let prompt = '';
+    await vi.waitFor(
+      () => {
+        prompt =
+          events
+            .filter((e) => e.topic === 'agent.output')
+            .map((e) => (e.data as AgentOutputEventData).text)
+            .find((text) => text.includes(titulo)) ?? '';
+        expect(prompt).not.toBe('');
+      },
+      { timeout: 20_000 },
+    );
+    await client.request('runs.stop', { runId: run.id });
+    expect(prompt).toContain('a implementação desta tarefa vai para barato');
+    expect(prompt).toContain('spawn_agent (profileId barato)');
   }, 60_000);
 
   it('valida a tarefa', async () => {

@@ -53,6 +53,11 @@ export interface StartOptions {
   readonly permissions: PermissionPolicy;
   /** Retoma uma sessão que já existiu (Core reiniciado): tenta o id do agente, senão recria com o histórico. */
   readonly resume?: ResumeOptions;
+  /**
+   * `_meta` da criação da sessão ACP, para o que só um agente entende (o adaptador
+   * do Claude lê `claudeCode.options`: ganchos, subagentes, ambiente).
+   */
+  readonly sessionMeta?: Readonly<Record<string, unknown>>;
 }
 
 export interface ResumeOptions {

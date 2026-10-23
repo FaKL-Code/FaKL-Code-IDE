@@ -286,6 +286,11 @@ export interface AgentRuntimeOptions {
   readonly sessionPrompt?: () => string | undefined;
   /** Instruções das conversas simples (`agents.start` com `conversa`), no lugar das de `sessionPrompt`. */
   readonly conversaPrompt?: () => string | undefined;
+  /** `_meta` da sessão ACP de um agente (os ganchos da economia no Claude Code). */
+  readonly sessionMeta?: (
+    sessionId: string,
+    profile: AgentProfile,
+  ) => Readonly<Record<string, unknown>> | undefined;
   /** Pedidos de aprovação do próprio Core, respondidos pelo mesmo `agents.permission`. */
   readonly approvals?: { respond(sessionId: string, id: string, allow: boolean): boolean };
   /** Tira segredos do texto antes de ele virar evento (SDD 14.1). */
@@ -844,6 +849,7 @@ export class AgentRuntime {
       ...(slot ? this.options.claudeAccounts?.env(slot) : {}),
     };
     await this.prepare(profile, env);
+    const sessionMeta = this.options.sessionMeta?.(id, profile);
     let handle: AgentHandle;
     try {
       handle = await this.adapterFor(profile).start({
@@ -853,6 +859,7 @@ export class AgentRuntime {
         env: { ...env, ...this.options.providerEnv?.(profile) },
         mcpServers,
         ...(systemPrompt ? { systemPrompt } : {}),
+        ...(sessionMeta ? { sessionMeta } : {}),
       });
     } catch (error) {
       if (worktree) await this.release(id, profile, worktree);
@@ -1654,6 +1661,7 @@ export class AgentRuntime {
     const accounts = this.options.claudeAccounts;
     const env = { FAKL_AGENT_SESSION: id, ...(slot ? accounts?.env(slot) : {}) };
     await this.prepare(profile, env);
+    const sessionMeta = this.options.sessionMeta?.(id, profile);
     const handle = await this.adapterFor(profile).start({
       profile,
       cwd: record.cwd,
@@ -1661,6 +1669,7 @@ export class AgentRuntime {
       env: { ...env, ...this.options.providerEnv?.(profile) },
       mcpServers,
       ...(record.systemPrompt ? { systemPrompt: record.systemPrompt } : {}),
+      ...(sessionMeta ? { sessionMeta } : {}),
       resume: {
         ...(record.acpSessionId ? { sessionId: record.acpSessionId } : {}),
         ...(history ? { history } : {}),

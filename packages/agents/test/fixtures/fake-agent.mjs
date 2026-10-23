@@ -1,6 +1,6 @@
 // Agente ACP falso para os testes do adaptador. O comportamento sai do texto
 // da mensagem (e FAKE_LOAD, FAKE_RESUME e FAKE_LOAD_FAIL ligam a retomada de sessão): "olá", "permissão", "escreva <arquivo>", "fora", "lento",
-// "segredo", "limite", "sair".
+// "segredo", "limite", "sair", "meta" (devolve o _meta recebido ao abrir a sessão).
 import { Readable, Writable } from 'node:stream';
 
 import * as acp from '@agentclientprotocol/sdk';
@@ -22,6 +22,9 @@ const sleep = (ms, signal) =>
     });
   });
 
+/** _meta recebido em session/new ou session/load. */
+let meta;
+
 let authFailures = 0;
 /** Método de login pedido pelo cliente (`authenticate`); a chave vem de FAKE_API_KEY. */
 let authenticated;
@@ -34,7 +37,9 @@ async function prompt(params, cx) {
   const last = params.prompt.at(-1).text;
   const usage = { inputTokens: 10, outputTokens: 5, totalTokens: 15 };
 
-  if (last === 'olá') {
+  if (last === 'meta') {
+    await say(cx, sessionId, JSON.stringify(meta ?? null));
+  } else if (last === 'olá') {
     await say(cx, sessionId, `oi (${params.prompt.length} blocos)`);
   } else if (last === 'permissão') {
     await cx.notify(acp.methods.client.session.update, {
@@ -202,11 +207,13 @@ acp
   .onRequest('session/load', async (ctx) => {
     if (process.env.FAKE_LOAD_FAIL === '1')
       throw new acp.RequestError(-32602, 'sessão desconhecida');
+    meta = ctx.params._meta;
     await say(ctx.client, ctx.params.sessionId, 'ANTIGA');
     return { configOptions: configOptions() };
   })
   .onRequest('session/resume', () => ({ configOptions: configOptions() }))
-  .onRequest('session/new', async () => {
+  .onRequest('session/new', async (ctx) => {
+    meta = ctx.params._meta;
     if (process.env.FAKE_HANG === '1') await new Promise(() => undefined);
     if (process.env.FAKE_AUTH === '1' && !authenticated)
       throw new acp.RequestError(-32000, 'Authentication required');

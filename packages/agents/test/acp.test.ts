@@ -341,6 +341,19 @@ describe('AcpAdapter', () => {
       expect(text()).toBe('oi (1 blocos)');
     });
 
+    it('manda o _meta da sessão ao abrir e ao retomar', async () => {
+      const sessionMeta = { claudeCode: { options: { x: 1 } } };
+      const nova = await start({ sessionMeta });
+      await sent(nova.handle, 'meta');
+      expect(JSON.parse(nova.text())).toEqual(sessionMeta);
+      const retomada = await start({ env: { FAKE_LOAD: '1' }, resume, sessionMeta });
+      await sent(retomada.handle, 'meta');
+      expect(JSON.parse(retomada.text())).toEqual(sessionMeta);
+      const sem = await start();
+      await sent(sem.handle, 'meta');
+      expect(sem.text()).toBe('null');
+    });
+
     it('usa session/resume quando o agente só oferece esse', async () => {
       const { handle } = await start({ env: { FAKE_RESUME: '1' }, resume });
       expect(handle.resumedAs).toBe('sessão');
