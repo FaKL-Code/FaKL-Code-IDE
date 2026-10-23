@@ -1,9 +1,9 @@
 {
-  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.15/FaKL-CodeSetup-x64-1.140.0000115.exe",
-  "name": "0.1.15",
-  "version": "9a964c5d4bd1f7ac0c4d4ee512ae6bdb80882e87",
-  "productVersion": "1.140.115.0",
-  "hash": "573226b4755034bfb0d42e90c946a161d26bfd3d",
-  "timestamp": 1792546395675,
-  "sha256hash": "c1fa15c3c697a48742a2718d8413dd6a6eac1273d28d94fc510121f275f1d0da"
+  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.16/FaKL-CodeSetup-x64-1.140.0000116.exe",
+  "name": "0.1.16",
+  "version": "f736046bada2bd8892620bab8843f5b93815cba0",
+  "productVersion": "1.140.116.0",
+  "hash": "ffdd007fc000d288b53e38a9c071f49d44861b0d",
+  "timestamp": 1792769773751,
+  "sha256hash": "b4160733411123d7391a3ef408a2a110024073e9374769354b63d0e22e811ac0"
 }
