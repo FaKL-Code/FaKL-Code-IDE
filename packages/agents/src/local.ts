@@ -13,6 +13,7 @@ import { l10n } from '@fakl/i18n';
 import { agentEnv } from './env.js';
 import { McpStdioClient } from './mcp-client.js';
 import { prepareMcpServers } from './mcp-servers.js';
+import { toolInputKey } from './tool-input.js';
 import type {
   AgentAdapter,
   AgentEvent,
@@ -362,16 +363,17 @@ class LocalSession implements AgentHandle {
     return Promise.resolve();
   }
 
-  resume(): Promise<void> {
+  resume(continuar = true): Promise<void> {
     if (this.current !== 'pausado') return Promise.resolve();
     this.setState('ocioso');
     if (this.interrupted) {
       this.interrupted = false;
-      this.queue.unshift({
-        text: resumePrompt(),
-        resolve: () => undefined,
-        reject: () => undefined,
-      });
+      if (continuar)
+        this.queue.unshift({
+          text: resumePrompt(),
+          resolve: () => undefined,
+          reject: () => undefined,
+        });
     }
     this.pump();
     return Promise.resolve();
@@ -567,7 +569,15 @@ class LocalSession implements AgentHandle {
       return l10n.t('Error: arguments are not valid JSON.');
     }
     const title = tool.title(args);
-    this.emit({ type: 'tool', toolCallId: call.id, title, kind: tool.kind, status: 'pending' });
+    const input = toolInputKey(args);
+    this.emit({
+      type: 'tool',
+      toolCallId: call.id,
+      title,
+      ...(input ? { input } : {}),
+      kind: tool.kind,
+      status: 'pending',
+    });
     if (!(await this.allowed(call.id, tool, title))) {
       this.emit({ type: 'tool', toolCallId: call.id, title, kind: tool.kind, status: 'failed' });
       this.checkRunning();

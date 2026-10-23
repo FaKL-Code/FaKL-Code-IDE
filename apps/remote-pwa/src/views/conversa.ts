@@ -385,6 +385,12 @@ export function conversationView(sessionId: string): View {
         { class: 'kv' },
         h('dt', {}, l10n.t('Cost')),
         h('dd', {}, cost || l10n.t('not reported by the agent')),
+        ...(usage.cached > 0
+          ? [
+              h('dt', {}, l10n.t('From cache')),
+              h('dd', {}, l10n.t('{0} of the input', `${formatTokens(usage.cached)} tok`)),
+            ]
+          : []),
         h('dt', {}, l10n.t('Mode')),
         h('dd', {}, modes()[current.permissoes].label),
         ...current.opcoes.flatMap((o) => [h('dt', {}, o.nome), h('dd', {}, option(o))]),

@@ -45,6 +45,7 @@ async function prompt(params, cx) {
         title: 'Editar a.txt',
         kind: 'edit',
         status: 'pending',
+        rawInput: { file_path: 'a.txt', content: 'oi', replace_all: false },
       },
     });
     const answer = await cx.request(acp.methods.client.session.requestPermission, {
@@ -120,6 +121,19 @@ async function prompt(params, cx) {
     });
     await say(cx, sessionId, 'doze caracteres');
     return { stopReason: 'end_turn' };
+  } else if (last === 'com cache') {
+    // Como o claude-agent-acp: a entrada nova é mínima e o resto vem do cache.
+    await say(cx, sessionId, 'ok');
+    return {
+      stopReason: 'end_turn',
+      usage: {
+        inputTokens: 12,
+        outputTokens: 4248,
+        totalTokens: 234805,
+        cachedReadTokens: 201340,
+        cachedWriteTokens: 29205,
+      },
+    };
   } else if (last === 'girar') {
     // Um agente preso: chama a mesma ferramenta sem parar, até a rodada ser cancelada.
     for (let i = 0; i < 200 && !controller.signal.aborted; i++) {

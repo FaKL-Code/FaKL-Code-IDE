@@ -387,6 +387,8 @@ interface Session {
   turnOutput: string;
   /** Conta passos e tokens da rodada e manda pausar quando passam do limite. */
   readonly freio: FreioDaRodada;
+  /** Por que o freio pausou a sessão; some quando ela volta a trabalhar. */
+  freada?: Parada | undefined;
   /** Conversa simples, sem servidores MCP (também ao reabrir a sessão). */
   readonly conversa?: boolean;
 }
@@ -921,11 +923,16 @@ export class AgentRuntime {
         text: this.options.redact?.(text) ?? text,
       });
     }
+    // Pausada pelo freio: a mensagem nova começa outra rodada, sem o "continue de
+    // onde parou" que repetiria o que o freio parou.
+    const freada = session.freada !== undefined && session.handle.state === 'pausado';
+    session.freada = undefined;
     session.handle.send(message).catch((error: unknown) => {
       if (session.replaced || this.closing || this.sessions.get(sessionId) !== session) return;
       const recovery = parseSessionLimit(error instanceof Error ? error.message : String(error));
       if (recovery && !session.recovery) this.waitForLimit(session, recovery);
     });
+    if (freada) void session.handle.resume(false).catch(() => undefined);
   }
 
   /**
@@ -1031,8 +1038,15 @@ export class AgentRuntime {
       if (version !== (this.recoveryVersions.get(id) ?? 0) || this.isClosing()) return;
       this.send(id, resumeAfterLimit());
     } else {
+      session.freada = undefined;
       await session.handle.resume();
     }
+  }
+
+  /** O freio pausou a sessão nesta rodada: o motivo, enquanto ela segue pausada. */
+  brakeOf(sessionId: string): Parada | undefined {
+    const session = this.sessions.get(sessionId);
+    return session?.handle.state === 'pausado' ? session.freada : undefined;
   }
 
   /** Espera atual por limite, inclusive quando só existe o registro do disco. */
@@ -1388,7 +1402,7 @@ export class AgentRuntime {
         if (event.state === 'pensando' && IDLE.has(event.previous)) session.freio.iniciar();
         return undefined;
       case 'tool':
-        return session.freio.ferramenta(event.toolCallId, event.title);
+        return session.freio.ferramenta(event.toolCallId, event.title, event.input);
       case 'usage':
         return event.usage.context ? session.freio.contexto(event.usage.context.used) : undefined;
       default:
@@ -1399,6 +1413,7 @@ export class AgentRuntime {
   /** Pausa o agente e conta à pessoa por quê; continuar dá uma rodada nova com o limite zerado. */
   private frear(session: Session, parada: Parada): void {
     this.options.log?.(l10n.t('agent {0} paused by the brake: {1}', session.id, parada.mensagem));
+    session.freada = parada;
     this.publish(session.id, { type: 'error', message: parada.mensagem });
     void session.handle.pause().catch(() => undefined);
   }

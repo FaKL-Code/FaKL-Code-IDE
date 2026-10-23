@@ -668,6 +668,12 @@ function openUsage(): void {
     panel.append(rings);
     const rows = el('dl', { class: 'kv' });
     rows.append(el('dt', {}, l10n.t('Total')), el('dd', {}, `${formatTokens(b.total)} tokens`));
+    if (b.cached > 0) {
+      rows.append(
+        el('dt', {}, l10n.t('From cache')),
+        el('dd', {}, l10n.t('{0} of the input', `${formatTokens(b.cached)} tok`)),
+      );
+    }
     const cost = formatCost(session.usage.cost);
     rows.append(el('dt', {}, l10n.t('Cost')), el('dd', {}, cost || l10n.t('no cost reported')));
     rows.append(el('dt', {}, l10n.t('Mode')), el('dd', {}, modeLabel(session.permissoes)));

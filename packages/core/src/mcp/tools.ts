@@ -80,7 +80,7 @@ export const MAESTRO_TOOLS: readonly McpTool[] = [
     name: 'await_results',
     method: 'maestro.awaitResults',
     description:
-      'Waits for the subagents to finish their turn and returns, for each one, a summary of the answer, branch, diff stats and cost. Returns at the deadline with those already finished.',
+      'Waits for the subagents to finish their turn and returns, for each one, a summary of the answer, branch, diff stats and cost. Returns at the deadline with those already finished. A subagent paused by the brake (stuck in a loop or spending too much) comes back with `freio`, the reason: send it a message with a different approach, or do that part yourself.',
     inputSchema: {
       type: 'object',
       properties: {

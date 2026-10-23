@@ -328,6 +328,17 @@ export function economiaMaestro(): string {
   );
 }
 
+/**
+ * O que a economia muda no maestro de uma tarefa: as vezes dele são as mais caras da
+ * execução, então o trabalho vai para o perfil mais barato que dá conta, e uma rodada
+ * inteira (install, build, testes) só roda depois de conferir o que mudou.
+ */
+function economiaTarefa(): string {
+  return l10n.t(
+    'Your turns are the most expensive of the run: when suggest_profile points to a profile cheaper than yours for a part of the work, hand that part to it and keep for yourself the plan, the review and the rounds; otherwise do it yourself, since a subagent at your cost only adds its setup. Before a round, check what changed with run_checks and only the commands that matter (the typecheck, the affected tests): the full round is the final gate.',
+  );
+}
+
 /** Orientação de economia para quem executa (ADR 0052). */
 export function economiaExecutor(): string {
   return l10n.t(
@@ -389,6 +400,7 @@ export function maestroPrompt(context: MaestroContext): string {
         'Small tasks you can do directly in your worktree. Do not push and do not switch branches.',
       ),
     ].join('\n'),
+    context.economia ? `${economiaMaestro()}\n${economiaTarefa()}` : '',
     memoryGuide(),
     task.perfisPermitidos !== undefined
       ? task.perfisPermitidos.length > 0

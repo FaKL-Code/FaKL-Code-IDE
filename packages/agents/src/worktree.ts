@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { rm } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import { l10n } from '@fakl/i18n';
@@ -35,7 +36,8 @@ function git(args: readonly string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'git',
-      args,
+      // No Windows o git para nos 260 caracteres; o node_modules de um worktree passa disso.
+      ['-c', 'core.longpaths=true', ...args],
       { cwd, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } },
       (error, stdout, stderr) => {
         if (error)
@@ -127,9 +129,18 @@ async function commitNow(worktree: Worktree, message: string): Promise<boolean> 
  */
 export async function removeWorktree(worktree: Worktree, message: string): Promise<void> {
   await commitWorktree(worktree, message);
-  await exclusive(worktree.repoRoot, () =>
-    git(['worktree', 'remove', '--force', worktree.path], worktree.repoRoot),
-  );
+  await exclusive(worktree.repoRoot, async () => {
+    try {
+      await git(['worktree', 'remove', '--force', worktree.path], worktree.repoRoot);
+    } catch (error) {
+      // O trabalho já está no branch; se o git não consegue apagar a pasta (um
+      // arquivo preso, um caminho que ele não alcança), o Node apaga e o git esquece.
+      await rm(worktree.path, { recursive: true, force: true, maxRetries: 3 }).catch(() => {
+        throw error;
+      });
+      await git(['worktree', 'prune'], worktree.repoRoot);
+    }
+  });
 }
 
 /**

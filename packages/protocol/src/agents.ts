@@ -182,7 +182,10 @@ export interface AgentStartResult {
 }
 
 export interface AgentUsageInfo {
+  /** Tudo o que foi enviado ao modelo, com o que veio do cache. */
   readonly inputTokens: number;
+  /** A parte da entrada lida do cache, que custa um décimo; só quando o agente informa. */
+  readonly cacheReadTokens?: number;
   readonly outputTokens: number;
   readonly totalTokens: number;
   readonly cost?: { readonly amount: number; readonly currency: string };

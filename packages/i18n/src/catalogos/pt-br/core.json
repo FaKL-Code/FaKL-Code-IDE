@@ -285,7 +285,7 @@
   "{0}: {1} must be a whole number, 0 or more": "{0}: {1} precisa ser um número inteiro, 0 ou mais",
   "Paused: the agent called the same tool {0} times in a row ({1}). It may be stuck in a loop.": "Pausado: o agente chamou a mesma ferramenta {0} vezes seguidas ({1}). Ele pode estar preso num loop. Retome para dar mais uma rodada.",
   "Paused: the agent has made {0} tool calls in this turn without finishing.": "Pausado: o agente fez {0} chamadas de ferramenta nesta rodada sem terminar. Retome para dar mais uma rodada.",
-  "Paused: this turn has already sent about {0} input tokens to the model.": "Pausado: esta rodada já enviou cerca de {0} tokens de entrada ao modelo. Retome para dar mais uma rodada.",
+  "Paused: this turn has already sent the equivalent of about {0} input tokens to the model (cache reads count as a tenth).": "Pausado: esta rodada já enviou o equivalente a cerca de {0} tokens de entrada ao modelo (o que vem do cache conta um décimo). Retome para dar mais uma rodada.",
   "The Desk": "A Mesa",
   "API keys and providers": "Chaves de API e provedores",
   "The vault": "O vault",

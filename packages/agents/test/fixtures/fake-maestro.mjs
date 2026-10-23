@@ -3,14 +3,17 @@
 // "completo" (padrão), "falha", "parado" (termina a vez sem finish),
 // "dupla" (delega a dois subagentes em paralelo, cada um num arquivo),
 // "rodadas" (roda run_checks até estourar o limite de rodadas) ou
-// "recursos" (acha um agente com find_resources e delega com ele, sem profileId).
-import { spawn } from 'node:child_process';
+// "recursos" (acha um agente com find_resources e delega com ele, sem profileId),
+// "commit" (passa no critério, faz commit do mesmo conteúdo e chama finish) ou
+// "freio" (repete a mesma edição até ser cancelado; com o aviso do freio, faz o roteiro completo).
+import { execFileSync, spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Readable, Writable } from 'node:stream';
 
 import * as acp from '@agentclientprotocol/sdk';
 
 let mcpConfig = [];
+let cancelado = false;
 
 const say = (cx, sessionId, text) =>
   cx.notify(acp.methods.client.session.update, {
@@ -123,7 +126,26 @@ async function prompt(params, cx) {
     }
     return { stopReason: 'end_turn' };
   }
-  if (last !== 'Comece a tarefa.' || mode === 'parado') {
+  if (mode === 'freio' && last === 'Comece a tarefa.') {
+    cancelado = false;
+    for (let i = 0; i < 20 && !cancelado; i++) {
+      await cx.notify(acp.methods.client.session.update, {
+        sessionId,
+        update: {
+          sessionUpdate: 'tool_call',
+          toolCallId: `loop${i}`,
+          title: 'Edit novo.txt',
+          kind: 'edit',
+          status: 'completed',
+          rawInput: { file_path: 'novo.txt', old_string: 'a', new_string: 'b' },
+        },
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return { stopReason: cancelado ? 'cancelled' : 'end_turn' };
+  }
+  const recomeca = mode === 'freio' && /change the approach|mude a abordagem/.test(last);
+  if ((last !== 'Comece a tarefa.' && !recomeca) || mode === 'parado') {
     await say(cx, sessionId, 'ok');
     return { stopReason: 'end_turn' };
   }
@@ -176,10 +198,23 @@ async function prompt(params, cx) {
       await fakl.call('finish', { veredito: 'sucesso', resumo: 'novo.txt criado' });
       return { stopReason: 'end_turn' };
     }
+    if (mode === 'commit') {
+      await writeFile('novo.txt', 'feito pelo maestro');
+      log.checks = await fakl.call('run_checks', {});
+      // Como o maestro de verdade: faz o commit antes de encerrar; o conteúdo é o mesmo.
+      execFileSync('git', ['add', '-A']);
+      execFileSync('git', ['-c', 'user.name=m', '-c', 'user.email=m@x', 'commit', '-qm', 'feito']);
+      log.finish = await fakl.call('finish', { veredito: 'sucesso', resumo: 'novo.txt criado' });
+      await say(cx, sessionId, JSON.stringify(log));
+      return { stopReason: 'end_turn' };
+    }
     if (mode === 'rodadas') {
       log.checks = [];
-      for (let i = 0; i < 4; i++) log.checks.push(await fakl.call('run_checks', {}));
-      await say(cx, sessionId, JSON.stringify(log));
+      // O registro vai a cada rodada: no limite, o Core para o maestro antes do fim.
+      for (let i = 0; i < 4; i++) {
+        log.checks.push(await fakl.call('run_checks', {}));
+        await say(cx, sessionId, JSON.stringify(log));
+      }
       await fakl.call('finish', { veredito: 'falha', resumo: 'o critério nunca passou' });
       return { stopReason: 'end_turn' };
     }
@@ -207,7 +242,20 @@ async function prompt(params, cx) {
   } finally {
     fakl.close();
   }
-  return { stopReason: 'end_turn' };
+  // Como o claude-agent-acp: o custo da vez só chega no fim dela, depois do finish.
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  if (!cancelado) {
+    await cx.notify(acp.methods.client.session.update, {
+      sessionId,
+      update: {
+        sessionUpdate: 'usage_update',
+        used: 1000,
+        size: 200000,
+        cost: { amount: 0.42, currency: 'USD' },
+      },
+    });
+  }
+  return { stopReason: cancelado ? 'cancelled' : 'end_turn' };
 }
 
 const stream = acp.ndJsonStream(Writable.toWeb(process.stdout), Readable.toWeb(process.stdin));
@@ -219,5 +267,7 @@ acp
     return { sessionId: 'm1' };
   })
   .onRequest('session/prompt', (ctx) => prompt(ctx.params, ctx.client))
-  .onNotification('session/cancel', () => undefined)
+  .onNotification('session/cancel', () => {
+    cancelado = true;
+  })
   .connect(stream);

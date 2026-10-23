@@ -93,6 +93,18 @@ describe('prompts do maestro', () => {
     expect(chatMaestroPrompt()).not.toContain('docs/catalogo-agentes-skills.md');
   });
 
+  it('com a economia ligada, o maestro da tarefa recebe a orientação dela', () => {
+    const context = { task, limits: {}, branch: 'fakl/tarefa-1', base: 'main', profiles: [] };
+    const economico = maestroPrompt({ ...context, economia: true });
+    expect(economico).toContain('Economia de tokens ligada');
+    expect(economico).toContain('um perfil mais barato que o seu');
+    expect(economico).toContain('só os comandos que importam');
+    expect(maestroPrompt(context)).not.toContain('Economia de tokens ligada');
+    // A parte das rodadas é da tarefa: o chat não tem run_checks.
+    expect(chatMaestroPrompt(undefined, [], true)).toContain('Economia de tokens ligada');
+    expect(chatMaestroPrompt(undefined, [], true)).not.toContain('run_checks');
+  });
+
   it('ensina a ler e alimentar a memória do vault', () => {
     const prompt = maestroPrompt({
       task,

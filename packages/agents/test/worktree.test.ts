@@ -71,6 +71,20 @@ describe('worktrees', () => {
     expect(git(repo, 'log', '-1', '--format=%s', wt.branch)).toBe('trabalho da sessão s1');
   });
 
+  it('remove o worktree com um node_modules de caminhos longos', async () => {
+    // No Windows o git recusava apagar ("Filename too long") e a pasta ficava.
+    const wt = await createWorktree({ repo, home, sessionId: 's1' });
+    await writeFile(join(wt.path, '.gitignore'), 'node_modules\n');
+    let deep = join(wt.path, 'node_modules', '.pnpm');
+    while (deep.length < 300) deep = join(deep, 'pacote-com-um-nome-comprido');
+    await mkdir(deep, { recursive: true });
+    await writeFile(join(deep, 'index.js'), '');
+    await removeWorktree(wt, 'trabalho');
+
+    expect(existsSync(wt.path)).toBe(false);
+    expect(git(repo, 'worktree', 'list')).not.toContain('s1');
+  });
+
   it('salva o trabalho mesmo com hooks do repositório que falhariam', async () => {
     // Como o lefthook num worktree sem node_modules: o pre-commit e o
     // commit-msg recusam tudo.
