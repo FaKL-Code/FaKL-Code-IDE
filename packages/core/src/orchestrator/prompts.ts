@@ -352,7 +352,7 @@ function economiaTarefa(executor?: string): string {
 /** Leitura do código fora da conversa principal, no explorador barato (ADR 0052). */
 export function economiaExplorar(): string {
   return l10n.t(
-    'When the Task tool offers the `explorador` subagent, use it to find things in the code (where something is, how it works, what calls it) instead of reading many files yourself: it runs on a cheaper model and brings back only the answer. Read directly only the files you are about to change.',
+    'When the Agent tool offers the `explorador` subagent (subagent_type `explorador`), use it to find things in the code (where something is, how it works, what calls it) instead of reading many files yourself: it runs on a cheaper model and brings back only the answer. Read directly only the files you are about to change.',
   );
 }
 

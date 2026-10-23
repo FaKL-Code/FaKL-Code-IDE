@@ -75,6 +75,8 @@ const EXPLORACAO: Record<Exclude<ModoEconomia, 'desligado'>, number> = {
   agressivo: 4,
 };
 const BUSCAS = new Set(['Read', 'Grep', 'Glob']);
+/** As ferramentas de comando do Claude Code: no Windows ele usa o PowerShell, com a mesma saída. */
+const COMANDOS = new Set(['Bash', 'PowerShell']);
 
 interface SaidaDoBash {
   readonly stdout?: unknown;
@@ -103,7 +105,7 @@ function aviso(texto: string): string {
 
 /** Troca o texto principal da saída de Bash ou Read, mantendo o formato que o Claude Code espera. */
 function comTexto(ferramenta: string, resposta: unknown, texto: string): unknown {
-  if (ferramenta === 'Bash') return { ...(resposta as object), stdout: texto, stderr: '' };
+  if (COMANDOS.has(ferramenta)) return { ...(resposta as object), stdout: texto, stderr: '' };
   const read = resposta as SaidaDoRead;
   return { ...read, file: { ...read.file, content: texto } };
 }
@@ -128,7 +130,7 @@ function posFerramenta(
   let mudou = false;
   const notas: string[] = [];
 
-  if (ferramenta === 'Bash' && resposta && typeof resposta === 'object') {
+  if (COMANDOS.has(ferramenta) && resposta && typeof resposta === 'object') {
     const bash = resposta as SaidaDoBash;
     const antes = tamanho(resposta);
     const stdout =
@@ -147,15 +149,14 @@ function posFerramenta(
   }
 
   const leitura =
-    ferramenta === 'Bash' ||
+    COMANDOS.has(ferramenta) ||
     (ferramenta === 'Read' && (resposta as SaidaDoRead | undefined)?.type === 'text');
   if (leitura && resposta && typeof resposta === 'object') {
     // O mesmo pedido, de quem tem o mesmo contexto, com exatamente a mesma saída.
-    // No Bash, só o comando: a descrição muda de uma chamada para outra.
-    const pedido =
-      ferramenta === 'Bash'
-        ? (entrada.tool_input as { command?: unknown } | undefined)?.command
-        : entrada.tool_input;
+    // Num comando, só ele: a descrição muda de uma chamada para outra.
+    const pedido = COMANDOS.has(ferramenta)
+      ? (entrada.tool_input as { command?: unknown } | undefined)?.command
+      : entrada.tool_input;
     const chave = digital([entrada.agent_id ?? '', ferramenta, pedido]);
     const marca = digital(resposta);
     const repetida = estado.vistos[chave] === marca;
@@ -183,7 +184,7 @@ function posFerramenta(
       notas.push(
         aviso(
           l10n.t(
-            'this conversation has made {0} reads and searches in this turn, and each one stays in the context paid on every step. To keep exploring the code, hand the question to the `{1}` subagent (Task tool): it runs on a cheaper model and brings back only the answer.',
+            'this conversation has made {0} reads and searches in this turn, and each one stays in the context paid on every step. To keep exploring the code, hand the question to the `{1}` subagent (Agent tool, subagent_type `{1}`): it runs on a cheaper model and brings back only the answer.',
             String(estado.exploracao),
             config.explorador,
           ),
@@ -241,7 +242,7 @@ export function ganchosDaEconomia(comando: string): Record<string, unknown> {
     },
   ];
   return {
-    PostToolUse: entrada('Bash|Read|Grep|Glob'),
+    PostToolUse: entrada('Bash|PowerShell|Read|Grep|Glob'),
     UserPromptSubmit: entrada(),
     PreCompact: entrada(),
     Stop: entrada(),

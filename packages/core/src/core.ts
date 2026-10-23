@@ -281,7 +281,12 @@ export function createCore(options: CoreOptions): Core {
                       'Reads and searches the code to answer a question about it, on a cheaper model. Use it for exploration (where something is, how it works, what uses it) instead of reading many files yourself.',
                     ),
                     prompt: exploradorPrompt(),
-                    tools: ['Read', 'Grep', 'Glob', 'Bash'],
+                    tools: [
+                      'Read',
+                      'Grep',
+                      'Glob',
+                      process.platform === 'win32' ? 'PowerShell' : 'Bash',
+                    ],
                     model: explorador,
                   },
                 },

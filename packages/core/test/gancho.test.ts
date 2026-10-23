@@ -91,6 +91,24 @@ describe('gancho da economia no Claude Code', () => {
     );
   });
 
+  it('o PowerShell do Windows é tratado como o Bash', () => {
+    const estado = estadoInicial();
+    const config = { modo: 'equilibrado' as const };
+    const ps: EntradaDoGancho = {
+      ...bash('baixando pacote\n'.repeat(80)),
+      tool_name: 'PowerShell',
+    };
+    const out = (processarGancho(ps, estado, config).saida as Saida).hookSpecificOutput;
+    expect(out.updatedToolOutput?.stdout).toContain('[linha acima repetida 80 vezes]');
+    const longa: EntradaDoGancho = {
+      ...ps,
+      tool_response: { stdout: 'x'.repeat(2_000), stderr: '', interrupted: false, isImage: false },
+    };
+    processarGancho(longa, estado, config);
+    const repetida = (processarGancho(longa, estado, config).saida as Saida).hookSpecificOutput;
+    expect(repetida.updatedToolOutput?.stdout).toMatch(/^\[FaKL economia: mesma saída/);
+  });
+
   it('saída curta repetida não vira aviso', () => {
     const estado = estadoInicial();
     const config = { modo: 'agressivo' as const };
@@ -149,7 +167,7 @@ describe('gancho da economia no Claude Code', () => {
       string,
       { matcher?: string; hooks: { command: string }[] }[]
     >;
-    expect(ganchos.PostToolUse?.[0]?.matcher).toBe('Bash|Read|Grep|Glob');
+    expect(ganchos.PostToolUse?.[0]?.matcher).toBe('Bash|PowerShell|Read|Grep|Glob');
     expect(ganchos.Stop?.[0]?.hooks[0]?.command).toBe('node gancho.mjs');
     expect(aspasSh(String.raw`\\.\pipe\fakl`)).toBe(String.raw`'\\.\pipe\fakl'`);
     expect(aspasSh("it's")).toBe(`'it'\\''s'`);
