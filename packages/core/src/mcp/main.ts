@@ -7,9 +7,13 @@
 import { l10n, localeFromEnv, useLocale } from '@fakl/i18n';
 
 import { isModoEconomia } from '../economia/compactar.js';
+import { rodarGancho } from '../economia/gancho-main.js';
 import { CoreClient } from '../rpc/client.js';
 import { McpServer } from './server.js';
 import { TOOL_SETS, type ToolSetName } from './tools.js';
+
+// O mesmo executável é o gancho da economia nas ferramentas do Claude Code.
+if (process.argv.includes('--gancho')) await rodarGancho();
 
 // Responde aos agentes no idioma da IDE, que o Core passa em FAKL_LOCALE.
 useLocale(localeFromEnv(process.env));

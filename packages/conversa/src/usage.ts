@@ -29,6 +29,8 @@ export interface UsageBreakdown {
   readonly input: number;
   readonly output: number;
   readonly total: number;
+  /** Da entrada, o que foi lido do cache (a um décimo do preço). */
+  readonly cached: number;
   /** Parte da entrada e da saída no total, de 0 a 1. */
   readonly inputShare: number;
   readonly outputShare: number;
@@ -40,6 +42,7 @@ export function usageBreakdown(usage: AgentUsageInfo): UsageBreakdown {
     input: usage.inputTokens,
     output: usage.outputTokens,
     total,
+    cached: usage.cacheReadTokens ?? 0,
     inputShare: total > 0 ? usage.inputTokens / total : 0,
     outputShare: total > 0 ? usage.outputTokens / total : 0,
   };
@@ -50,6 +53,7 @@ export function sumUsage(sessions: readonly Pick<AgentSessionInfo, 'usage'>[]): 
   let inputTokens = 0;
   let outputTokens = 0;
   let totalTokens = 0;
+  let cacheReadTokens = 0;
   let amount = 0;
   let currency: string | undefined;
   let mixed = false;
@@ -57,6 +61,7 @@ export function sumUsage(sessions: readonly Pick<AgentSessionInfo, 'usage'>[]): 
     inputTokens += usage.inputTokens;
     outputTokens += usage.outputTokens;
     totalTokens += usage.totalTokens;
+    cacheReadTokens += usage.cacheReadTokens ?? 0;
     if (usage.cost) {
       if (currency && currency !== usage.cost.currency) mixed = true;
       currency = usage.cost.currency;
@@ -67,6 +72,7 @@ export function sumUsage(sessions: readonly Pick<AgentSessionInfo, 'usage'>[]): 
     inputTokens,
     outputTokens,
     totalTokens,
+    ...(cacheReadTokens > 0 ? { cacheReadTokens } : {}),
     ...(currency && !mixed ? { cost: { amount, currency } } : {}),
   };
 }

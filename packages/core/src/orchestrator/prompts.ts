@@ -319,12 +319,40 @@ export interface MaestroContext {
   readonly resources?: ResourceSummary;
   /** Modo econômico de tokens ligado (ADR 0052): o prompt pede delegação e relatos enxutos. */
   readonly economia?: boolean;
+  /** No modo econômico, o perfil mais barato que o maestro para quem vai a implementação. */
+  readonly executor?: string;
 }
 
 /** Orientação de economia para quem delega (ADR 0052). */
 export function economiaMaestro(): string {
   return l10n.t(
     'Token saving is on: write precise subagent instructions in few words, omit profileId so spawn_agent picks the cheapest profile that fits (suggest_profile shows the choice), ask for short reports, and do not read again what you already have.',
+  );
+}
+
+/**
+ * O que a economia muda no maestro de uma tarefa: as vezes dele são as mais caras da
+ * execução, então o trabalho vai para o perfil mais barato que dá conta, e uma rodada
+ * inteira (install, build, testes) só roda depois de conferir o que mudou.
+ */
+function economiaTarefa(executor?: string): string {
+  const quem = executor
+    ? l10n.t(
+        'Your turns are the most expensive of the run, and the implementation of this task goes to {0}, which costs less than you. Find out only what you need to plan (the explorer subagent, when you have one, reads for you), then hand the coding to it with spawn_agent (profileId {0}) with precise instructions: files, expected behavior, how to check. Keep for yourself the plan, review_diff, merge_work and the rounds; write code yourself only to fix a few lines after the review.',
+        executor,
+      )
+    : l10n.t(
+        'Your turns are the most expensive of the run: when suggest_profile points to a profile cheaper than yours for a part of the work, hand that part to it and keep for yourself the plan, the review and the rounds; otherwise do it yourself, since a subagent at your cost only adds its setup.',
+      );
+  return `${quem} ${l10n.t(
+    'Before a round, check what changed with run_checks and only the commands that matter (the typecheck, the affected tests): the full round is the final gate.',
+  )}`;
+}
+
+/** Leitura do código fora da conversa principal, no explorador barato (ADR 0052). */
+export function economiaExplorar(): string {
+  return l10n.t(
+    'When the Agent tool offers the `explorador` subagent (subagent_type `explorador`), use it to find things in the code (where something is, how it works, what calls it) instead of reading many files yourself: it runs on a cheaper model and brings back only the answer. Read directly only the files you are about to change.',
   );
 }
 
@@ -389,6 +417,9 @@ export function maestroPrompt(context: MaestroContext): string {
         'Small tasks you can do directly in your worktree. Do not push and do not switch branches.',
       ),
     ].join('\n'),
+    context.economia
+      ? `${economiaMaestro()}\n${economiaTarefa(context.executor)}\n${economiaExplorar()}`
+      : '',
     memoryGuide(),
     task.perfisPermitidos !== undefined
       ? task.perfisPermitidos.length > 0
@@ -461,7 +492,7 @@ export function chatMaestroPrompt(
     ].join('\n'),
     knowsResources(resources) ? resourceGuide() : '',
     resourcesSection(resources),
-    economia ? economiaMaestro() : '',
+    economia ? `${economiaMaestro()}\n${economiaExplorar()}` : '',
     memoryHint(),
   ]
     .filter(Boolean)
@@ -519,7 +550,7 @@ export function workerPrompt(
           'When you finish, reply with a short summary: what you did, files changed and what is still pending.',
         ),
     criterio ? `${l10n.t('Criteria for this subtask:')}\n${criterio}` : '',
-    economia ? economiaExecutor() : '',
+    economia ? `${economiaExecutor()}\n${economiaExplorar()}` : '',
     resourcesBriefing(resources),
   ]
     .filter(Boolean)

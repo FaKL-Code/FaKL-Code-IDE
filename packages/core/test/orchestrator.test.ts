@@ -9,6 +9,7 @@ import { AcpAdapter } from '@fakl/agents';
 import { isFinalAgentState } from '@fakl/protocol';
 import type {
   AgentOutputEventData,
+  AgentProfileDefinition,
   AgentSessionInfo,
   Decision,
   EventNotificationParams,
@@ -16,9 +17,10 @@ import type {
   Run,
   Task,
 } from '@fakl/protocol';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  classificarComplexidade,
   CoreClient,
   CoreRpcError,
   createCore,
@@ -143,6 +145,7 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     maestroMode = 'completo',
     resumeInterrupted = false,
     fetch?: (url: string, init?: RequestInit) => Promise<Response>,
+    perfisAntes: readonly AgentProfileDefinition[] = [],
   ): Promise<void> => {
     socket = await testSocket();
     const token = createSessionToken();
@@ -156,6 +159,7 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
       agents: {
         home: join(dir, 'home'),
         profiles: [
+          ...perfisAntes,
           {
             id: 'maestro',
             nome: 'Maestro',
@@ -166,7 +170,7 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
           { id: 'falso', nome: 'Falso', provedor: 'teste', adaptador: 'acp' },
         ],
         adapterFor: (profile) =>
-          profile.id === 'maestro'
+          profile.id.startsWith('maestro')
             ? new AcpAdapter({
                 command: process.execPath,
                 args: [fakeMaestro],
@@ -282,6 +286,12 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
   });
 
   it('o maestro delega, integra, verifica e entrega com merge', async () => {
+    // Como o commitlint de um projeto: só aceita cabeçalho convencional ou merge do git.
+    await writeFile(
+      join(repo, '.git', 'hooks', 'commit-msg'),
+      '#!/bin/sh\nhead -n 1 "$1" | grep -qE "^(Merge |feat|fix|chore)" || { echo "tipo inválido" >&2; exit 1; }\n',
+      { mode: 0o755 },
+    );
     await startCore();
     const task = await createTask();
     const started = await client.request<Run>('runs.start', { taskId: task.id });
@@ -296,7 +306,14 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
       ['falso', 'executor', 1],
     ]);
     expect(git('show', 'main:novo.txt')).toBe('um\ndois\ntrês');
-    expect(git('log', '-1', '--format=%s', 'main')).toBe('fakl: Criar novo.txt');
+    expect(git('log', '-1', '--format=%s%n%b', 'main')).toBe(
+      `Merge branch '${run.branch}'\nfakl: Criar novo.txt`,
+    );
+    // O finish não cancela a vez do maestro: o custo dela chega no fim.
+    const maestro = (await client.request<AgentSessionInfo[]>('agents.list')).find(
+      (s) => s.sessionId === run.maestroSessionId,
+    );
+    expect(maestro?.usage.cost).toEqual({ amount: 0.42, currency: 'USD' });
 
     const log = events
       .filter((e) => e.topic === 'agent.output')
@@ -309,10 +326,32 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     );
     expect(String((parsed.proibido as { erro?: string }).erro)).toMatch(/não pode ser maestro/);
     expect(parsed.checks).toMatchObject({ numero: 1, veredito: 'passou' });
+    // A saída do que passou não volta para o maestro; a rodada gravada fica inteira.
+    const checks = (parsed.checks as { verificacoes: Record<string, unknown>[] }).verificacoes;
+    expect(checks).toEqual([expect.objectContaining({ ok: true })]);
+    expect(checks[0]).not.toHaveProperty('saida');
+    expect(run.rodadas[0]?.verificacoes[0]).toHaveProperty('saida');
     expect(events.some((e) => e.topic === 'run.done')).toBe(true);
 
     const got = await client.request<{ task: Task }>('tasks.get', { taskId: task.id });
     expect(got.task.status).toBe('concluída');
+  }, 60_000);
+
+  it('merge barrado por um gancho do projeto diz o motivo, não "conflito"', async () => {
+    await writeFile(
+      join(repo, '.git', 'hooks', 'commit-msg'),
+      '#!/bin/sh\ngrep -q "fakl: Criar" "$1" || exit 0\necho "mensagem recusada pelo gancho" >&2\nexit 1\n',
+      { mode: 0o755 },
+    );
+    await startCore();
+    const task = await createTask();
+    const started = await client.request<Run>('runs.start', { taskId: task.id });
+    const run = await waitRun(started.id, (r) => r.status === 'concluída' || r.status === 'falhou');
+    expect(run.resultado).toBe('branch');
+    expect(run.motivo).toMatch(/mensagem recusada pelo gancho/);
+    expect(run.motivo).not.toMatch(/conflito|conflict/);
+    expect(git('status', '--porcelain')).toBe('');
+    expect(git('log', '-1', '--format=%s', 'main')).toBe('inicial');
   }, 60_000);
 
   /** Entrega `pr-merge` por uma API do GitHub falsa; `config` vai no config.yaml. */
@@ -456,6 +495,66 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     ]);
   }, 60_000);
 
+  it('uma sessão do Claude recebe os ganchos da economia e o explorador mais barato', async () => {
+    await startCore('completo', false, undefined, [
+      {
+        id: 'claude-caro',
+        nome: 'Caro',
+        provedor: 'anthropic',
+        adaptador: 'acp',
+        modelo: 'caro-1',
+      },
+      {
+        id: 'claude-leve',
+        nome: 'Leve',
+        provedor: 'anthropic',
+        adaptador: 'acp',
+        modelo: 'leve-1',
+        custoRelativo: 'baixo',
+      },
+    ]);
+    const metaDe = async (profileId: string): Promise<unknown> => {
+      const { sessionId } = await client.request<{ sessionId: string }>('agents.start', {
+        profileId,
+        cwd: repo,
+      });
+      await client.request('agents.send', { sessionId, message: 'meta' });
+      let text: string | undefined;
+      await waitFor(() => {
+        text = events
+          .filter((e) => e.topic === 'agent.output' && e.subject === sessionId)
+          .map((e) => (e.data as AgentOutputEventData).text)
+          .find((t) => t.startsWith('{') || t === 'null');
+        return text !== undefined;
+      }, 20_000);
+      await client.request('agents.stop', { sessionId });
+      return JSON.parse(text ?? 'null');
+    };
+    const options = (
+      (await metaDe('claude-caro')) as {
+        claudeCode: {
+          options: {
+            env: Record<string, string>;
+            settings: { hooks: Record<string, { hooks: { command: string }[] }[]> };
+            agents?: Record<string, { model: string }>;
+          };
+        };
+      }
+    ).claudeCode.options;
+    const comando = options.settings.hooks.PostToolUse?.[0]?.hooks[0]?.command ?? '';
+    expect(comando).toContain('--gancho');
+    // O token vai no ambiente, não no comando que o Claude Code grava no transcrito.
+    expect(comando).not.toContain('FAKL_');
+    expect(options.env.FAKL_ECONOMIA).toBe('equilibrado');
+    expect(options.env.FAKL_AGENT_TOKEN).toBeTruthy();
+    expect(options.agents?.explorador?.model).toBe('leve-1');
+    // O mais barato não tem para quem descer; outro provedor não recebe nada.
+    expect(
+      (await metaDe('claude-leve')) as { claudeCode: { options: { agents?: unknown } } },
+    ).not.toHaveProperty('claudeCode.options.agents');
+    expect(await metaDe('falso')).toBeNull();
+  }, 60_000);
+
   it('uma sessão do chat chama outro agente sem tarefa (Maestro Mode)', async () => {
     await startCore();
     const started = await client.request<{ sessionId: string; worktree?: { branch: string } }>(
@@ -570,7 +669,7 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     // O trabalho dos dois chegou ao branch principal por merge.
     expect(git('show', 'main:a.txt')).toMatch(/^feito por \d+$/);
     expect(git('show', 'main:b.txt')).toMatch(/^feito por \d+$/);
-    expect(git('log', '-1', '--format=%s', 'main')).toBe('fakl: Criar a.txt e b.txt');
+    expect(git('log', '-1', '--format=%b', 'main').trim()).toBe('fakl: Criar a.txt e b.txt');
     expect(existsSync(join(repo, 'a.txt'))).toBe(true);
 
     // Eventos: estado e saída de cada subagente, rodada e fim da execução.
@@ -604,10 +703,41 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
 
     expect(run.rodadas).toHaveLength(2);
     expect(run.rodadas.map((r) => r.veredito)).toEqual(['falhou', 'falhou']);
+    // O que falhou volta com a saída, para o maestro saber o que corrigir.
+    const findLog = () =>
+      events
+        .filter((e) => e.topic === 'agent.output')
+        .map((e) => (e.data as AgentOutputEventData).text)
+        .find((text) => text.startsWith('{"tools"'));
+    await vi.waitFor(
+      () => {
+        expect(findLog()).toBeDefined();
+      },
+      { timeout: 10_000 },
+    );
+    const checks = (JSON.parse(findLog() ?? '{}') as { checks: { verificacoes?: unknown[] }[] })
+      .checks;
+    const primeira = checks[0]?.verificacoes?.[0] as { ok?: boolean; saida?: unknown } | undefined;
+    expect(primeira?.ok).toBe(false);
+    expect(typeof primeira?.saida).toBe('string');
     expect(run.status).toBe('falhou');
     expect(events.some((e) => e.topic === 'run.limit')).toBe(true);
     const limit = events.find((e) => e.topic === 'run.limit')?.data as { limite?: string };
     expect(limit.limite).toBe('rodadas');
+  }, 60_000);
+
+  it('um commit do mesmo conteúdo depois da rodada aprovada não roda o critério de novo', async () => {
+    await startCore('commit');
+    const task = await createTask({
+      titulo: 'Criar novo.txt',
+      criterio: { comandos: ['git --version'] },
+    });
+    const started = await client.request<Run>('runs.start', { taskId: task.id });
+    const run = await waitRun(started.id, (r) => r.status === 'concluída' || r.status === 'falhou');
+
+    expect(run.status).toBe('concluída');
+    expect(run.rodadas.map((r) => r.veredito)).toEqual(['passou']);
+    expect(git('show', 'main:novo.txt')).toBe('feito pelo maestro');
   }, 60_000);
 
   it('retoma sozinho a execução que uma queda do Core interrompeu', async () => {
@@ -669,6 +799,79 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     await expect(
       client.request('tasks.create', { titulo: 'x', repoPath: repo, permissoes: 'tudo' }),
     ).rejects.toBeInstanceOf(CoreRpcError);
+  }, 60_000);
+
+  it('o maestro pausado pelo freio recebe o motivo e volta a trabalhar', async () => {
+    await mkdir(join(dir, 'home', '.fakl'), { recursive: true });
+    await writeFile(join(dir, 'home', '.fakl', 'config.yaml'), 'freio:\n  repeticoes: 3\n');
+    await startCore('freio');
+    const task = await createTask({ permissoes: 'autopilot' });
+    const started = await client.request<Run>('runs.start', { taskId: task.id });
+    const run = await waitRun(started.id, (r) => r.status !== 'executando');
+    expect({ status: run.status, motivo: run.motivo }).toEqual({
+      status: 'concluída',
+      motivo: undefined,
+    });
+    expect(run.decisoes).toEqual([]);
+    expect(git('cat-file', '-p', 'HEAD:novo.txt')).toBeTruthy();
+  }, 60_000);
+
+  it('sem maestro na tarefa, o modo econômico escolhe o perfil pelo tamanho dela', async () => {
+    await startCore('parado', false, undefined, [
+      {
+        id: 'maestro-caro',
+        nome: 'Caro',
+        provedor: 'teste',
+        adaptador: 'acp',
+        podeSerMaestro: true,
+        custoRelativo: 'alto',
+      },
+    ]);
+    const maestroDe = async (extra: Record<string, unknown>): Promise<string | undefined> => {
+      const task = await createTask({ maestroProfileId: undefined, entrega: 'branch', ...extra });
+      const run = await client.request<Run>('runs.start', { taskId: task.id });
+      await client.request('runs.stop', { runId: run.id });
+      return run.agentes.find((a) => a.papel === 'maestro')?.profileId;
+    };
+    // Pedido curto e comum: o maestro de custo médio basta.
+    expect(await maestroDe({})).toBe('maestro');
+    // Segurança e refatoração ampla: o perfil forte.
+    expect(
+      await maestroDe({
+        titulo: 'Refatorar a autenticação OAuth',
+        descricao:
+          'Refatoração ampla da autenticação, com revisão de segurança em vários arquivos.',
+      }),
+    ).toBe('maestro-caro');
+  }, 60_000);
+
+  it('no modo econômico, o maestro recebe o executor mais barato da parte delegada', async () => {
+    await startCore('eco', false, undefined, [
+      { id: 'barato', nome: 'Barato', provedor: 'teste', adaptador: 'acp', custoRelativo: 'baixo' },
+    ]);
+    // Tarefa de nível médio: sozinha iria ao perfil médio; delegada, desce ao barato.
+    const titulo = 'Implementar a paginação da listagem de pedidos';
+    const descricao =
+      'A listagem de pedidos carrega tudo de uma vez. Paginar no servidor com limite e deslocamento, ' +
+      'mostrar a navegação entre páginas na tela e manter o filtro de status ao trocar de página.';
+    expect(classificarComplexidade(`${titulo}\n${descricao}`).nivel).toBe('media');
+    const task = await createTask({ titulo, descricao, entrega: 'branch' });
+    const run = await client.request<Run>('runs.start', { taskId: task.id });
+    let prompt = '';
+    await vi.waitFor(
+      () => {
+        prompt =
+          events
+            .filter((e) => e.topic === 'agent.output')
+            .map((e) => (e.data as AgentOutputEventData).text)
+            .find((text) => text.includes(titulo)) ?? '';
+        expect(prompt).not.toBe('');
+      },
+      { timeout: 20_000 },
+    );
+    await client.request('runs.stop', { runId: run.id });
+    expect(prompt).toContain('a implementação desta tarefa vai para barato');
+    expect(prompt).toContain('spawn_agent (profileId barato)');
   }, 60_000);
 
   it('valida a tarefa', async () => {

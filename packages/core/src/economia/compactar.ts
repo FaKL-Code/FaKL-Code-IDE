@@ -73,6 +73,11 @@ function compactarTexto(texto: string, limites: Limites): string {
   return cortarMeio(juntarRepetidas(tirarAnsi(texto), limites.repeticoesMin), limites.textoMax);
 }
 
+/** Compacta um texto solto (a saída de um comando) pelos limites do modo. */
+export function compactarSaida(texto: string, modo: ModoEconomia): string {
+  return modo === 'desligado' ? texto : compactarTexto(texto, LIMITES[modo]);
+}
+
 function vazio(valor: unknown): boolean {
   return valor === null || valor === '' || (Array.isArray(valor) && valor.length === 0);
 }

@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
-import { readdir, readFile } from 'node:fs/promises';
+import { copyFile, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 
 import { commitWorktree, type AgentProfile, type McpServerRef } from '@fakl/agents';
@@ -48,6 +48,7 @@ import type { ModoEconomia } from '../economia/compactar.js';
 import {
   classificarComplexidade,
   escolherPerfil,
+  nivelDelegado,
   rebaixou,
   type Escolha,
   type PerfilRoteavel,
@@ -79,6 +80,8 @@ const ACTIVE_RUN: ReadonlySet<RunStatus> = new Set<RunStatus>([
   'pausada',
   'aguardando-decisão',
 ]);
+/** Quanto o encerramento espera a vez do maestro acabar sozinha depois do finish. */
+const FINISH_GRACE_MS = 30_000;
 const MERGE_ATTEMPTS = 3;
 const MERGE_RETRY_MS = 3_000;
 const CHECK_TIMEOUT_MS = 20 * 60_000;
@@ -175,22 +178,39 @@ interface RunState {
 }
 
 /**
- * Impressão do worktree: commit, mudanças rastreadas e arquivos novos. Igual
- * entre duas rodadas, o critério não tem por que rodar de novo.
+ * O que o agente recebe do critério: a saída só do que falhou. A de um
+ * comando que passou (o log do install, do build) não informa nada e voltava a
+ * ser paga em cada passo seguinte; a rodada gravada, que a IDE mostra, fica inteira.
+ */
+function forAgent(checks: readonly CheckResult[]): Partial<CheckResult>[] {
+  return checks.map(({ saida, ...rest }) => (rest.ok ? rest : { ...rest, saida }));
+}
+
+/**
+ * Impressão do conteúdo do worktree: a árvore que um `git add -A` gravaria,
+ * montada num índice à parte. Igual entre duas rodadas, o critério não tem por
+ * que rodar de novo; um commit sem mudança de conteúdo não muda a impressão.
  */
 async function treeFingerprint(cwd: string): Promise<string | undefined> {
+  const dir = await mkdtemp(join(tmpdir(), 'fakl-indice-'));
+  const env = { GIT_INDEX_FILE: join(dir, 'index') };
+  const step = async (args: readonly string[]): Promise<string> => {
+    const result = await exec('git', args, { cwd, env });
+    if (result.code !== 0) throw new Error(result.stderr);
+    return result.stdout.trim();
+  };
   try {
-    const hash = createHash('sha1');
-    hash.update(await git(['rev-parse', 'HEAD'], cwd));
-    hash.update(await git(['diff', 'HEAD', '--binary'], cwd));
-    const untracked = await git(['ls-files', '--others', '--exclude-standard', '-z'], cwd);
-    for (const file of untracked.split('\0').filter(Boolean).sort()) {
-      hash.update(file);
-      hash.update(await readFile(join(cwd, file)).catch(() => Buffer.alloc(0)));
-    }
-    return hash.digest('hex');
+    // A cópia do índice traz o cache de stat: o add só relê o que mudou.
+    const index = await git(['rev-parse', '--git-path', 'index'], cwd);
+    await copyFile(isAbsolute(index) ? index : join(cwd, index), env.GIT_INDEX_FILE).catch(() =>
+      step(['read-tree', 'HEAD']),
+    );
+    await step(['add', '-A']);
+    return await step(['write-tree']);
   } catch {
     return undefined;
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
 
@@ -642,7 +662,7 @@ export class Orchestrator implements Disposable {
       const caller = await this.caller(context.principal);
       const p = objectParams(params);
       const escolha = await this.routeProfile(
-        caller.state,
+        caller.state.task,
         stringParam(p, 'instrucoes'),
         typeof p.criterio === 'string' ? p.criterio : undefined,
         typeof p.papel === 'string' ? p.papel : 'executor',
@@ -957,7 +977,7 @@ export class Orchestrator implements Disposable {
         ),
       );
     }
-    const maestroId = task.maestroProfileId ?? (await this.defaultMaestro());
+    const maestroId = task.maestroProfileId ?? (await this.defaultMaestro(task));
     const run: RunState['run'] = {
       id: ulid(),
       taskId,
@@ -987,9 +1007,18 @@ export class Orchestrator implements Disposable {
   /**
    * Maestro padrão: um perfil instalado que pode ser maestro, de preferência
    * um agente de CLI (modelo local fica por último). Sem provedor nenhum, a
-   * orquestração fica indisponível e a mensagem diz como ligar um.
+   * orquestração fica indisponível e a mensagem diz como ligar um. No modo
+   * econômico, a tarefa escolhe pelo tamanho: a simples não paga o perfil mais caro.
    */
-  private async defaultMaestro(): Promise<string> {
+  private async defaultMaestro(task?: Task): Promise<string> {
+    if (task && this.economico()) {
+      const texto = `${task.titulo}\n${task.descricao ?? ''}`;
+      const roteado = await this.routeProfile(task, texto, undefined, 'maestro', true);
+      if (roteado) {
+        this.options.economia?.registrar({ roteadas: 1 });
+        return roteado.escolha.id;
+      }
+    }
     const profiles = this.options.profiles();
     if (profiles.length === 0) throw RpcError.invalidParams(noProviderMessage());
     const missing = new Set(
@@ -1048,6 +1077,11 @@ export class Orchestrator implements Disposable {
     const extra = await (
       this.options.maestroContext?.(state.repoRoot) ?? Promise.resolve([])
     ).catch(() => []);
+    const executor = await this.executorEconomico(
+      task,
+      `${task.titulo}\n${task.descricao ?? ''}`,
+      profileId,
+    );
     const started = await this.options.agents.launch({
       profileId,
       cwd: state.repoRoot,
@@ -1064,6 +1098,7 @@ export class Orchestrator implements Disposable {
         base: state.base,
         profiles: this.options.profiles(),
         economia: this.economico(),
+        ...(executor ? { executor } : {}),
         history: state.run.rodadas,
         ...(previousSummary ? { previousSummary } : {}),
       }),
@@ -1099,6 +1134,8 @@ export class Orchestrator implements Disposable {
       if (error instanceof RpcError) throw error;
       throw RpcError.invalidParams(error instanceof Error ? error.message : String(error));
     }
+    // Pausada pelo freio, a sessão sai da pausa antes da rodada nova; não é fim de vez.
+    state.turnDone.delete(sessionId);
   }
 
   private startTimer(state: RunState): void {
@@ -1251,14 +1288,18 @@ export class Orchestrator implements Disposable {
   }
 
   /** Classifica a tarefa e escolhe o perfil da camada de custo certa, entre os permitidos e disponíveis. */
+  /** `topo`: o maestro da própria tarefa, que vai pelo tamanho dela, sem o peso de um sub-maestro. */
   private async routeProfile(
-    state: RunState,
+    task: Task,
     instrucoes: string,
     criterio: string | undefined,
     papel: string,
+    topo = false,
   ): Promise<{ escolha: Escolha; sinais: readonly string[] } | undefined> {
-    const permitted = state.task.perfisPermitidos;
-    const fixed = state.task.papeisFixados?.[papel];
+    // Quem executa uma parte delegada desce um nível; revisor e sub-maestro, não.
+    const delegado = this.economico() && !topo && papel !== 'revisor' && papel !== 'maestro';
+    const permitted = task.perfisPermitidos;
+    const fixed = task.papeisFixados?.[papel];
     const availability = new Map(
       (await this.options.agents.detect().catch(() => [])).map((a) => [a.id, a.availability]),
     );
@@ -1266,6 +1307,13 @@ export class Orchestrator implements Disposable {
       .profiles()
       .filter((profile) => !permitted || permitted.includes(profile.id))
       .filter((profile) => !fixed || profile.id === fixed)
+      // Um agente de terminal não recebe as ferramentas MCP do maestro (ADR 0047).
+      // nem modelo local, que costuma tropeçar nelas.
+      .filter(
+        (profile) =>
+          papel !== 'maestro' ||
+          (profile.adaptador !== 'terminal' && profile.adaptador !== 'ollama'),
+      )
       .map((profile) => {
         const placar = this.options.scorecard?.summaryFor(profile.id);
         return {
@@ -1281,10 +1329,28 @@ export class Orchestrator implements Disposable {
       });
     const classificacao = classificarComplexidade(instrucoes, {
       ...(criterio ? { criterio } : {}),
-      papel,
+      ...(topo ? {} : { papel }),
     });
-    const escolha = escolherPerfil(perfis, classificacao.nivel, { papel });
+    const nivel = delegado ? nivelDelegado(classificacao.nivel) : classificacao.nivel;
+    const escolha = escolherPerfil(perfis, nivel, { papel });
     return escolha ? { escolha, sinais: classificacao.sinais } : undefined;
+  }
+
+  /**
+   * No modo econômico, o perfil que executaria uma parte desta tarefa, quando é
+   * mais barato que o maestro: o prompt dele diz para quem vai a implementação, em
+   * vez de deixar a decisão para uma consulta que ele quase nunca faz.
+   */
+  private async executorEconomico(
+    task: Task,
+    instrucoes: string,
+    maestroId: string,
+  ): Promise<string | undefined> {
+    if (!this.economico()) return undefined;
+    const roteado = await this.routeProfile(task, instrucoes, undefined, 'executor');
+    const maestro = this.options.profiles().find((profile) => profile.id === maestroId);
+    if (!roteado || !rebaixou(roteado.escolha, maestro?.custoRelativo ?? 'médio')) return undefined;
+    return roteado.escolha.id;
   }
 
   /** Diferença de custo médio por tarefa entre quem pediu e o perfil escolhido, quando o placar tem os dois. */
@@ -1448,7 +1514,7 @@ export class Orchestrator implements Disposable {
       // Sem perfil pedido e sem sugestão de agente ou skill: o modo econômico escolhe pela tarefa.
       if (this.options.economia && this.options.economia.modo !== 'desligado') {
         const roteado = await this.routeProfile(
-          state,
+          state.task,
           task.instrucoes,
           typeof p.criterio === 'string' ? p.criterio : undefined,
           task.papel,
@@ -1519,6 +1585,9 @@ export class Orchestrator implements Disposable {
             ? { retomada: this.options.agents.recoveryOf(id) }
             : {}),
           estado: this.options.agents.stateOf(id) ?? 'parado',
+          ...(this.options.agents.brakeOf(id)
+            ? { freio: this.options.agents.brakeOf(id)?.mensagem }
+            : {}),
           resumo: truncate(state.lastReply.get(id) ?? state.current.get(id) ?? '', REPLY_LIMIT),
           branch: agent?.branch ?? null,
           diffStat:
@@ -1587,6 +1656,8 @@ export class Orchestrator implements Disposable {
           'merge',
           '--no-ff',
           '--no-edit',
+          // Integração interna, como os pontos de salvamento: a entrega passa pelos ganchos.
+          '--no-verify',
           agent.branch,
         ],
         { cwd: tree.path },
@@ -1604,7 +1675,9 @@ export class Orchestrator implements Disposable {
         ok: false,
         branch: agent.branch,
         conflitos: conflicts.split('\n').filter(Boolean),
-        erro: l10n.t('conflict: delegate the resolution or merge by hand in your worktree'),
+        erro: conflicts
+          ? l10n.t('conflict: delegate the resolution or merge by hand in your worktree')
+          : l10n.t('merge failed: {0}', (merged.stderr || merged.stdout).trim().slice(-300)),
       });
     }
     return results;
@@ -1619,7 +1692,7 @@ export class Orchestrator implements Disposable {
     const tree = this.options.agents.worktree(caller.sessionId);
     const cwd = tree?.path ?? state.repoRoot;
     if (explicit?.length) {
-      return { verificacoes: await this.check(explicit, cwd) };
+      return { verificacoes: forAgent(await this.check(explicit, cwd)) };
     }
     const round = await this.round(state, cwd);
     if (!round) {
@@ -1627,7 +1700,7 @@ export class Orchestrator implements Disposable {
         erro: l10n.t('round limit reached; the run followed the configured policy'),
       };
     }
-    return round;
+    return { ...round, verificacoes: forAgent(round.verificacoes) };
   }
 
   private async check(commands: readonly string[], cwd: string): Promise<CheckResult[]> {
@@ -1698,7 +1771,9 @@ export class Orchestrator implements Disposable {
     if (caller.agent.parentSessionId) {
       // Um submaestro termina a subtarefa dele; quem entrega é o maestro principal.
       state.lastReply.set(caller.sessionId, `${veredito.toUpperCase()}: ${resumo}`);
-      setTimeout(() => void this.options.agents.stop(caller.sessionId, 'maestro'), 0);
+      void this.letTurnEnd(caller.sessionId).then(() =>
+        this.options.agents.stop(caller.sessionId, 'maestro'),
+      );
       return {
         ok: true,
         mensagem: l10n.t('subtask ended; the maestro above receives the summary'),
@@ -1706,7 +1781,14 @@ export class Orchestrator implements Disposable {
     }
     if (veredito !== 'sucesso') {
       setTimeout(
-        () => void this.finalize(state, 'falha', resumo || l10n.t('the maestro gave up'), 'branch'),
+        () =>
+          void this.finalize(
+            state,
+            'falha',
+            resumo || l10n.t('the maestro gave up'),
+            'branch',
+            true,
+          ),
         0,
       );
       return { ok: true, mensagem: l10n.t('run ended as a failure') };
@@ -1753,8 +1835,14 @@ export class Orchestrator implements Disposable {
       }
     }
     const entrega = state.task.entrega ?? this.options.defaults?.().entrega ?? DEFAULT_DELIVERY;
-    setTimeout(() => void this.finalize(state, 'sucesso', resumo, entrega), 0);
-    return { ok: true, mensagem: l10n.t('criteria passed; delivering ({0})', entrega) };
+    setTimeout(() => void this.finalize(state, 'sucesso', resumo, entrega, true), 0);
+    return {
+      ok: true,
+      mensagem: l10n.t(
+        'criteria passed; delivering ({0}). Do not change any more files: end your turn with a short summary.',
+        entrega,
+      ),
+    };
   }
 
   // ---------------------------------------------------------------- decisões e limites
@@ -1945,6 +2033,22 @@ export class Orchestrator implements Disposable {
     await this.saveRun(state);
   }
 
+  /**
+   * Depois do finish, deixa a vez do agente acabar sozinha (com um teto): o
+   * claude-agent-acp só manda o custo no fim da vez, e cancelá-la perdia o
+   * custo da execução inteira, que costuma ser uma vez só.
+   */
+  private async letTurnEnd(sessionId: string | undefined): Promise<void> {
+    if (!sessionId) return;
+    const deadline = Date.now() + FINISH_GRACE_MS;
+    while (
+      WORKING.has(this.options.agents.stateOf(sessionId) ?? 'parado') &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+
   private async stopAgents(state: RunState): Promise<void> {
     const ids = state.run.agentes.map((a) => a.sessionId);
     await Promise.all(
@@ -1985,8 +2089,9 @@ export class Orchestrator implements Disposable {
     how: 'sucesso' | 'falha' | 'rascunho',
     resumo: string,
     entrega: Delivery,
+    fromMaestro = false,
   ): Promise<void> {
-    const done = this.finish(state, how, resumo, entrega).finally(() => {
+    const done = this.finish(state, how, resumo, entrega, fromMaestro).finally(() => {
       this.finishing.delete(done);
     });
     this.finishing.add(done);
@@ -1998,6 +2103,7 @@ export class Orchestrator implements Disposable {
     how: 'sucesso' | 'falha' | 'rascunho',
     resumo: string,
     entrega: Delivery,
+    fromMaestro: boolean,
   ): Promise<void> {
     if (state.finishing) return;
     state.finishing = true;
@@ -2006,6 +2112,7 @@ export class Orchestrator implements Disposable {
       resolve('cancelada');
       state.waiters.delete(id);
     }
+    if (fromMaestro) await this.letTurnEnd(state.run.maestroSessionId);
     await this.stopAgents(state);
     state.run.resumo = resumo;
     state.run.fim = now(this.clock);
@@ -2107,18 +2214,35 @@ export class Orchestrator implements Disposable {
                 ),
         };
       }
+      // Cabeçalho no formato do próprio git: commitlint e afins ignoram merges, e o
+      // commit-msg do projeto barrava um `fakl: ...` (o merge falhava como "conflito").
       const merged = await exec(
         'git',
-        ['merge', '--no-ff', '-m', `fakl: ${state.task.titulo}`, branch],
-        {
-          cwd: repoRoot,
-        },
+        [
+          'merge',
+          '--no-ff',
+          '-m',
+          `Merge branch '${branch}'`,
+          '-m',
+          `fakl: ${state.task.titulo}`,
+          branch,
+        ],
+        { cwd: repoRoot },
       );
       if (merged.code !== 0) {
+        const conflicts = await git(['diff', '--name-only', '--diff-filter=U'], repoRoot).catch(
+          () => '',
+        );
         await exec('git', ['merge', '--abort'], { cwd: repoRoot });
         return {
           resultado: 'branch',
-          motivo: l10n.t('merge with conflict; the work is in {0}', branch),
+          motivo: conflicts
+            ? l10n.t('merge with conflict; the work is in {0}', branch)
+            : l10n.t(
+                'merge not done ({0}); the work is in {1}',
+                (merged.stderr || merged.stdout).trim().slice(-300),
+                branch,
+              ),
         };
       }
       // Projeto Lovable: o branch acompanhado vai para o GitHub, e o Lovable mostra a mudança.
@@ -2461,8 +2585,13 @@ export class Orchestrator implements Disposable {
     if (event.topic !== 'agent.state') return;
     if (this.options.agents.recoveryOf(event.subject)) return;
     const { state: next, previous } = event.data as AgentStateEventData;
+    // Pausado pelo freio, ninguém retoma sozinho: para quem espera, a vez acabou.
+    const freada = next === 'pausado' && this.options.agents.brakeOf(event.subject) !== undefined;
     const turnEnded =
-      (WORKING.has(previous) || previous === 'pausado') && !WORKING.has(next) && next !== 'pausado';
+      freada ||
+      ((WORKING.has(previous) || previous === 'pausado') &&
+        !WORKING.has(next) &&
+        next !== 'pausado');
     if (turnEnded || isFinalAgentState(next)) {
       state.turnDone.add(event.subject);
       const text = state.current.get(event.subject);
@@ -2547,13 +2676,19 @@ export class Orchestrator implements Disposable {
       if (!maestro || WORKING.has(this.options.agents.stateOf(maestro) ?? 'parado')) return;
       if (state.nudges < MAX_NUDGES) {
         state.nudges++;
+        const freio = this.options.agents.brakeOf(maestro);
         try {
           this.sendTo(
             state,
             maestro,
-            l10n.t(
-              'The task is not finished yet: you did not call finish. If you are waiting for subagents, use await_results. Keep going until you run run_checks and call finish.',
-            ),
+            freio
+              ? l10n.t(
+                  '{0} Do not repeat what you were doing: change the approach (read the code before editing it again, delegate, or split the work) and keep going until you run run_checks and call finish.',
+                  freio.mensagem,
+                )
+              : l10n.t(
+                  'The task is not finished yet: you did not call finish. If you are waiting for subagents, use await_results. Keep going until you run run_checks and call finish.',
+                ),
           );
         } catch {
           // Teto diário: a decisão vem pelo evento do teto.

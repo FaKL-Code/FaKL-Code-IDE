@@ -53,6 +53,11 @@ export interface StartOptions {
   readonly permissions: PermissionPolicy;
   /** Retoma uma sessão que já existiu (Core reiniciado): tenta o id do agente, senão recria com o histórico. */
   readonly resume?: ResumeOptions;
+  /**
+   * `_meta` da criação da sessão ACP, para o que só um agente entende (o adaptador
+   * do Claude lê `claudeCode.options`: ganchos, subagentes, ambiente).
+   */
+  readonly sessionMeta?: Readonly<Record<string, unknown>>;
 }
 
 export interface ResumeOptions {
@@ -66,7 +71,10 @@ export interface ResumeOptions {
 export type ResumeKind = 'sessão' | 'histórico';
 
 export interface Usage {
+  /** Tudo o que foi enviado ao modelo, com o que veio do cache. */
   readonly inputTokens: number;
+  /** A parte da entrada lida do cache, que custa um décimo; só quando o agente informa. */
+  readonly cacheReadTokens?: number;
   readonly outputTokens: number;
   readonly totalTokens: number;
   /** Custo acumulado informado pelo agente, quando ele informa. */
@@ -94,6 +102,8 @@ export type AgentEvent =
       readonly type: 'tool';
       readonly toolCallId: string;
       readonly title?: string;
+      /** Impressão digital dos argumentos: a mesma chamada repetida tem a mesma. */
+      readonly input?: string;
       readonly kind?: string;
       readonly status?: string;
     }
@@ -134,7 +144,11 @@ export interface AgentHandle {
   /** Troca uma opção; vale a partir da próxima mensagem. */
   setOption(id: string, value: string | boolean): Promise<void>;
   pause(): Promise<void>;
-  resume(): Promise<void>;
+  /**
+   * Volta da pausa. Uma vez interrompida recomeça com "continue de onde parou";
+   * `continuar: false` descarta isso, para a próxima mensagem começar a rodada.
+   */
+  resume(continuar?: boolean): Promise<void>;
   stop(reason: StopReason): Promise<void>;
   usage(): Usage;
 }

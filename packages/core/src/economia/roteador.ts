@@ -73,6 +73,15 @@ export function classificarComplexidade(
   return { nivel, sinais };
 }
 
+/**
+ * Nível de uma parte delegada: quem delega já planejou e quebrou o trabalho, e a
+ * revisão e as verificações conferem o resultado, então a execução cabe um nível
+ * abaixo do que o texto sozinho indicaria.
+ */
+export function nivelDelegado(nivel: Complexidade): Complexidade {
+  return nivel === 'alta' ? 'media' : 'baixa';
+}
+
 export interface PerfilRoteavel {
   readonly id: string;
   readonly custoRelativo: 'baixo' | 'médio' | 'alto';

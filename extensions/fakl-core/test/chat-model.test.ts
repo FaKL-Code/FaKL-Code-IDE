@@ -146,6 +146,8 @@ describe('uso', () => {
       total: 1000,
     });
     expect(usageBreakdown({ inputTokens: 0, outputTokens: 0, totalTokens: 0 }).inputShare).toBe(0);
+    expect(usageBreakdown({ ...usage, cacheReadTokens: 600 }).cached).toBe(600);
+    expect(usageBreakdown(usage).cached).toBe(0);
   });
 
   it('soma as conversas e descarta custo de moedas misturadas', () => {

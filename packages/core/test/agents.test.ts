@@ -99,6 +99,19 @@ describe('Core: agentes', { timeout: 20_000 }, () => {
     const info = sessions.find((s) => s.sessionId === sessionId);
     expect(info?.state).toBe('pausado');
     expect(info?.usage.turno?.passos).toBe(5);
+
+    // A mensagem seguinte tira da pausa e começa a rodada dela, sem o "continue de onde parou".
+    const antes = events.length;
+    await client.request('agents.send', { sessionId, message: 'olá' });
+    await waitFor(() => events.slice(antes).some((e) => e.topic === 'agent.output'), 5_000);
+    // Dá tempo de uma segunda resposta aparecer, se o "continue" tivesse ido antes.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const depois = events.slice(antes);
+    expect(
+      depois
+        .filter((e) => e.topic === 'agent.output')
+        .map((e) => (e.data as AgentOutputEventData).text),
+    ).toEqual([expect.stringMatching(/^oi/)]);
   });
 
   it('a conversa simples sobe sem servidores MCP e responde', async () => {

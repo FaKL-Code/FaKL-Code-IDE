@@ -15,6 +15,7 @@ import spawn from 'cross-spawn';
 
 import { agentEnv } from './env.js';
 import { prepareMcpServers } from './mcp-servers.js';
+import { toolInputKey } from './tool-input.js';
 import type {
   AgentAdapter,
   AgentEvent,
@@ -254,6 +255,7 @@ class AcpSession implements AgentHandle {
   private exitSeen: Promise<void> = Promise.resolve();
   private stderrTail = '';
   private totals = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  private cacheRead = 0;
   private cost: Usage['cost'];
   private context: Usage['context'];
   /** Para estimar o uso de agentes que não o informam na resposta (codex-acp). */
@@ -401,6 +403,7 @@ class AcpSession implements AgentHandle {
           });
         }
       }
+      const meta = this.options.sessionMeta ? { _meta: { ...this.options.sessionMeta } } : {};
       const resumeId = this.options.resume?.sessionId;
       let reopened = false;
       if (resumeId) {
@@ -415,7 +418,7 @@ class AcpSession implements AgentHandle {
           this.replaying = true;
           try {
             const response = (await Promise.race([
-              agent.request(method, { sessionId: resumeId, cwd: this.cwd, mcpServers }),
+              agent.request(method, { sessionId: resumeId, cwd: this.cwd, mcpServers, ...meta }),
               exited,
               timedOut,
             ])) as { configOptions?: acp.SessionConfigOption[] | null } | null | undefined;
@@ -433,7 +436,7 @@ class AcpSession implements AgentHandle {
         }
       }
       if (!reopened) {
-        const request: acp.NewSessionRequest = { cwd: this.cwd, mcpServers };
+        const request: acp.NewSessionRequest = { cwd: this.cwd, mcpServers, ...meta };
         const created = await Promise.race([
           agent.request(acp.methods.agent.session.new, request),
           exited,
@@ -538,16 +541,17 @@ class AcpSession implements AgentHandle {
     }
   }
 
-  resume(): Promise<void> {
+  resume(continuar = true): Promise<void> {
     if (this.current !== 'pausado') return Promise.resolve();
     this.setState('ocioso');
     if (this.interrupted) {
       this.interrupted = false;
-      this.queue.unshift({
-        text: resumePrompt(),
-        resolve: () => undefined,
-        reject: () => undefined,
-      });
+      if (continuar)
+        this.queue.unshift({
+          text: resumePrompt(),
+          resolve: () => undefined,
+          reject: () => undefined,
+        });
     }
     this.pump();
     return Promise.resolve();
@@ -565,6 +569,7 @@ class AcpSession implements AgentHandle {
   usage(): Usage {
     return {
       ...this.totals,
+      ...(this.cacheRead > 0 ? { cacheReadTokens: this.cacheRead } : {}),
       ...(this.cost ? { cost: this.cost } : {}),
       ...(this.context ? { context: this.context } : {}),
     };
@@ -658,10 +663,12 @@ class AcpSession implements AgentHandle {
       case 'tool_call':
       case 'tool_call_update': {
         const status = update.status ?? undefined;
+        const input = toolInputKey(update.rawInput);
         this.emit({
           type: 'tool',
           toolCallId: update.toolCallId,
           ...(update.title ? { title: update.title } : {}),
+          ...(input ? { input } : {}),
           ...(update.kind ? { kind: update.kind } : {}),
           ...(status ? { status } : {}),
         });
@@ -784,10 +791,19 @@ class AcpSession implements AgentHandle {
     };
   }
 
+  /**
+   * O ACP separa a entrada nova do que foi lido e escrito no cache; o
+   * claude-agent-acp informa 12 tokens de entrada numa rodada que enviou 230
+   * mil. A entrada aqui é tudo o que foi enviado, e a leitura do cache fica à
+   * parte para quem quiser mostrar o desconto.
+   */
   private addUsage(usage: acp.Usage | null | undefined): void {
     if (!usage) return;
+    const read = usage.cachedReadTokens ?? 0;
+    const input = usage.inputTokens + read + (usage.cachedWriteTokens ?? 0);
+    this.cacheRead += read;
     this.totals = {
-      inputTokens: this.totals.inputTokens + usage.inputTokens,
+      inputTokens: this.totals.inputTokens + input,
       outputTokens: this.totals.outputTokens + usage.outputTokens,
       totalTokens: this.totals.totalTokens + usage.totalTokens,
     };

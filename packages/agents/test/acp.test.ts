@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   AcpAdapter,
   describeToolInput,
+  toolInputKey,
   type AgentEvent,
   type AgentHandle,
   type PermissionPolicy,
@@ -114,6 +115,17 @@ describe('AcpAdapter', () => {
     });
   });
 
+  it('conta o cache na entrada e separa o que foi lido dele', async () => {
+    const agent = await start();
+    await agent.handle.send('com cache');
+    expect(agent.handle.usage()).toEqual({
+      inputTokens: 12 + 201340 + 29205,
+      cacheReadTokens: 201340,
+      outputTokens: 4248,
+      totalTokens: 234805,
+    });
+  });
+
   it('informa a janela de contexto assim que o agente a manda', async () => {
     const agent = await start();
     await agent.handle.send('sem uso');
@@ -160,6 +172,13 @@ describe('AcpAdapter', () => {
       title: 'Editar a.txt',
       detail: 'file_path: a.txt\ncontent: oi\nreplace_all: false',
     });
+    expect(agent.events).toContainEqual(
+      expect.objectContaining({
+        type: 'tool',
+        toolCallId: 't1',
+        input: toolInputKey({ file_path: 'a.txt', content: 'oi', replace_all: false }),
+      }),
+    );
     expect(agent.handle.state).toBe('aguardando-permissão');
     await agent.handle.respondPermission('t1', false);
     await done;
@@ -322,6 +341,19 @@ describe('AcpAdapter', () => {
       expect(text()).toBe('oi (1 blocos)');
     });
 
+    it('manda o _meta da sessão ao abrir e ao retomar', async () => {
+      const sessionMeta = { claudeCode: { options: { x: 1 } } };
+      const nova = await start({ sessionMeta });
+      await sent(nova.handle, 'meta');
+      expect(JSON.parse(nova.text())).toEqual(sessionMeta);
+      const retomada = await start({ env: { FAKE_LOAD: '1' }, resume, sessionMeta });
+      await sent(retomada.handle, 'meta');
+      expect(JSON.parse(retomada.text())).toEqual(sessionMeta);
+      const sem = await start();
+      await sent(sem.handle, 'meta');
+      expect(sem.text()).toBe('null');
+    });
+
     it('usa session/resume quando o agente só oferece esse', async () => {
       const { handle } = await start({ env: { FAKE_RESUME: '1' }, resume });
       expect(handle.resumedAs).toBe('sessão');
@@ -362,5 +394,25 @@ describe('describeToolInput', () => {
     const detail = describeToolInput({ conteudo: 'x'.repeat(5_000) });
     expect(detail).toHaveLength(2_001);
     expect(detail?.endsWith('…')).toBe(true);
+  });
+});
+
+describe('toolInputKey', () => {
+  it('a mesma chamada tem a mesma impressão digital, em qualquer ordem de chaves', () => {
+    const a = toolInputKey({ file_path: 'a.ts', old_string: 'x', new_string: 'y' });
+    expect(a).toMatch(/^[0-9a-f]{16}$/);
+    expect(toolInputKey({ new_string: 'y', file_path: 'a.ts', old_string: 'x' })).toBe(a);
+  });
+
+  it('edições diferentes do mesmo arquivo têm impressões diferentes', () => {
+    expect(toolInputKey({ file_path: 'a.ts', old_string: 'x', new_string: 'y' })).not.toBe(
+      toolInputKey({ file_path: 'a.ts', old_string: 'z', new_string: 'w' }),
+    );
+  });
+
+  it('sem argumentos, nada', () => {
+    expect(toolInputKey(undefined)).toBeUndefined();
+    expect(toolInputKey(null)).toBeUndefined();
+    expect(toolInputKey({})).toBeUndefined();
   });
 });

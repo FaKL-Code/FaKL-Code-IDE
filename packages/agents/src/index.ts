@@ -4,6 +4,7 @@ export * from './env.js';
 export * from './local.js';
 export * from './mcp-client.js';
 export * from './presets.js';
+export * from './tool-input.js';
 export * from './types.js';
 export * from './which.js';
 export * from './worktree.js';
