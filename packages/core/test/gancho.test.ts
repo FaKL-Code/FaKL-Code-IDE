@@ -74,6 +74,23 @@ describe('gancho da economia no Claude Code', () => {
     expect(processarGancho(read(`${conteudo}y`), estado, config)).toEqual({});
   });
 
+  it('o mesmo comando com outra descrição conta como repetição', () => {
+    const estado = estadoInicial();
+    const config = { modo: 'equilibrado' as const };
+    const saida = 'resultado distinto numa linha\n'
+      .repeat(60)
+      .replace(/distinto/g, (_, i) => String(i));
+    const com = (description: string): EntradaDoGancho => ({
+      ...bash(saida),
+      tool_input: { command: 'pnpm test', description },
+    });
+    processarGancho(com('primeira vez'), estado, config);
+    const repetida = processarGancho(com('segunda vez'), estado, config);
+    expect((repetida.saida as Saida).hookSpecificOutput.updatedToolOutput?.stdout).toMatch(
+      /^\[FaKL economia: mesma saída/,
+    );
+  });
+
   it('saída curta repetida não vira aviso', () => {
     const estado = estadoInicial();
     const config = { modo: 'agressivo' as const };

@@ -534,6 +534,7 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
       (await metaDe('claude-caro')) as {
         claudeCode: {
           options: {
+            env: Record<string, string>;
             settings: { hooks: Record<string, { hooks: { command: string }[] }[]> };
             agents?: Record<string, { model: string }>;
           };
@@ -542,7 +543,10 @@ describe.skipIf(!existsSync(mcpMain))('Core: orquestrador', () => {
     ).claudeCode.options;
     const comando = options.settings.hooks.PostToolUse?.[0]?.hooks[0]?.command ?? '';
     expect(comando).toContain('--gancho');
-    expect(comando).toContain("FAKL_ECONOMIA='equilibrado'");
+    // O token vai no ambiente, não no comando que o Claude Code grava no transcrito.
+    expect(comando).not.toContain('FAKL_');
+    expect(options.env.FAKL_ECONOMIA).toBe('equilibrado');
+    expect(options.env.FAKL_AGENT_TOKEN).toBeTruthy();
     expect(options.agents?.explorador?.model).toBe('leve-1');
     // O mais barato não tem para quem descer; outro provedor não recebe nada.
     expect(

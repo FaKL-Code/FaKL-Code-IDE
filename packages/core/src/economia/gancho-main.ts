@@ -4,7 +4,7 @@
  * servidor MCP (`--gancho`). Nunca atrapalha a ferramenta: qualquer erro sai
  * calado, sem mudar nada.
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -33,6 +33,19 @@ function lerEstado(arquivo: string): EstadoDoGancho {
     return { ...estadoInicial(), ...salvo };
   } catch {
     return estadoInicial();
+  }
+}
+
+const ANTIGO_MS = 2 * 24 * 60 * 60_000;
+
+function limparAntigos(pasta: string): void {
+  try {
+    for (const nome of readdirSync(pasta)) {
+      const arquivo = join(pasta, nome);
+      if (Date.now() - statSync(arquivo).mtimeMs > ANTIGO_MS) rmSync(arquivo, { force: true });
+    }
+  } catch {
+    // A pasta ainda não existe.
   }
 }
 
@@ -66,6 +79,8 @@ export async function rodarGancho(): Promise<never> {
     });
     if (entrada.hook_event_name === 'SessionEnd') rmSync(arquivo, { force: true });
     else {
+      // Sessão parada pela IDE não chega ao SessionEnd: o que ficou de dias atrás sai aqui.
+      if (entrada.hook_event_name === 'UserPromptSubmit') limparAntigos(pasta);
       mkdirSync(pasta, { recursive: true });
       writeFileSync(arquivo, JSON.stringify(estado));
     }

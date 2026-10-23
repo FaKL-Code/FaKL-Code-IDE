@@ -151,7 +151,12 @@ function posFerramenta(
     (ferramenta === 'Read' && (resposta as SaidaDoRead | undefined)?.type === 'text');
   if (leitura && resposta && typeof resposta === 'object') {
     // O mesmo pedido, de quem tem o mesmo contexto, com exatamente a mesma saída.
-    const chave = digital([entrada.agent_id ?? '', ferramenta, entrada.tool_input]);
+    // No Bash, só o comando: a descrição muda de uma chamada para outra.
+    const pedido =
+      ferramenta === 'Bash'
+        ? (entrada.tool_input as { command?: unknown } | undefined)?.command
+        : entrada.tool_input;
+    const chave = digital([entrada.agent_id ?? '', ferramenta, pedido]);
     const marca = digital(resposta);
     const repetida = estado.vistos[chave] === marca;
     lembrarVisto(estado, chave, marca);

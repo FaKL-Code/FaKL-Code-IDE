@@ -250,8 +250,9 @@ export function createCore(options: CoreOptions): Core {
     if (!launcher || modo === 'desligado') return undefined;
     if (profile.provedor !== 'anthropic' || profile.adaptador !== 'acp') return undefined;
     const explorador = exploradorDe(profile, agents.profileList());
+    // Vão no ambiente da sessão, que o gancho herda: na linha de comando, o Claude Code
+    // grava o comando no transcrito, e o token iria junto.
     const env: Record<string, string> = {
-      ...launcher.env,
       FAKL_ECONOMIA: modo,
       FAKL_LOCALE: currentLocale(),
       FAKL_CORE_SOCKET: options.socketPath,
@@ -262,7 +263,7 @@ export function createCore(options: CoreOptions): Core {
     const caminho = (valor: string): string =>
       aspasSh(process.platform === 'win32' ? valor.replace(/\\/g, '/') : valor);
     const comando = [
-      ...Object.entries(env).map(([name, value]) => `${name}=${aspasSh(value)}`),
+      ...Object.entries(launcher.env ?? {}).map(([name, value]) => `${name}=${aspasSh(value)}`),
       caminho(launcher.command),
       ...launcher.args.map(caminho),
       '--gancho',
@@ -270,6 +271,7 @@ export function createCore(options: CoreOptions): Core {
     return {
       claudeCode: {
         options: {
+          env,
           settings: { hooks: ganchosDaEconomia(comando) },
           ...(explorador
             ? {
