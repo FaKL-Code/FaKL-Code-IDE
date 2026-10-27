@@ -12,6 +12,10 @@ updates:
       # Os tipos do Node acompanham a versão do Node usada (.nvmrc), não a mais nova.
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # O 2.x do SDK do ACP tirou o `usage` por rodada da API estável (agora só em
+      # `/unstable`), que alimenta o teto diário de gasto e o placar dos agentes.
+      - dependency-name: '@agentclientprotocol/sdk'
+        update-types: ['version-update:semver-major']
     groups:
       dev-tooling:
         dependency-type: development
