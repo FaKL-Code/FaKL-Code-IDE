@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@fakl/i18n": "workspace:*",
-    "imapflow": "^2.5.2",
+    "imapflow": "^2.9.1",
     "mailparser": "^3.12.4"
   },
   "devDependencies": {
