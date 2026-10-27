@@ -100,7 +100,7 @@ export const en: Textos = {
       ['Chat and review', 'Logs, pause, resume and a diff before applying.', '/docs/agentes/'],
       [
         'Vault',
-        'Graph, backlinks, tags and Git sync. Session note and Devlog ready to go.',
+        'Notes explorer, graph, backlinks, tags and Git sync. Session note and Devlog ready to go.',
         '/docs/vault/',
       ],
       ['GitHub', 'PRs, reviews, issues and Actions from all your repositories.', '/docs/github/'],

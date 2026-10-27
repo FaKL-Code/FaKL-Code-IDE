@@ -8,6 +8,7 @@ ordem: 6
 
 The vault is a folder of Markdown files, compatible with Obsidian. Set it up with **Set up the vault**. The IDE offers:
 
+- a **notes explorer** in its own sidebar (the Vault icon), with folders, the open note always highlighted, Backlinks and Tags;
 - a **graph** of the notes (**Open the vault graph**);
 - links and backlinks, tags, and templates (**Insert vault template**);
 - **Today's note** (the daily note) and **Add to daily note**;

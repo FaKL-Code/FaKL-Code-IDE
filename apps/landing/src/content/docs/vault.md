@@ -8,6 +8,7 @@ ordem: 6
 
 O vault é uma pasta de arquivos Markdown, compatível com o Obsidian. Configure com **Configurar o vault**. A IDE oferece:
 
+- **explorador de notas** numa barra lateral própria (o ícone do Vault), com pastas, a nota aberta sempre marcada, Backlinks e Tags;
 - **grafo** das notas (**Abrir o grafo do vault**);
 - links e backlinks, tags e templates (**Inserir template do vault**);
 - **nota de hoje** e **Anotar no diário**;
