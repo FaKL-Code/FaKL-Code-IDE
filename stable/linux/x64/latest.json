@@ -1,9 +1,9 @@
 {
-  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.16/FaKL-Code-linux-x64-1.140.0000116.tar.gz",
-  "name": "0.1.16",
-  "version": "f736046bada2bd8892620bab8843f5b93815cba0",
-  "productVersion": "1.140.116.0",
-  "hash": "546799f82f6d23d99382c22c65cb39af7e44d9eb",
-  "timestamp": 1792769773751,
-  "sha256hash": "612441b3d301fc84126f21afd840f983cfe348d130e41cfe10a10fca27097c1d"
+  "url": "https://github.com/FaKL-Code/FaKL-Code-IDE/releases/download/v0.1.17/FaKL-Code-linux-x64-1.140.0000117.tar.gz",
+  "name": "0.1.17",
+  "version": "c632a16479fd22cb857be6e2d5e042cdd23ce8cd",
+  "productVersion": "1.140.117.0",
+  "hash": "839296504cb58b4ac1443de38b9bb5b9d4ee7b08",
+  "timestamp": 1793072748703,
+  "sha256hash": "bf681e92d40d590c4153b0b7a9995d73e4aa70f448d5d2033d1f7507c76a7a86"
 }
