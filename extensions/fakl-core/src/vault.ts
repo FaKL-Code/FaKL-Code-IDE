@@ -11,7 +11,7 @@ import type { AgentEventRouter } from './agents.js';
 import { EmbeddingsUi } from './vault-embeddings.js';
 import type { EmbedNote } from './vault-embed.js';
 import { VaultNotesUi } from './vault-tree.js';
-import type { FolderNode } from './vault-tree-model.js';
+import { newNotePath, type FolderNode } from './vault-tree-model.js';
 
 interface GraphNode {
   path: string;
@@ -106,8 +106,8 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
       vscode.commands.registerCommand('fakl.vault.daily', () => this.daily()),
       vscode.commands.registerCommand('fakl.vault.appendDaily', () => this.appendDaily()),
       vscode.commands.registerCommand('fakl.vault.newNote', () => this.newNote()),
-      vscode.commands.registerCommand('fakl.vault.newNoteHere', (folder: FolderNode) =>
-        this.newNote(folder.path),
+      vscode.commands.registerCommand('fakl.vault.newNoteHere', (folder?: FolderNode) =>
+        this.newNote(folder?.path),
       ),
       vscode.commands.registerCommand('fakl.vault.sync', () => this.sync()),
       vscode.commands.registerCommand('fakl.vault.openWindow', () => this.openWindow()),
@@ -611,9 +611,8 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
         : l10n.t('Title; use Folder/Title to create it outside the Inbox'),
     });
     if (!titulo?.trim()) return;
-    const clean = titulo.trim().replace(/[\\:*?"<>|#^[\]]/g, '-');
-    const path = clean.includes('/') ? clean : `${folder ?? 'Inbox'}/${clean}`;
-    const name = path.split('/').pop() ?? clean;
+    const path = newNotePath(titulo, folder);
+    const name = path.split('/').pop() ?? titulo.trim();
     const existing = this.names.get(path.toLowerCase());
     if (existing) {
       await this.open(existing);

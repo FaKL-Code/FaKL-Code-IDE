@@ -121,10 +121,17 @@ function load(graph: VaultGraphData): void {
     neighbors.get(b)?.add(a);
   }
   if (focused) focused = byPath.get(focused.path);
+  hover = undefined;
   // O layout assenta de uma vez: sem nós andando pela tela, e sem custo de quadro depois.
-  heat = 1;
-  const rounds = nodes.length > 1500 ? 60 : nodes.length > 600 ? 120 : 340;
-  for (let i = 0; i < rounds && heat > 0; i++) simulate();
+  // O resfriamento é calculado para a temperatura chegar a zero no último passo, qualquer
+  // que seja o número de passos; num vault que já estava na tela (um salvamento, um sync)
+  // as notas conhecidas ficam onde estavam e basta um ajuste curto.
+  const known = nodes.filter((n) => previous.has(n.path)).length;
+  const warm = known >= nodes.length * 0.9;
+  heat = warm ? 0.3 : 1;
+  const rounds = warm ? 60 : nodes.length > 1500 ? 60 : nodes.length > 600 ? 120 : 340;
+  const cooling = heat / rounds;
+  for (let i = 0; i < rounds; i++) simulate(cooling);
   heat = 0;
   const notas = nodes.length === 1 ? l10n.t('1 note') : l10n.t('{0} notes', nodes.length);
   const links = edges.length === 1 ? l10n.t('1 link') : l10n.t('{0} links', edges.length);
@@ -133,7 +140,7 @@ function load(graph: VaultGraphData): void {
   requestDraw();
 }
 
-function simulate(): void {
+function simulate(cooling = 0.003): void {
   const count = nodes.length;
   // Repulsão: todos contra todos até ~600 notas; acima disso, amostra vizinhos próximos.
   const step = count > 600 ? Math.ceil(count / 600) : 1;
@@ -178,7 +185,7 @@ function simulate(): void {
     n.x += n.vx * heat;
     n.y += n.vy * heat;
   }
-  heat = Math.max(0, heat - 0.003);
+  heat = Math.max(0, heat - cooling);
 }
 
 function radius(n: Node): number {
@@ -302,6 +309,8 @@ canvas.addEventListener('mousemove', (event) => {
 canvas.addEventListener('mouseleave', () => {
   if (!hover) return;
   hover = undefined;
+  canvas.style.cursor = '';
+  canvas.title = '';
   requestDraw();
 });
 canvas.addEventListener(
