@@ -68,6 +68,8 @@ describe('parseUpdateNotice', () => {
 describe('versões', () => {
   it('lê os três números como o serviço de atualização', () => {
     expect(versionParts('1.135.0000101')).toEqual([1, 135, 101]);
+    expect(versionParts('1.143.10118')).toEqual([1, 143, 10118]);
+    expect(versionParts('1.143.10118.0')).toEqual([1, 143, 10118]);
     expect(versionParts('1.135.101.0')).toEqual([1, 135, 101]);
     expect(versionParts('1.135.06960')).toEqual([1, 135, 6960]);
     expect(versionParts('1.135')).toBeUndefined();
@@ -78,6 +80,9 @@ describe('versões', () => {
     expect(isNewer('1.135.0000101', '1.135.101.0')).toBe(false);
     expect(isNewer('1.135.0000200', '1.135.101.0')).toBe(false);
     expect(isNewer('1.135.0000200', '1.136.1.0')).toBe(true);
+    // De quem está na v0.1.17 (Code-OSS 1.140.0) para a v0.1.18 (Code-OSS 1.143.1).
+    expect(isNewer('1.140.117', '1.143.10118.0')).toBe(true);
+    expect(isNewer('1.143.10118', '1.143.10118.0')).toBe(false);
     expect(isNewer('nada', '1.135.101.0')).toBe(false);
   });
 });

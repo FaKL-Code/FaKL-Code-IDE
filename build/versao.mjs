@@ -4,10 +4,15 @@
 // O VS Code compara a versão do app com a do manifesto de atualização (ADR 0037).
 // Os scripts do VSCodium montam essa versão com a data do build (dia do ano e hora),
 // que volta ao começo todo ano e não diz nada sobre a release. Aqui ela sai da tag:
-// vX.Y.Z vira `<Code-OSS>` + X*10000 + Y*100 + Z, com seis dígitos. O VSCodium aceita
+// vX.Y.Z vira `<Code-OSS>` + X*10000 + Y*100 + Z, com quatro dígitos. O VSCodium aceita
 // um RELEASE_VERSION já definido desde que comece pela tag do Code-OSS.
 //
-//   v0.1.1 + Code-OSS 1.135.0  ->  1.135.0000101  (o app mostra 1.135.101)
+//   v0.1.1  + Code-OSS 1.135.0  ->  1.135.00101  (o app mostra 1.135.101)
+//   v0.1.18 + Code-OSS 1.143.1  ->  1.143.10118  (o app mostra 1.143.10118)
+//
+// O terceiro número é o dígito de patch do Code-OSS seguido dos quatro do contador, e o
+// Windows aceita no máximo 65535 em cada parte da versão do instalador (ADR 0054). Até a
+// v0.1.17 eram seis dígitos, que só cabiam com o patch do Code-OSS em 0.
 //
 // Uso: node build/versao.mjs v0.1.1   (imprime o RELEASE_VERSION)
 
@@ -30,6 +35,9 @@ export function numeroDaVersao({ major, minor, patch }) {
   return major * 10_000 + minor * 100 + patch;
 }
 
+/** Maior contador que cabe: com patch 5 do Code-OSS, 5*10000 + 9999 = 59999 < 65535. */
+export const LIMITE_DO_CONTADOR = 9_999;
+
 /** RELEASE_VERSION do VSCodium para a tag, em cima da tag do Code-OSS (ex. "1.135.0"). */
 export function releaseVersion(tag, codeOssTag) {
   const versao = lerTag(tag);
@@ -37,7 +45,13 @@ export function releaseVersion(tag, codeOssTag) {
   if (!/^\d+\.\d+\.[0-5]$/.test(codeOssTag)) {
     throw new Error(`tag do Code-OSS inesperada: ${codeOssTag}`);
   }
-  return `${codeOssTag}${String(numeroDaVersao(versao)).padStart(6, '0')}`;
+  const numero = numeroDaVersao(versao);
+  if (numero > LIMITE_DO_CONTADOR) {
+    throw new Error(
+      `a tag ${tag} não cabe na versão do instalador do Windows (contador ${numero}, máximo ${LIMITE_DO_CONTADOR}): veja a ADR 0054`,
+    );
+  }
+  return `${codeOssTag}${String(numero).padStart(4, '0')}`;
 }
 
 /**
@@ -57,10 +71,11 @@ export function versaoDoApp(produto) {
 
 /** A tag vX.Y.Z que originou um RELEASE_VERSION feito por `releaseVersion`. */
 export function tagDaRelease(release) {
-  // O primeiro dígito do terceiro número é o patch do Code-OSS; o resto, o da release.
-  // Os da data (`06960`) têm quatro dígitos depois dele, os nossos seis.
+  // O primeiro dígito do terceiro número é o patch do Code-OSS; o resto, o da release:
+  // quatro dígitos, ou seis nas releases até a v0.1.17. A versão da data do build também
+  // tem quatro (`06960`), então quem usa isto compara o resultado com a tag que pediu.
   const digitos = (release.split('.')[2] ?? '').slice(1);
-  if (!/^\d{6}$/.test(digitos)) return undefined;
+  if (!/^(\d{4}|\d{6})$/.test(digitos)) return undefined;
   const terceiro = Number.parseInt(digitos, 10);
   const major = Math.floor(terceiro / 10_000);
   const minor = Math.floor((terceiro % 10_000) / 100);

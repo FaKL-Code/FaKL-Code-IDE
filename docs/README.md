@@ -80,3 +80,4 @@
 | [0051](adr/0051-cafe-do-ci.md)                                                 | Café do CI: as execuções do GitHub Actions como a cozinha do cyber café |
 | [0052](adr/0052-modo-economico-de-tokens.md)                                   | Modo econômico de tokens                                                |
 | [0053](adr/0053-cozinha-do-ci-em-tela-propria.md)                              | Cozinha do CI em tela própria, com as saídas do café e da Mesa          |
+| [0054](adr/0054-versao-interna-dentro-do-limite-do-windows.md)                 | Versão interna dentro do limite do Windows                              |

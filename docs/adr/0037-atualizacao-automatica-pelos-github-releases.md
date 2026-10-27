@@ -33,7 +33,7 @@ Três pontos não vêm prontos:
   `build/manifestos-update.mjs` (SHA-1 e SHA-256 do instalador final, já
   assinado) e os publica nessa branch, depois de criar a release.
 - A versão do app sai da tag (`build/versao.mjs`): `vX.Y.Z` vira o RELEASE_VERSION
-  do VSCodium com `X*10000 + Y*100 + Z`, em seis dígitos, sobre a tag do Code-OSS
+  do VSCodium com `X*10000 + Y*100 + Z`, em seis dígitos (quatro desde a ADR 0054), sobre a tag do Code-OSS
   (`v0.1.1` com Code-OSS 1.135.0 dá `1.135.0000101`, e o app mostra `1.135.101`).
   Cresce a cada release e entre versões do Code-OSS. Tags com sufixo (`-rc1`) não
   entram na atualização; esse build leva a versão da data.

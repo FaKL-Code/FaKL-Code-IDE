@@ -88,8 +88,8 @@ com os instaladores e um `SHA256SUMS.txt`. Versões `0.x` saem como pré-release
 A IDE se atualiza pelos GitHub Releases (ADR 0037). Três peças:
 
 - **Versão do app.** O `build.yml` passa a tag da release ao `build/versao.mjs`, que
-  monta o RELEASE_VERSION do VSCodium: `vX.Y.Z` vira `X*10000 + Y*100 + Z` em seis
-  dígitos, sobre a tag do Code-OSS. Tags com sufixo (`v0.2.0-rc1`) e builds manuais
+  monta o RELEASE_VERSION do VSCodium: `vX.Y.Z` vira `X*10000 + Y*100 + Z` em quatro
+  dígitos, sobre a tag do Code-OSS (ADR 0054). Tags com sufixo (`v0.2.0-rc1`) e builds manuais
   sem tag usam a versão da data do build e não entram na atualização.
 - **Manifestos.** Depois de criar a release, o `release.yml` roda
   `build/manifestos-update.mjs` e publica os `latest.json` na branch `atualizacoes`.
@@ -102,10 +102,17 @@ A IDE se atualiza pelos GitHub Releases (ADR 0037). Três peças:
 
 | Tag da release | RELEASE_VERSION (Code-OSS 1.135.0) | Versão em **Sobre** |
 | -------------- | ---------------------------------- | ------------------- |
-| `v0.1.0`       | `1.135.0000100`                    | `1.135.100`         |
-| `v0.1.1`       | `1.135.0000101`                    | `1.135.101`         |
-| `v0.2.0`       | `1.135.0000200`                    | `1.135.200`         |
-| `v1.0.0`       | `1.135.0010000`                    | `1.135.10000`       |
+| `v0.1.0`       | `1.135.00100`                      | `1.135.100`         |
+| `v0.1.1`       | `1.135.00101`                      | `1.135.101`         |
+| `v0.2.0`       | `1.135.00200`                      | `1.135.200`         |
+| `v0.99.99`     | `1.135.09999`                      | `1.135.9999`        |
+
+Com o Code-OSS 1.143.1, a `v0.1.18` dá `1.143.10118`: o terceiro número é o dígito de patch
+do Code-OSS seguido dos quatro do contador. O Windows aceita no máximo 65535 em cada parte
+da versão do instalador, então o contador vai até 9999 (`v0.99.99`); a `v1.0.0` pede um
+esquema novo e o `build/versao.mjs` recusa a tag antes de o build começar. Até a `v0.1.17`
+eram seis dígitos (`1.140.0000117`), que só cabiam com o patch do Code-OSS em 0; o app
+se atualiza dessas para as novas sem mudança, porque o que ele compara é o número.
 
 A v0.1.0 saiu antes disso (versão `1.135.06960`, da data) e não se atualiza: a
 v0.1.1 em diante sim. Para retirar uma release ruim, reverta o commit dela na
