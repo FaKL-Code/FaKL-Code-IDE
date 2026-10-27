@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 import type { AgentEventRouter } from './agents.js';
 import { EmbeddingsUi } from './vault-embeddings.js';
 import type { EmbedNote } from './vault-embed.js';
+import { VaultNotesUi } from './vault-tree.js';
+import type { FolderNode } from './vault-tree-model.js';
 
 interface GraphNode {
   path: string;
@@ -42,12 +44,15 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
   private readonly disposables: vscode.Disposable[] = [];
   private readonly item: vscode.StatusBarItem;
   private readonly changed = new vscode.EventEmitter<undefined>();
+  private readonly notesChanged = new vscode.EventEmitter<void>();
   private readonly backlinksView: vscode.TreeView<Backlink>;
   private client: CoreClient | undefined;
   private status: VaultStatus | undefined;
   private syncing = false;
   /** Nome da nota (sem .md, minúsculo) e caminho relativo → caminho relativo. */
   private names = new Map<string, string>();
+  /** Caminhos de todas as notas do vault, para o explorador da barra lateral. */
+  private notePaths: string[] = [];
   private backlinks: Backlink[] = [];
   private watcher: vscode.FileSystemWatcher | undefined;
   private refreshTimer: NodeJS.Timeout | undefined;
@@ -72,7 +77,13 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
       this.item,
       this.embeddings,
       this.changed,
+      this.notesChanged,
       this.backlinksView,
+      new VaultNotesUi(
+        () => this.root,
+        () => this.notePaths,
+        this.notesChanged.event,
+      ),
       router.listen((event) => {
         if (event.topic === 'vault.sync') {
           const data = event.data as { fase?: string; conflicts?: string[]; error?: string };
@@ -95,6 +106,9 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
       vscode.commands.registerCommand('fakl.vault.daily', () => this.daily()),
       vscode.commands.registerCommand('fakl.vault.appendDaily', () => this.appendDaily()),
       vscode.commands.registerCommand('fakl.vault.newNote', () => this.newNote()),
+      vscode.commands.registerCommand('fakl.vault.newNoteHere', (folder: FolderNode) =>
+        this.newNote(folder.path),
+      ),
       vscode.commands.registerCommand('fakl.vault.sync', () => this.sync()),
       vscode.commands.registerCommand('fakl.vault.openWindow', () => this.openWindow()),
       vscode.commands.registerCommand('fakl.vault.openNote', (path: string) => this.open(path)),
@@ -112,6 +126,8 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
   disconnected(): void {
     this.client = undefined;
     this.status = undefined;
+    this.notePaths = [];
+    this.notesChanged.fire();
     this.render();
   }
 
@@ -164,10 +180,12 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
 
   private async refreshNames(): Promise<void> {
     const names = new Map<string, string>();
+    let paths: string[] = [];
     if (this.client && this.root) {
       const graph = await this.client
         .request<{ nodes: GraphNode[] }>('vault.graph')
         .catch(() => ({ nodes: [] }));
+      paths = graph.nodes.map((node) => node.path);
       // Caminhos mais curtos primeiro: como no Obsidian, vencem nomes repetidos.
       const nodes = [...graph.nodes].sort((a, b) => a.path.length - b.path.length);
       for (const node of nodes) {
@@ -179,6 +197,8 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
       }
     }
     this.names = names;
+    this.notePaths = paths;
+    this.notesChanged.fire();
   }
 
   private render(): void {
@@ -316,7 +336,6 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
     const item = new vscode.TreeItem(link.title);
     if (link.path.includes('/')) item.description = dirname(link.path);
     item.tooltip = link.path;
-    item.iconPath = new vscode.ThemeIcon('references');
     item.command = {
       command: 'fakl.vault.openNote',
       title: l10n.t('Open'),
@@ -581,16 +600,19 @@ export class VaultUi implements vscode.TreeDataProvider<Backlink>, vscode.Dispos
     await client.request('vault.appendDaily', { texto });
   }
 
-  private async newNote(): Promise<void> {
+  /** Cria uma nota; `folder` vem do menu de uma pasta do explorador, senão vai para a Inbox. */
+  private async newNote(folder?: string): Promise<void> {
     const client = this.requireClient();
     if (!client || !(await this.requireVault())) return;
     const titulo = await vscode.window.showInputBox({
       title: l10n.t('New note'),
-      prompt: l10n.t('Title; use Folder/Title to create it outside the Inbox'),
+      prompt: folder
+        ? l10n.t('Title of the new note in {0}', folder)
+        : l10n.t('Title; use Folder/Title to create it outside the Inbox'),
     });
     if (!titulo?.trim()) return;
     const clean = titulo.trim().replace(/[\\:*?"<>|#^[\]]/g, '-');
-    const path = clean.includes('/') ? clean : `Inbox/${clean}`;
+    const path = clean.includes('/') ? clean : `${folder ?? 'Inbox'}/${clean}`;
     const name = path.split('/').pop() ?? clean;
     const existing = this.names.get(path.toLowerCase());
     if (existing) {

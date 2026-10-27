@@ -711,6 +711,8 @@
   "Anything extra for this time? (optional)": "Algo a mais para esta vez? (opcional)",
   "The playbook didn't start: {0}": "O playbook não começou: {0}",
   "Open a vault note to turn it into a task.": "Abra uma nota do vault para virar tarefa.",
+  "No notes in the vault yet.": "Ainda não há notas no vault.",
+  "Title of the new note in {0}": "Título da nova nota em {0}",
   "The note didn't become a task: {0}": "A nota não virou tarefa: {0}",
   "Audit log": "Auditoria",
   "Sensitive actions, newest first": "Ações sensíveis, da mais nova",
