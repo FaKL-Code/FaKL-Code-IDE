@@ -11,13 +11,27 @@
 
 .fakl-wikilink-missing {
   opacity: 0.6;
+  text-decoration: underline dashed;
+  text-underline-offset: 2px;
 }
 
 .fakl-callout {
   --fakl-callout: var(--vscode-textLink-foreground, #4a8fd9);
+  border: 1px solid color-mix(in srgb, var(--fakl-callout) 25%, transparent);
   border-radius: 6px;
   padding: 0.5em 1em;
   background: color-mix(in srgb, var(--fakl-callout) 8%, transparent);
+}
+
+/* Temas de alto contraste: sem cor para sustentar, o link e o callout ganham traço. */
+@media (forced-colors: active) {
+  .fakl-wikilink {
+    text-decoration: underline;
+  }
+
+  .fakl-callout {
+    border-color: CanvasText;
+  }
 }
 
 .fakl-callout-title {

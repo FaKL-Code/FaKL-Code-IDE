@@ -1,6 +1,8 @@
+import { join, resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { NoteTree } from '../src/vault-tree-model.js';
+import { newNotePath, NoteTree, pathInside } from '../src/vault-tree-model.js';
 
 const PATHS = [
   'Inbox/Ideia.md',
@@ -64,5 +66,43 @@ describe('NoteTree', () => {
     const empty = new NoteTree([]);
     expect(empty.children()).toEqual([]);
     expect(empty.size).toBe(0);
+  });
+});
+
+describe('newNotePath', () => {
+  it('um título solto vai para a Inbox', () => {
+    expect(newNotePath('Ideia')).toBe('Inbox/Ideia');
+    expect(newNotePath('  Ideia  ')).toBe('Inbox/Ideia');
+  });
+
+  it('sem pasta, Pasta/Título é um caminho do vault', () => {
+    expect(newNotePath('Projetos/Plano')).toBe('Projetos/Plano');
+  });
+
+  it('com pasta, o título fica dentro dela, mesmo com barras', () => {
+    expect(newNotePath('Ideia', 'Projetos/FaKL')).toBe('Projetos/FaKL/Ideia');
+    expect(newNotePath('Sub/Ideia', 'Projetos/FaKL')).toBe('Projetos/FaKL/Sub/Ideia');
+  });
+
+  it('troca por hífen os caracteres que não cabem num nome de nota', () => {
+    expect(newNotePath('a:b*c?d#e^f[g]h|i')).toBe('Inbox/a-b-c-d-e-f-g-h-i');
+  });
+});
+
+describe('pathInside', () => {
+  const root = resolve('/vault');
+
+  it('devolve o caminho relativo com barras', () => {
+    expect(pathInside(root, join(root, 'Projetos', 'Plano.md'))).toBe('Projetos/Plano.md');
+  });
+
+  it('aceita pasta cujo nome começa com dois pontos', () => {
+    expect(pathInside(root, join(root, '..arquivo', 'nota.md'))).toBe('..arquivo/nota.md');
+  });
+
+  it('recusa o que está fora do vault ou é o próprio vault', () => {
+    expect(pathInside(root, join(root, '..', 'outro', 'nota.md'))).toBeUndefined();
+    expect(pathInside(root, resolve('/outro/nota.md'))).toBeUndefined();
+    expect(pathInside(root, root)).toBeUndefined();
   });
 });

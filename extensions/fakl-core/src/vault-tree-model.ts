@@ -1,3 +1,5 @@
+import { isAbsolute, relative, sep } from 'node:path';
+
 /*
  * Árvore de pastas e notas do vault, como o explorador de arquivos do Obsidian.
  * Lógica pura: recebe os caminhos das notas e devolve o que a barra lateral mostra.
@@ -108,4 +110,22 @@ export class NoteTree {
       count: this.folders.get(path)?.count ?? 0,
     };
   }
+}
+
+/**
+ * Caminho de uma nota nova. Com `folder` (o menu de uma pasta do explorador), o título
+ * fica dentro dela, mesmo com barras (`Sub/Ideia` vira `Pasta/Sub/Ideia`); sem pasta,
+ * `Pasta/Título` é um caminho do vault e um título solto vai para a Inbox.
+ */
+export function newNotePath(title: string, folder?: string): string {
+  const clean = title.trim().replace(/[\\:*?"<>|#^[\]]/g, '-');
+  if (folder) return `${folder}/${clean}`;
+  return clean.includes('/') ? clean : `Inbox/${clean}`;
+}
+
+/** Caminho relativo (com `/`) de `file` dentro de `root`, ou `undefined` se estiver fora. */
+export function pathInside(root: string, file: string): string | undefined {
+  const rel = relative(root, file);
+  if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return undefined;
+  return rel.split(sep).join('/');
 }

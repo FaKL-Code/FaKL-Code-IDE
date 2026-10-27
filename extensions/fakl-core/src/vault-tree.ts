@@ -1,9 +1,7 @@
-import { relative, sep } from 'node:path';
-
 import { l10n } from '@fakl/i18n';
 import * as vscode from 'vscode';
 
-import { NoteTree, type TreeNode } from './vault-tree-model.js';
+import { NoteTree, pathInside, type TreeNode } from './vault-tree-model.js';
 
 /**
  * Explorador de notas do vault: pastas e notas na barra lateral, com a nota
@@ -47,19 +45,22 @@ export class VaultNotesUi implements vscode.TreeDataProvider<TreeNode>, vscode.D
   }
 
   private refresh(): void {
+    // Só a primeira carga leva a nota aberta à vista: depois, cada salvamento ou sync
+    // reabriria as pastas que a pessoa fechou e tiraria a seleção de onde ela a pôs.
+    const first = this.tree.size === 0;
     this.tree = new NoteTree(this.notes());
     this.view.message =
       this.root() && this.tree.size === 0 ? l10n.t('No notes in the vault yet.') : '';
     this.changed.fire(undefined);
-    void this.reveal(vscode.window.activeTextEditor?.document.uri);
+    if (first) void this.reveal(vscode.window.activeTextEditor?.document.uri);
   }
 
   /** Marca no explorador a nota que está aberta, abrindo as pastas até ela. */
   private async reveal(uri: vscode.Uri | undefined): Promise<void> {
     const root = this.root();
     if (!root || !this.view.visible || uri?.scheme !== 'file') return;
-    const rel = relative(root, uri.fsPath).split(sep).join('/');
-    if (rel.startsWith('..') || !this.tree.has(rel)) return;
+    const rel = pathInside(root, uri.fsPath);
+    if (!rel || !this.tree.has(rel)) return;
     try {
       await this.view.reveal(this.tree.noteNode(rel), { select: true, focus: false, expand: true });
     } catch {
