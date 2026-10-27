@@ -122,6 +122,7 @@
   "command.vault.daily": "Abrir a nota de hoje",
   "command.vault.appendDaily": "Anotar no diário",
   "command.vault.newNote": "Nova nota no vault",
+  "command.vault.newNoteHere": "Nova nota nesta pasta",
   "command.vault.sync": "Sincronizar o vault",
   "command.vault.openWindow": "Abrir o vault numa janela",
   "command.vault.openNote": "Abrir nota",
@@ -266,7 +267,6 @@
   "viewsWelcome.resources.skills.2": "Nenhuma skill instalada. A IDE não traz skills prontas: elas vêm de fontes de recursos (um repositório git ou uma pasta) ou são criadas aqui.\n[Adicionar uma fonte de recursos](command:fakl.resources.sources.add)\n[Criar skill](command:fakl.resources.skills.create)",
   "viewsWelcome.resources.skills.3": "Nenhuma skill instalada na IDE.\n[Instalar das fontes](command:fakl.resources.skills.install)\n[Criar skill](command:fakl.resources.skills.create)",
   "viewsWelcome.resources.mcps.1": "Nenhum servidor MCP neste workspace. Eles ficam em .vscode/mcp.json do projeto.\n[Adicionar servidor MCP](command:fakl.resources.mcps.create)",
-  "viewsWelcome.vault.backlinks.1": "O vault guarda notas em Markdown, no formato do Obsidian, sincronizadas entre suas máquinas por um repositório git privado.\n[Configurar o vault](command:fakl.vault.configure)",
   "viewsWelcome.ssh.hosts.1": "Nenhum host ainda.\n[Novo host](command:fakl.ssh.add)\n[Editar ~/.ssh/config](command:fakl.ssh.editConfig)",
   "viewsWelcome.ssh.forwards.1": "Nenhum encaminhamento. Encaminhe uma porta de um host para abrir, por exemplo, o painel de um banco que só escuta no 127.0.0.1 do servidor.\n[Encaminhar uma porta](command:fakl.ssh.forward.open)",
   "viewsWelcome.resources.mcpLibrary.1": "O FaKL Core não está respondendo. Os servidores MCP da IDE aparecerão quando a conexão voltar.\n[Tentar conectar](command:fakl.core.status)",
@@ -320,5 +320,7 @@
   "config.rede.consultasAutomaticas": "Deixar a FaKL-Code fazer as consultas automáticas à rede: a última versão dos adaptadores dos agentes no npm (Provedores e Doctor) e, no macOS, o aviso de versão nova no GitHub. Desligada, nenhuma das duas acontece; os comandos \"Conferir as versões dos conectores\" e \"Procurar atualização da FaKL-Code\" continuam valendo à mão. Não cobre o atualizador do próprio editor (use `update.mode` com `none`), as atualizações de extensões nem os serviços que você configurou (GitHub, relay, voz e outros). Veja docs/privacidade.md.",
   "command.economia.show": "Mostrar a economia de tokens",
   "command.economia.setMode": "Trocar o modo de economia de tokens",
-  "command.economia.reset": "Zerar os contadores de economia de tokens"
+  "command.economia.reset": "Zerar os contadores de economia de tokens",
+  "view.vault.notes": "Notas",
+  "viewsWelcome.vault.notes.1": "O vault guarda notas em Markdown, no formato do Obsidian, sincronizadas entre suas máquinas por um repositório git privado.\n[Configurar o vault](command:fakl.vault.configure)"
 }

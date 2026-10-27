@@ -87,13 +87,11 @@ export class VaultGraphUi implements vscode.TreeDataProvider<TagItem>, vscode.Di
     if (item.kind === 'tag') {
       const tree = new vscode.TreeItem(`#${item.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
       tree.description = String(item.count);
-      tree.iconPath = new vscode.ThemeIcon('tag');
       tree.contextValue = 'tag';
       return tree;
     }
     const tree = new vscode.TreeItem(item.title, vscode.TreeItemCollapsibleState.None);
     tree.description = item.path;
-    tree.iconPath = new vscode.ThemeIcon('note');
     tree.command = {
       command: 'fakl.vault.openNote',
       title: l10n.t('Open'),
@@ -205,11 +203,12 @@ export class VaultGraphUi implements vscode.TreeDataProvider<TagItem>, vscode.Di
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
   canvas { display: block; width: 100vw; height: 100vh; }
-  #filtro { position: absolute; top: 8px; left: 8px; width: 220px; padding: 4px 6px; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent); }
-  #info { position: absolute; bottom: 8px; left: 8px; color: var(--vscode-descriptionForeground); font-size: 12px; }
-  #controles { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
-  #controles button { min-width: 28px; padding: 3px 8px; color: var(--vscode-button-secondaryForeground, var(--vscode-foreground)); background: var(--vscode-button-secondaryBackground, transparent); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border, transparent)); border-radius: 3px; font: inherit; cursor: pointer; }
-  #controles button:hover { background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground)); }
+  #filtro { position: absolute; top: 10px; left: 10px; width: 200px; padding: 3px 8px; color: var(--vscode-input-foreground); background: transparent; border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent)); border-radius: 4px; font: inherit; }
+  #filtro:focus { background: var(--vscode-input-background); }
+  #info { position: absolute; bottom: 10px; left: 10px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+  #controles { position: absolute; top: 10px; right: 10px; display: flex; gap: 2px; }
+  #controles button { min-width: 26px; padding: 2px 7px; color: var(--vscode-descriptionForeground); background: transparent; border: 1px solid transparent; border-radius: 4px; font: inherit; cursor: pointer; }
+  #controles button:hover { color: var(--vscode-foreground); background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)); }
   canvas:focus-visible, #filtro:focus-visible, #controles button:focus-visible, .so-leitor button:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: -2px; }
   .so-leitor { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
   .so-leitor:focus-within { position: absolute; top: 40px; left: 8px; width: auto; height: auto; max-width: 60%; margin: 0; padding: 4px; overflow: auto; max-height: 40%; clip-path: none; white-space: normal; background: var(--vscode-editorWidget-background); border: 1px solid var(--vscode-focusBorder); }

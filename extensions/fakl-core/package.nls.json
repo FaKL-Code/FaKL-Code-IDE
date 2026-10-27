@@ -122,6 +122,7 @@
   "command.vault.daily": "Open today's note",
   "command.vault.appendDaily": "Add to the daily note",
   "command.vault.newNote": "New vault note",
+  "command.vault.newNoteHere": "New note in this folder",
   "command.vault.sync": "Sync the vault",
   "command.vault.openWindow": "Open the vault in a window",
   "command.vault.openNote": "Open note",
@@ -266,7 +267,6 @@
   "viewsWelcome.resources.skills.2": "No skills installed. The IDE ships with no skills: they come from resource sources (a git repository or a folder) or are created here.\n[Add a resource source](command:fakl.resources.sources.add)\n[Create skill](command:fakl.resources.skills.create)",
   "viewsWelcome.resources.skills.3": "No skills installed in the IDE.\n[Install from sources](command:fakl.resources.skills.install)\n[Create skill](command:fakl.resources.skills.create)",
   "viewsWelcome.resources.mcps.1": "No MCP servers in this workspace. They live in the project's .vscode/mcp.json.\n[Add MCP server](command:fakl.resources.mcps.create)",
-  "viewsWelcome.vault.backlinks.1": "The vault keeps Markdown notes, in Obsidian format, synced across your machines through a private git repository.\n[Set up the vault](command:fakl.vault.configure)",
   "viewsWelcome.ssh.hosts.1": "No hosts yet.\n[New host](command:fakl.ssh.add)\n[Edit ~/.ssh/config](command:fakl.ssh.editConfig)",
   "viewsWelcome.ssh.forwards.1": "No port forwards. Forward a port of a host to open, for example, a database panel that only listens on the host's 127.0.0.1.\n[Forward a port](command:fakl.ssh.forward.open)",
   "viewsWelcome.resources.mcpLibrary.1": "The FaKL Core is not responding. The IDE's MCP servers will show up when the connection is back.\n[Try to connect](command:fakl.core.status)",
@@ -320,5 +320,7 @@
   "config.rede.consultasAutomaticas": "Let FaKL-Code make its automatic network queries: the latest agent adapter versions on npm (Providers and Doctor) and, on macOS, the new-version notice on GitHub. Turn it off to stop both; the commands \"Check adapter versions\" and \"Check for FaKL-Code updates\" still work by hand. It does not cover the editor's own updater (set `update.mode` to `none`), extension updates, or the services you configured (GitHub, relay, voice, and so on). See docs/privacidade.md.",
   "command.economia.show": "Show token saving",
   "command.economia.setMode": "Change token saving mode",
-  "command.economia.reset": "Reset token saving counters"
+  "command.economia.reset": "Reset token saving counters",
+  "view.vault.notes": "Notes",
+  "viewsWelcome.vault.notes.1": "The vault keeps Markdown notes, in Obsidian format, synced across your machines through a private git repository.\n[Set up the vault](command:fakl.vault.configure)"
 }

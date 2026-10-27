@@ -602,6 +602,12 @@
         "icon": "$(new-file)"
       },
       {
+        "command": "fakl.vault.newNoteHere",
+        "title": "%command.vault.newNoteHere%",
+        "category": "FaKL",
+        "icon": "$(new-file)"
+      },
+      {
         "command": "fakl.vault.sync",
         "title": "%command.vault.sync%",
         "category": "FaKL",
@@ -1185,6 +1191,11 @@
           "icon": "media/agents.svg"
         },
         {
+          "id": "fakl-vault",
+          "title": "Vault",
+          "icon": "media/vault.svg"
+        },
+        {
           "id": "fakl-claude",
           "title": "%viewsContainer.fakl-claude%",
           "icon": "media/claude.svg"
@@ -1229,11 +1240,19 @@
           "id": "fakl.tasks",
           "name": "%view.tasks%",
           "contextualTitle": "%view.tasks.contextualTitle%"
+        }
+      ],
+      "fakl-vault": [
+        {
+          "id": "fakl.vault.notes",
+          "name": "%view.vault.notes%",
+          "contextualTitle": "Vault"
         },
         {
           "id": "fakl.vault.backlinks",
           "name": "Backlinks",
-          "contextualTitle": "Vault"
+          "contextualTitle": "Vault",
+          "when": "fakl.vault.active"
         },
         {
           "id": "fakl.vault.tags",
@@ -1412,8 +1431,8 @@
         "when": "workspaceFolderCount > 0"
       },
       {
-        "view": "fakl.vault.backlinks",
-        "contents": "%viewsWelcome.vault.backlinks.1%",
+        "view": "fakl.vault.notes",
+        "contents": "%viewsWelcome.vault.notes.1%",
         "when": "!fakl.vault.active"
       },
       {
@@ -1604,28 +1623,33 @@
         },
         {
           "command": "fakl.vault.search",
-          "when": "view == fakl.vault.backlinks",
+          "when": "view == fakl.vault.notes",
           "group": "navigation@1"
         },
         {
-          "command": "fakl.vault.graph",
-          "when": "view == fakl.vault.backlinks",
+          "command": "fakl.vault.newNote",
+          "when": "view == fakl.vault.notes && fakl.vault.active",
           "group": "navigation@2"
         },
         {
           "command": "fakl.vault.daily",
-          "when": "view == fakl.vault.backlinks",
-          "group": "navigation@2"
-        },
-        {
-          "command": "fakl.vault.newNote",
-          "when": "view == fakl.vault.backlinks",
+          "when": "view == fakl.vault.notes && fakl.vault.active",
           "group": "navigation@3"
         },
         {
+          "command": "fakl.vault.graph",
+          "when": "view == fakl.vault.notes && fakl.vault.active",
+          "group": "overflow@1"
+        },
+        {
           "command": "fakl.vault.sync",
-          "when": "view == fakl.vault.backlinks && fakl.vault.active",
-          "group": "navigation@4"
+          "when": "view == fakl.vault.notes && fakl.vault.active",
+          "group": "overflow@2"
+        },
+        {
+          "command": "fakl.vault.menu",
+          "when": "view == fakl.vault.notes",
+          "group": "overflow@3"
         },
         {
           "command": "fakl.playbooks.run",
@@ -2128,6 +2152,16 @@
           "command": "fakl.resources.mcpLibrary.remove",
           "when": "viewItem == fakl.resource.mcpLibrary",
           "group": "inline@2"
+        },
+        {
+          "command": "fakl.vault.newNoteHere",
+          "when": "view == fakl.vault.notes && viewItem == folder",
+          "group": "inline"
+        },
+        {
+          "command": "fakl.vault.newNoteHere",
+          "when": "view == fakl.vault.notes && viewItem == folder",
+          "group": "navigation"
         }
       ],
       "commandPalette": [
@@ -2201,6 +2235,10 @@
         },
         {
           "command": "fakl.vault.openNote",
+          "when": "false"
+        },
+        {
+          "command": "fakl.vault.newNoteHere",
           "when": "false"
         },
         {

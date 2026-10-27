@@ -16,8 +16,11 @@ import {
 
 /*
  * Grafo do vault (RF-403): nós são notas, arestas são wikilinks. Layout por
- * forças (repulsão, molas e gravidade) num canvas; arrastar move a vista,
- * a roda dá zoom, clicar abre a nota e passar o mouse destaca os vizinhos.
+ * forças (repulsão, molas e gravidade) num canvas, calculado de uma vez ao
+ * carregar: a tela fica parada e só é redesenhada quando algo muda. Arrastar
+ * move a vista, a roda dá zoom, clicar abre a nota e passar o mouse destaca
+ * os vizinhos. Nós e ligações são neutros; só a nota aberta e a sob o mouse
+ * ganham a cor de destaque do tema.
  * Pelo teclado (RNF-14): Tab entra no canvas; as setas levam o foco à nota mais
  * próxima na direção, Page Down/Up percorrem a lista em ordem alfabética, Enter
  * abre, + e - dão zoom e Esc sai. Cada nota focada é lida num `aria-live`, com
@@ -76,12 +79,15 @@ const FG = color('--vscode-foreground', '#ccc');
 const MUTED = color('--vscode-descriptionForeground', '#888');
 const ACCENT = color('--vscode-textLink-foreground', '#4a8fd9');
 const FOCUS = color('--vscode-focusBorder', '#4a8fd9');
-const PALETTE = ['#e07a5f', '#81b29a', '#f2cc8f', '#9b8fd6', '#5fa8d3', '#d67ab1', '#a3b18a'];
+const FONT = color('--vscode-font-family', 'sans-serif');
 
-function folderColor(folder: string): string {
-  let h = 0;
-  for (const c of folder) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return folder ? (PALETTE[h % PALETTE.length] ?? MUTED) : MUTED;
+/** Pede um redesenho no próximo quadro; vários pedidos seguidos viram um só. */
+function requestDraw(): void {
+  if (frame) return;
+  frame = requestAnimationFrame(() => {
+    frame = 0;
+    draw();
+  });
 }
 
 function load(graph: VaultGraphData): void {
@@ -115,17 +121,16 @@ function load(graph: VaultGraphData): void {
     neighbors.get(b)?.add(a);
   }
   if (focused) focused = byPath.get(focused.path);
+  // O layout assenta de uma vez: sem nós andando pela tela, e sem custo de quadro depois.
   heat = 1;
-  // Com menos movimento pedido, o layout assenta de uma vez e a tela fica parada.
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    for (let i = 0; i < (nodes.length > 1500 ? 60 : 200); i++) simulate();
-    heat = 0;
-  }
+  const rounds = nodes.length > 1500 ? 60 : nodes.length > 600 ? 120 : 340;
+  for (let i = 0; i < rounds && heat > 0; i++) simulate();
+  heat = 0;
   const notas = nodes.length === 1 ? l10n.t('1 note') : l10n.t('{0} notes', nodes.length);
   const links = edges.length === 1 ? l10n.t('1 link') : l10n.t('{0} links', edges.length);
   info.textContent = `${notas} · ${links}`;
   canvas.setAttribute('aria-label', describeGraph(nodes.length, edges.length));
-  start();
+  requestDraw();
 }
 
 function simulate(): void {
@@ -177,7 +182,7 @@ function simulate(): void {
 }
 
 function radius(n: Node): number {
-  return 3 + Math.min(9, Math.sqrt(n.degree) * 1.6);
+  return 2.5 + Math.min(7, Math.sqrt(n.degree) * 1.4);
 }
 
 function visible(n: Node): boolean {
@@ -202,22 +207,22 @@ function draw(): void {
     if (!visible(a) || !visible(b)) continue;
     const lit = focus !== undefined && (a === focus || b === focus);
     ctx.strokeStyle = lit ? ACCENT : MUTED;
-    ctx.globalAlpha = lit ? 0.9 : focus ? 0.12 : 0.35;
+    ctx.globalAlpha = lit ? 0.8 : focus ? 0.1 : 0.25;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
-  ctx.font = `${String(11 / view.scale)}px sans-serif`;
+  ctx.font = `${String(11 / view.scale)}px ${FONT}`;
   ctx.textAlign = 'center';
   for (const n of nodes) {
     if (!visible(n)) continue;
     const dim = focus !== undefined && n !== focus && !near?.has(n);
-    ctx.globalAlpha = dim ? 0.25 : 1;
+    ctx.globalAlpha = dim ? 0.2 : 1;
     ctx.beginPath();
     ctx.arc(n.x, n.y, radius(n), 0, Math.PI * 2);
-    ctx.fillStyle = n.path === current ? ACCENT : folderColor(n.folder);
+    ctx.fillStyle = n === focus || n.path === current ? ACCENT : near?.has(n) === true ? FG : MUTED;
     ctx.fill();
     const label =
       n === focus || near?.has(n) === true || view.scale > 1.4 || (filter !== '' && visible(n));
@@ -237,24 +242,7 @@ function draw(): void {
   }
 }
 
-function loop(): void {
-  frame = requestAnimationFrame(loop);
-  // No começo, vários passos por quadro para o layout assentar rápido.
-  const steps = heat > 0.5 ? 4 : heat > 0 ? 1 : 0;
-  for (let i = 0; i < steps; i++) simulate();
-  draw();
-}
-
-function start(): void {
-  if (!frame) frame = requestAnimationFrame(loop);
-}
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    cancelAnimationFrame(frame);
-    frame = 0;
-  } else start();
-});
+window.addEventListener('resize', requestDraw);
 
 function toWorld(event: MouseEvent): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect();
@@ -300,12 +288,21 @@ canvas.addEventListener('mousemove', (event) => {
       view = { ...view, x: view.x + dx, y: view.y + dy };
       drag.x = event.clientX;
       drag.y = event.clientY;
+      requestDraw();
     }
     return;
   }
-  hover = nodeAt(event);
+  const over = nodeAt(event);
+  if (over === hover) return;
+  hover = over;
   canvas.style.cursor = hover ? 'pointer' : 'grab';
   canvas.title = hover ? hover.path : '';
+  requestDraw();
+});
+canvas.addEventListener('mouseleave', () => {
+  if (!hover) return;
+  hover = undefined;
+  requestDraw();
 });
 canvas.addEventListener(
   'wheel',
@@ -321,6 +318,7 @@ canvas.addEventListener(
       x: mx - ((mx - view.x) * scale) / view.scale,
       y: my - ((my - view.y) * scale) / view.scale,
     };
+    requestDraw();
   },
   { passive: false },
 );
@@ -382,6 +380,7 @@ function focusNode(n: Node | undefined): void {
   focused = n;
   reveal(n);
   announce(n);
+  requestDraw();
 }
 
 /** Primeira nota ao entrar com Tab: a aberta no editor, senão a primeira da lista. */
@@ -391,19 +390,27 @@ function initialNode(): Node | undefined {
   return sortNodes(visibleNodes())[0];
 }
 
+function resetView(): void {
+  view = { x: 0, y: 0, scale: 1 };
+  requestDraw();
+}
+
 function zoomCenter(direction: 'in' | 'out'): void {
   const scale = zoomStep(view.scale, direction);
   const k = scale / view.scale;
   view = { scale, x: view.x * k, y: view.y * k };
+  requestDraw();
 }
 
 canvas.addEventListener('focus', () => {
   canvasFocused = true;
   if (!focused || !visible(focused)) focusNode(initialNode());
   else announce(focused);
+  requestDraw();
 });
 canvas.addEventListener('blur', () => {
   canvasFocused = false;
+  requestDraw();
 });
 canvas.addEventListener('keydown', (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -431,10 +438,11 @@ canvas.addEventListener('keydown', (event) => {
     if (focused) vscode.postMessage({ type: 'open', path: focused.path });
   } else if (event.key === 'Escape') {
     focused = undefined;
+    requestDraw();
     filterInput.focus();
   } else if (event.key === '+' || event.key === '=') zoomCenter('in');
   else if (event.key === '-' || event.key === '_') zoomCenter('out');
-  else if (event.key === '0') view = { x: 0, y: 0, scale: 1 };
+  else if (event.key === '0') resetView();
   else handled = false;
   if (handled) event.preventDefault();
 });
@@ -451,18 +459,14 @@ for (const [id, action] of [
       zoomCenter('out');
     },
   ],
-  [
-    'zoom-reiniciar',
-    () => {
-      view = { x: 0, y: 0, scale: 1 };
-    },
-  ],
+  ['zoom-reiniciar', resetView],
 ] as const) {
   document.getElementById(id)?.addEventListener('click', action);
 }
 
 filterInput.addEventListener('input', () => {
   filter = filterInput.value.trim().toLowerCase();
+  requestDraw();
 });
 
 window.addEventListener('message', (event: MessageEvent<GraphToWebview | ToTips>) => {
@@ -472,6 +476,7 @@ window.addEventListener('message', (event: MessageEvent<GraphToWebview | ToTips>
     load(message.graph);
   } else if (message.type === 'current') {
     current = message.path;
+    requestDraw();
   }
 });
 

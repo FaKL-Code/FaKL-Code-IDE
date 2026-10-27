@@ -103,7 +103,7 @@ export const pt = {
       ['Chat e revisão', 'Logs, pausa, retomada e diff antes de aplicar.', '/docs/agentes/'],
       [
         'Vault',
-        'Grafo, backlinks, tags e sync por Git. Nota da sessão e Devlog prontos.',
+        'Explorador de notas, grafo, backlinks, tags e sync por Git. Nota da sessão e Devlog prontos.',
         '/docs/vault/',
       ],
       ['GitHub', 'PRs, revisões, issues e Actions de todos os repositórios.', '/docs/github/'],

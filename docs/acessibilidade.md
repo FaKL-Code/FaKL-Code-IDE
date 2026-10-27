@@ -28,7 +28,8 @@ O canvas é um alvo focável (`role="application"`, com o total de notas e links
   depois do canvas na ordem de Tab há a lista de links da nota; escolher um leva o foco a ele.
 - O filtro de notas e os botões de zoom (menos, 1:1, mais) têm rótulo. O anel de foco é desenhado
   no canvas, na cor de foco do tema.
-- Com `prefers-reduced-motion`, o layout assenta de uma vez e a tela fica parada.
+- O layout assenta de uma vez ao carregar e a tela fica parada: só é redesenhada quando algo muda
+  (mouse, zoom, filtro, foco). Por isso `prefers-reduced-motion` não precisa de caso à parte.
 
 ## Cyber café (painel da IDE)
 
