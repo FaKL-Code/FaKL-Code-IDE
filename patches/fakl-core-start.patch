@@ -3,7 +3,7 @@ index 8901db30..3c7ce8fe 100644
 --- a/src/vs/code/electron-main/app.ts
 +++ b/src/vs/code/electron-main/app.ts
 @@ -16,6 +16,7 @@ import { getPathLabel } from '../../base/common/labels.js';
- import { Disposable, DisposableStore, MutableDisposable, toDisposable } from '../../base/common/lifecycle.js';
+ import { Disposable, DisposableStore, toDisposable } from '../../base/common/lifecycle.js';
  import { Schemas, VSCODE_AUTHORITY } from '../../base/common/network.js';
  import { join, posix } from '../../base/common/path.js';
 +import { startFaklCore } from './faklCore.js';
