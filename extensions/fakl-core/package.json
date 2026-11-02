@@ -2831,7 +2831,7 @@
     "@fakl/voz": "workspace:*",
     "@types/markdown-it": "^14.2.0",
     "@types/qrcode": "^1.5.6",
-    "@types/vscode": "~1.140.0",
+    "@types/vscode": "~1.144.0",
     "esbuild": "^0.28.2",
     "markdown-it": "^14.3.3",
     "mermaid": "^11.17.2",
