@@ -12,6 +12,9 @@ onlyBuiltDependencies:
 # versão sem esperar o Mermaid. A API que o Mermaid usa (renderToString) não mudou.
 # DOMPurify também vem do Mermaid e tem vulnerabilidades corrigidas na 3.4.17 (pnpm audit).
 # Remover cada linha quando o Mermaid passar a exigir a versão segura.
+# glob e minimatch vêm de eslint e @vscode/l10n-dev (só dev) e têm avisos corrigidos na 14.0.2 e na 11.0.1.
 overrides:
   katex: ^0.18.2
   dompurify: ^3.4.17
+  glob: ^14.0.2
+  minimatch: ^11.0.1
