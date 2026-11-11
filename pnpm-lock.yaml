@@ -293,8 +293,8 @@ importers:
         specifier: workspace:*
         version: link:../i18n
       imapflow:
-        specifier: ^2.9.1
-        version: 2.9.1
+        specifier: ^2.11.0
+        version: 2.11.0
       mailparser:
         specifier: ^3.12.4
         version: 3.12.4
@@ -317,8 +317,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       ws:
-        specifier: ^8.22.0
-        version: 8.22.0
+        specifier: ^8.22.2
+        version: 8.22.2
     devDependencies:
       '@fakl/core':
         specifier: workspace:*
@@ -1611,6 +1611,10 @@ packages:
     resolution: {integrity: sha512-CCUNycmUjrV5M0wNf23waWAt9eOHczhjLbUQS7k0FNJvR0py9VSqHFt+tSl/D0+XI73VLG0U+PwYtq9R0zsm9Q==}
     engines: {node: '>=20.0.0'}
 
+  '@zone-eu/mailsplit@5.4.30':
+    resolution: {integrity: sha512-qN0KT6/ziAFvo5TzscaqpurIJaJQEXPPtqBZnpyhiGrACOKLDVMV6Lm57kXt5e/8zZUWoYiSC8oKl/aewtrJDQ==}
+    engines: {node: '>=20.0.0'}
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -2106,6 +2110,10 @@ packages:
     resolution: {integrity: sha512-PE0KjlsDy9JSsoU4C2Q8NXb1kC4c+bZRac9ZvHXUE4q1Ht63gScKMdEy9jst9+Fi3M4eDkqzkEhBZvix4blP2A==}
     engines: {node: '>=18.0.0'}
 
+  encoding-japanese@2.5.0:
+    resolution: {integrity: sha512-5TKhaMWTUF777NQ16OrAkJFuEd1uOnEBw8ODeXFTc/Y9csZZQ6/jiIS5r4aFuzfowu9gLGrE51zqI2H0dLwlmg==}
+    engines: {node: '>=18.0.0'}
+
   entities@4.5.0:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
     engines: {node: '>=0.12'}
@@ -2389,8 +2397,8 @@ packages:
     resolution: {integrity: sha512-2E8Q6rh+1RRSq/YdaGsNfXsEZy9FVqv6BSSrkmZJP7BnaoPnRfKL+YaofPvP+5rzdk144qSm6i4+hvPgUcbV4Q==}
     engines: {node: '>= 4'}
 
-  imapflow@2.9.1:
-    resolution: {integrity: sha512-hOq2/+T+WnQzRy7D40gYlio25nG+c9bhtrxowokOQM57SwZFqRbqAtxFQcIpx82lhYBPQEEVVjmkYpd9Fplj7g==}
+  imapflow@2.11.0:
+    resolution: {integrity: sha512-Jv/PBBbBsKjBkdN5DUbELRCo7Xm3DQz+gYBkAy4h87ObQthTRd7nu53WV/dKDf2M8imoJZY+eQFBVkQAJagC6g==}
     engines: {node: '>=20.0.0'}
 
   import-fresh@3.3.1:
@@ -2418,8 +2426,8 @@ packages:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
     engines: {node: '>=12'}
 
-  ip-address@10.7.4:
-    resolution: {integrity: sha512-DWBMKyeM25D70nrIiTkgQth59/G+naKOTep6huF9j+GmeK3DMD60Zvxg5d5qQnz+38AHgou6ean2LECX+lrKDg==}
+  ip-address@10.7.6:
+    resolution: {integrity: sha512-00LYkM6byILa9eQIx6qoaXCM40xTLd56AZ4vyaPW3YTyb49VZYPo5xsiAq4tuQ54GH4R7gVdYScJ1B7B77PuTg==}
     engines: {node: '>= 12'}
 
   iron-webcrypto@1.2.1:
@@ -2589,6 +2597,10 @@ packages:
 
   libmime@5.6.3:
     resolution: {integrity: sha512-cuTUW/Jybvh5O4/U9p61gyutHOjDtZyGQYuY99+bfnaFwqcDf2Nb+R6hMHY6DDen2H9wLKQSMpofWUgn2TI5JQ==}
+    engines: {node: '>=20.0.0'}
+
+  libmime@5.6.4:
+    resolution: {integrity: sha512-QWiiwq3ujIUSsCCjFDldDN7FfXuLYSTnEln0oeYfOjgqyVlRV6WQ3UyJ/paguoz8Ynxy1s7k3kh6xomS3bJkCw==}
     engines: {node: '>=20.0.0'}
 
   libqp@3.0.1:
@@ -3156,8 +3168,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  thread-stream@4.2.0:
-    resolution: {integrity: sha512-e2zZ96wSChazBsbENf/Pcm/4swHt2cEKQ92rhUjkL9GCKiTDJIaTBenjE/m9DXi0QBmTMDkFDdOomUy20A1tDQ==}
+  thread-stream@4.2.1:
+    resolution: {integrity: sha512-Stg6edJXC/6/xqGwSXwFokrUhChJ18amEjpKH89WrQQ0oVFDF+pUUcTpiwWhFUrE89Vf16FBOlwhaw+lescxMQ==}
     engines: {node: '>=20'}
 
   tiny-inflate@1.0.3:
@@ -3478,8 +3490,8 @@ packages:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
     engines: {node: '>=18'}
 
-  ws@8.22.0:
-    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
+  ws@8.22.2:
+    resolution: {integrity: sha512-/rEZ2ejown2N5gxVTHUu9bVVC7ttu0/Tgzf5hbTOixR3Fs7mbbXgn2DbdbcKgJOmpQMtrIUWivtYuVMnp/W/yA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4731,6 +4743,12 @@ snapshots:
       libmime: 5.6.3
       libqp: 3.0.1
 
+  '@zone-eu/mailsplit@5.4.30':
+    dependencies:
+      libbase64: 1.4.1
+      libmime: 5.6.4
+      libqp: 3.0.1
+
   acorn-jsx@5.3.2(acorn@8.19.0):
     dependencies:
       acorn: 8.19.0
@@ -5296,6 +5314,8 @@ snapshots:
 
   encoding-japanese@2.4.0: {}
 
+  encoding-japanese@2.5.0: {}
+
   entities@4.5.0: {}
 
   entities@7.0.1: {}
@@ -5620,13 +5640,13 @@ snapshots:
 
   ignore@7.0.13: {}
 
-  imapflow@2.9.1:
+  imapflow@2.11.0:
     dependencies:
-      '@zone-eu/mailsplit': 5.4.29
-      encoding-japanese: 2.4.0
+      '@zone-eu/mailsplit': 5.4.30
+      encoding-japanese: 2.5.0
       iconv-lite: 0.7.3
       libbase64: 1.4.1
-      libmime: 5.6.3
+      libmime: 5.6.4
       libqp: 3.0.1
       pino: 10.3.1
       socks: 2.8.10
@@ -5648,7 +5668,7 @@ snapshots:
 
   internmap@2.0.3: {}
 
-  ip-address@10.7.4: {}
+  ip-address@10.7.6: {}
 
   iron-webcrypto@1.2.1: {}
 
@@ -5774,6 +5794,13 @@ snapshots:
   libmime@5.6.3:
     dependencies:
       encoding-japanese: 2.4.0
+      iconv-lite: 0.7.3
+      libbase64: 1.4.1
+      libqp: 3.0.1
+
+  libmime@5.6.4:
+    dependencies:
+      encoding-japanese: 2.5.0
       iconv-lite: 0.7.3
       libbase64: 1.4.1
       libqp: 3.0.1
@@ -6096,7 +6123,7 @@ snapshots:
       real-require: 0.2.0
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
-      thread-stream: 4.2.0
+      thread-stream: 4.2.1
 
   png2icons@2.0.1: {}
 
@@ -6312,7 +6339,7 @@ snapshots:
 
   socks@2.8.10:
     dependencies:
-      ip-address: 10.7.4
+      ip-address: 10.7.6
       smart-buffer: 4.2.0
 
   sonic-boom@4.2.1:
@@ -6371,7 +6398,7 @@ snapshots:
       picocolors: 1.1.1
       sax: 1.6.1
 
-  thread-stream@4.2.0:
+  thread-stream@4.2.1:
     dependencies:
       real-require: 1.0.0
 
@@ -6586,7 +6613,7 @@ snapshots:
       string-width: 7.2.0
       strip-ansi: 7.2.0
 
-  ws@8.22.0: {}
+  ws@8.22.2: {}
 
   xml2js@0.5.0:
     dependencies:
