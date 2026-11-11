@@ -80,5 +80,21 @@ fi
 
 ./prepare_assets.sh
 
+if [[ "${OS_NAME}" == "osx" && -n "${CERTIFICATE_OSX_P12_DATA:-}" ]]; then
+  # O prepare_assets.sh já assinou, notarizou e carimbou; confere que o resultado vale,
+  # para uma release não sair com o app que o Gatekeeper recusa.
+  echo "==> Conferindo a assinatura e a notarização"
+  shopt -s nullglob
+  apps=("VSCode-darwin-${VSCODE_ARCH}"/*.app)
+  shopt -u nullglob
+  if [[ ${#apps[@]} -ne 1 ]]; then
+    echo "esperava um .app em VSCode-darwin-${VSCODE_ARCH}, achei ${#apps[@]}" >&2
+    exit 1
+  fi
+  codesign --verify --deep --strict "${apps[0]}"
+  xcrun stapler validate "${apps[0]}"
+  spctl --assess --type execute -vv "${apps[0]}"
+fi
+
 echo "==> Instaladores gerados:"
 ls -la assets
