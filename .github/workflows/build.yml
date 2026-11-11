@@ -53,7 +53,7 @@ jobs:
           [string[]]$windows = 'windows-2022'
           $linux = [ordered]@{ name = 'Linux x64'; runner = @('ubuntu-22.04'); os_name = 'linux'; arch = 'x64' }
           $all = @(
-            [ordered]@{ name = 'macOS arm64'; runner = @('macos-14'); os_name = 'osx'; arch = 'arm64' },
+            [ordered]@{ name = 'macOS arm64'; runner = @('macos-15'); os_name = 'osx'; arch = 'arm64' },
             [ordered]@{ name = 'Windows x64'; runner = $windows; os_name = 'windows'; arch = 'x64' }
           )
           $include = switch ($env:PLATAFORMAS) {
