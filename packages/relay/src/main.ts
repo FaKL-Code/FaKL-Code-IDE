@@ -10,7 +10,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { join, resolve } from 'node:path';
 
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { l10n, localeFromEnv, useLocale } from '@fakl/i18n';
 
 import { createRelay } from './relay.js';
