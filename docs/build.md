@@ -29,7 +29,7 @@ não copia esses scripts: ele fixa a versão deles e aplica a marca por cima.
   Actions (escolhendo todas as plataformas, só Windows ou só macOS), ou chamado
   pela release. Compila só a arquitetura mais nova de cada sistema: macOS arm64
   (Apple Silicon) e Windows x64.
-- Os dois sistemas compilam nos runners hospedados do GitHub (`macos-14` e
+- Os dois sistemas compilam nos runners hospedados do GitHub (`macos-15` e
   `windows-latest`). O Windows leva perto de duas horas.
 
 Nos runners do GitHub, o build guarda em cache, por sistema e versão do Code-OSS, o cache do npm, o
