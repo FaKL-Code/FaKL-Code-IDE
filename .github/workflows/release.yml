@@ -25,6 +25,13 @@ jobs:
     with:
       plataformas: ${{ inputs.plataformas }}
       versao: ${{ inputs.tag }}
+    # Só os segredos da Apple, para o build assinar e notarizar o app do macOS.
+    secrets:
+      APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
 
   # Assina os instaladores .exe no SignPath. O pedido ao SignPath Foundation foi
   # recusado, então hoje a variável SIGNPATH_ORGANIZATION_ID não existe, este job é
@@ -114,6 +121,10 @@ jobs:
           mac=(*-darwin-arm64-*.zip)
           if (( ${#mac[@]} >= 1 )); then
             cp -- "${mac[0]}" FaKL-Code-macOS-arm64.zip
+          fi
+          dmg=(*.arm64.*.dmg)
+          if (( ${#dmg[@]} >= 1 )); then
+            cp -- "${dmg[0]}" FaKL-Code-macOS-arm64.dmg
           fi
           linux_tar=(*-linux-x64-*.tar.gz)
           if (( ${#linux_tar[@]} >= 1 )); then

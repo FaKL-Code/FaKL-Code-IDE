@@ -38,9 +38,9 @@ módulos nativos já compilados. Com o cache, o `npm ci` vira um `npm install` q
 só ajusta o que mudou. A compilação em si (o `gulp`) não tem cache e continua
 sendo a maior parte do tempo.
 
-Saídas atuais: `.zip` do app no macOS (assinado ad hoc) e instaladores `.exe`
-(por usuário e para o sistema, sem assinatura) e `.zip` no Windows. O `.dmg` e a notarização
-dependem de uma conta no Apple Developer Program (SDD 15.2).
+Saídas atuais: `.zip` do app no macOS (assinado ad hoc; com os segredos da Apple, assinado,
+notarizado e com `.dmg`, veja [assinatura](assinatura.md)) e instaladores `.exe`
+(por usuário e para o sistema, sem assinatura) e `.zip` no Windows.
 
 ## Fumaça da IDE compilada
 

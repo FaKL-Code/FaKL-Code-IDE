@@ -22,6 +22,19 @@ on:
       versao:
         type: string
         default: ''
+    # Conta paga do Apple Developer Program (docs/assinatura.md). Sem eles o app do macOS
+    # sai com assinatura ad hoc, como antes.
+    secrets:
+      APPLE_CERTIFICATE_P12:
+        required: false
+      APPLE_CERTIFICATE_PASSWORD:
+        required: false
+      APPLE_ID:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_APP_PASSWORD:
+        required: false
 
 permissions:
   contents: read
@@ -185,6 +198,13 @@ jobs:
           # Com node_modules restauradas, npm install só ajusta o que mudou; o
           # npm ci apagaria tudo e reinstalaria do zero.
           FAKL_NPM_CI: ${{ steps.deps-cache.outputs.cache-matched-key != '' && 'npm install --no-audit --no-fund --prefer-offline' || '' }}
+          # O prepare_assets.sh do VSCodium assina, notariza e carimba o app do macOS quando
+          # CERTIFICATE_OSX_P12_DATA existe. Só o job do macOS recebe os segredos.
+          CERTIFICATE_OSX_P12_DATA: ${{ matrix.os_name == 'osx' && secrets.APPLE_CERTIFICATE_P12 || '' }}
+          CERTIFICATE_OSX_P12_PASSWORD: ${{ matrix.os_name == 'osx' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          CERTIFICATE_OSX_APPLE_ID: ${{ matrix.os_name == 'osx' && secrets.APPLE_ID || '' }}
+          CERTIFICATE_OSX_TEAM_ID: ${{ matrix.os_name == 'osx' && secrets.APPLE_TEAM_ID || '' }}
+          CERTIFICATE_OSX_APP_PASSWORD: ${{ matrix.os_name == 'osx' && secrets.APPLE_APP_PASSWORD || '' }}
         run: build/build.sh
 
       # Salva mesmo se um passo posterior à instalação falhar, para o próximo
