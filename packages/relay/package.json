@@ -25,7 +25,7 @@
     "@fakl/i18n": "workspace:*",
     "@fakl/remote": "workspace:*",
     "web-push": "^4.0.0",
-    "ws": "^8.22.2"
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "@fakl/core": "workspace:*",
