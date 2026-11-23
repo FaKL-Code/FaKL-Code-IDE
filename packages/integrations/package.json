@@ -22,7 +22,7 @@
   "dependencies": {
     "@fakl/i18n": "workspace:*",
     "imapflow": "^2.11.0",
-    "mailparser": "^3.14.3"
+    "mailparser": "^3.15.0"
   },
   "devDependencies": {
     "@types/mailparser": "^3.9.0"
